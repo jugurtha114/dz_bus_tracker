@@ -1,8 +1,10 @@
 // lib/screens/common/error_screen.dart
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../config/route_config.dart';
 import '../../config/theme_config.dart';
+import '../../providers/auth_provider.dart';
 import '../../widgets/common/custom_button.dart';
 
 enum ErrorType {
@@ -23,7 +25,7 @@ class ErrorScreen extends StatelessWidget {
 
   const ErrorScreen({
     Key? key,
-    required this.message,
+    this.message = 'An error occurred',  // Make message optional with default value
     this.errorType = ErrorType.unknown,
     this.onRetry,
     this.onGoBack,

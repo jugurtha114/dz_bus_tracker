@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import '../../config/api_config.dart';
 import '../../config/app_config.dart';
 import '../../config/route_config.dart';
 import '../../config/theme_config.dart';
@@ -16,12 +17,13 @@ import '../../widgets/common/app_bar.dart';
 import '../../widgets/common/glassy_container.dart';
 import '../../widgets/common/custom_button.dart';
 import '../../widgets/common/loading_indicator.dart';
+import '../../widgets/driver/passenger_counter.dart';
+import '../../widgets/driver/tracking_controls.dart';
 import '../../widgets/map/map_widget.dart';
 import '../../helpers/dialog_helper.dart';
 import '../../helpers/error_handler.dart';
 import '../../helpers/permission_helper.dart';
-import 'widgets/tracking_controls.dart';
-import 'widgets/passenger_counter.dart';
+
 
 class DriverHomeScreen extends StatefulWidget {
   const DriverHomeScreen({Key? key}) : super(key: key);

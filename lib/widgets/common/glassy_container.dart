@@ -16,6 +16,7 @@ class GlassyContainer extends StatelessWidget {
   final Alignment alignment;
   final BoxBorder? border;
   final List<BoxShadow>? boxShadow;
+  final VoidCallback? onTap; // Added onTap callback
 
   const GlassyContainer({
     Key? key,
@@ -30,11 +31,13 @@ class GlassyContainer extends StatelessWidget {
     this.alignment = Alignment.center,
     this.border,
     this.boxShadow,
+    this.onTap, // Include onTap in constructor
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    // Wrap with GestureDetector if onTap is provided
+    Widget container = Container(
       height: height,
       width: width,
       margin: margin,
@@ -59,5 +62,15 @@ class GlassyContainer extends StatelessWidget {
         ),
       ),
     );
+
+    // Add GestureDetector if onTap callback is provided
+    if (onTap != null) {
+      return GestureDetector(
+        onTap: onTap,
+        child: container,
+      );
+    }
+
+    return container;
   }
 }

@@ -14,7 +14,7 @@ import '../../widgets/common/custom_text_field.dart';
 import '../../widgets/common/glassy_container.dart';
 import '../../helpers/error_handler.dart';
 import '../../helpers/permission_helper.dart';
-import 'widgets/register_form.dart';
+import '../../widgets/auth/register_form.dart';
 
 class DriverRegisterScreen extends StatefulWidget {
   const DriverRegisterScreen({Key? key}) : super(key: key);

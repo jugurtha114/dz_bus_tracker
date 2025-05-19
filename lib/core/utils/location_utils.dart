@@ -96,15 +96,11 @@ class LocationUtils {
 
   // Find closest point among a list of points
   static Map<String, dynamic>? findClosestPoint(
-  double latitude,
-  double longitude,
-  List<Map<String, dynamic>> points,
-  String latKey = 'latitude',
-  String lngKey = 'longitude',
-  ) {
-  if (points.isEmpty) {
-  return null;
-  }
+      double latitude,
+      double longitude,
+      List<Map<String, dynamic>> points,
+      {String latKey = 'latitude', String lngKey = 'longitude'}
+      ) {
 
   double minDistance = double.infinity;
   Map<String, dynamic>? closestPoint;

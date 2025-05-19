@@ -6,6 +6,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'config/api_config.dart';
 import 'config/app_config.dart';
 import 'config/route_config.dart';
 import 'config/theme_config.dart';

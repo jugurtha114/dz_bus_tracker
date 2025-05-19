@@ -67,13 +67,13 @@ class ErrorDisplayWidget extends StatelessWidget {
           // Action button
           CustomButton(
             text: actionText!,
-            onPressed: onAction,
+            onPressed: onAction!, // Fix: Non-null assertion since we already check it's not null
             type: useGlassyContainer
                 ? ButtonType.filled
                 : ButtonType.outlined,
             color: useGlassyContainer ? AppColors.white : AppColors.primary,
             textColor: useGlassyContainer ? AppColors.primary : AppColors.white,
-            icon: onAction != null ? Icons.refresh : null,
+            icon: Icons.refresh, // Fixed: Remove the conditional check since we know onAction isn't null here
           ),
         ],
       ],

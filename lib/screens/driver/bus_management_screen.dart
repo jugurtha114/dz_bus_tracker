@@ -11,8 +11,9 @@ import '../../widgets/common/glassy_container.dart';
 import '../../widgets/common/loading_indicator.dart';
 import '../../helpers/dialog_helper.dart';
 import '../../helpers/error_handler.dart';
-import 'widgets/bus_form.dart';
-import 'widgets/bus_card.dart';
+import '../../widgets/driver/bus_card.dart';
+import '../../widgets/driver/widgets/bus_form.dart';
+
 
 class BusManagementScreen extends StatefulWidget {
   const BusManagementScreen({Key? key}) : super(key: key);

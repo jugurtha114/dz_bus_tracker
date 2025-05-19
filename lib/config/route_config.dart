@@ -68,6 +68,7 @@ class AppRoutes {
 
 class AppRouter {
   static Route<dynamic> generateRoute(RouteSettings settings) {
+    final args = settings.arguments as Map<String, dynamic>?;
     switch (settings.name) {
     // Auth routes
       case AppRoutes.splash:
@@ -111,13 +112,39 @@ class AppRouter {
       case AppRoutes.busTracking:
         return MaterialPageRoute(builder: (_) => const BusTrackingScreen());
       case AppRoutes.busDetails:
-        return MaterialPageRoute(builder: (_) => const BusDetailsScreen());
+        final busId = args?['busId'] as String?;
+        if (busId == null) {
+          return MaterialPageRoute(
+            builder: (_) => const ErrorScreen(
+              message: 'Bus ID is required to view details',
+              errorType: ErrorType.notFound,
+            ),
+          );
+        }
+        return MaterialPageRoute(
+          builder: (_) => BusDetailsScreen(busId: busId),
+        );
       case AppRoutes.lineDetails:
         return MaterialPageRoute(builder: (_) => const LineDetailsScreen());
       case AppRoutes.stopDetails:
         return MaterialPageRoute(builder: (_) => const StopDetailsScreen());
       case AppRoutes.rateDriver:
-        return MaterialPageRoute(builder: (_) => const RateDriverScreen());
+        final driverId = args?['driverId'] as String?;
+        if (driverId == null) {
+          return MaterialPageRoute(
+            builder: (_) => const ErrorScreen(
+              message: 'Driver ID is required to submit a rating',
+              errorType: ErrorType.notFound,
+            ),
+          );
+        }
+        return MaterialPageRoute(
+          builder: (_) => RateDriverScreen(
+            driverId: driverId,
+            busId: args?['busId'] as String?,
+            tripId: args?['tripId'] as String?,
+          ),
+        );
 
     // Common routes
       case AppRoutes.notifications:
@@ -127,11 +154,24 @@ class AppRouter {
       case AppRoutes.about:
         return MaterialPageRoute(builder: (_) => const AboutScreen());
 
+      case AppRoutes.error:
+        final message = args?['message'] as String? ?? 'An unexpected error occurred';
+        return MaterialPageRoute(
+          builder: (_) => ErrorScreen(
+            message: message,
+            errorType: args?['errorType'] as ErrorType? ?? ErrorType.unknown,
+            onRetry: args?['onRetry'] as VoidCallback?,
+            onGoBack: args?['onGoBack'] as VoidCallback?,
+            showHomeButton: args?['showHomeButton'] as bool? ?? true,
+          ),
+        );
+
     // Default error route
       default:
         return MaterialPageRoute(
           builder: (_) => ErrorScreen(
-            errorMessage: 'No route defined for ${settings.name}',
+            message: 'No route defined for ${settings.name}',
+            errorType: ErrorType.notFound,
           ),
         );
     }

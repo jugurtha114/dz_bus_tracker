@@ -54,7 +54,7 @@ class TrackingControls extends StatelessWidget {
           text: isTracking ? 'Stop Tracking' : 'Start Tracking',
           onPressed: isEnabled
               ? (isTracking ? onStopTracking : onStartTracking)
-              : null,
+              : () {}, // No-op function instead of null
           isDisabled: !isEnabled,
           color: isTracking ? AppColors.error : AppColors.success,
           icon: isTracking ? Icons.stop_circle_outlined : Icons.play_circle_outline,

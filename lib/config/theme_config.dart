@@ -89,6 +89,8 @@ class AppTextStyles {
 }
 
 class AppTheme {
+  // lib/config/theme_config.dart - using CardThemeData
+
   static ThemeData get lightTheme {
     return ThemeData(
       primaryColor: AppColors.primary,
@@ -111,13 +113,13 @@ class AppTheme {
         iconTheme: IconThemeData(color: AppColors.white),
       ),
       textTheme: TextTheme(
-        headline1: AppTextStyles.h1,
-        headline2: AppTextStyles.h2,
-        headline3: AppTextStyles.h3,
-        bodyText1: AppTextStyles.body,
-        bodyText2: AppTextStyles.bodySmall,
-        button: AppTextStyles.button,
-        caption: AppTextStyles.caption,
+        displayLarge: AppTextStyles.h1,
+        displayMedium: AppTextStyles.h2,
+        displaySmall: AppTextStyles.h3,
+        bodyLarge: AppTextStyles.body,
+        bodyMedium: AppTextStyles.bodySmall,
+        labelLarge: AppTextStyles.button,
+        bodySmall: AppTextStyles.caption,
       ),
       buttonTheme: ButtonThemeData(
         buttonColor: AppColors.primary,
@@ -128,8 +130,8 @@ class AppTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          primary: AppColors.primary,
-          onPrimary: AppColors.white,
+          foregroundColor: AppColors.white,
+          backgroundColor: AppColors.primary,
           padding: EdgeInsets.symmetric(vertical: 12, horizontal: 24),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
@@ -139,7 +141,7 @@ class AppTheme {
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          primary: AppColors.primary,
+          foregroundColor: AppColors.primary,
           padding: EdgeInsets.symmetric(vertical: 12, horizontal: 24),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
@@ -148,7 +150,7 @@ class AppTheme {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          primary: AppColors.primary,
+          foregroundColor: AppColors.primary,
           padding: EdgeInsets.symmetric(vertical: 12, horizontal: 24),
           side: BorderSide(color: AppColors.primary),
           shape: RoundedRectangleBorder(
@@ -177,12 +179,16 @@ class AppTheme {
         filled: true,
         fillColor: AppColors.white,
       ),
-      cardTheme: CardTheme(
+      // Use CardThemeData instead of CardTheme
+      cardTheme: CardThemeData(
+        clipBehavior: Clip.antiAlias,
+        color: Colors.transparent,
         elevation: 0,
+        margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
-        color: Colors.transparent,
+        shadowColor: Colors.transparent,
       ),
     );
   }

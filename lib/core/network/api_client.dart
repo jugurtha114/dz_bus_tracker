@@ -1,5 +1,6 @@
 // lib/core/network/api_client.dart
 
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
@@ -297,7 +298,7 @@ class ApiClient {
       // Apply request interceptors (simplified for multipart)
       for (final interceptor in _interceptors) {
         if (interceptor is! AuthInterceptor) { // Skip auth interceptor for multipart
-          await interceptor.onRequest(request);
+          await interceptor.onRequest(request as InterceptedRequest);
         }
       }
 

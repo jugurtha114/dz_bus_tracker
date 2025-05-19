@@ -160,7 +160,7 @@ class _RatingInputState extends State<RatingInput> {
           // Submit button
           CustomButton(
             text: widget.submitButtonText,
-            onPressed: _hasRated ? _handleSubmit : null,
+            onPressed: _hasRated ? _handleSubmit : () {},
             isLoading: widget.isLoading,
             isDisabled: !_hasRated,
             color: widget.useGlassyContainer

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'dart:async';
+import '../../config/api_config.dart';
 import '../../config/app_config.dart';
 import '../../config/theme_config.dart';
 import '../../providers/passenger_provider.dart';

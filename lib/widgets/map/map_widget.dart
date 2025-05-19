@@ -28,7 +28,7 @@ class MapWidget extends StatelessWidget {
   final bool indoorViewEnabled;
   final bool compassEnabled;
   final void Function(CameraPosition)? onCameraMove;
-  final void Function(CameraPosition)? onCameraIdle;
+  final VoidCallback? onCameraIdle; // Fixed: Changed to VoidCallback (void Function()?)
   final void Function(LatLng)? onTap;
   final void Function(LatLng)? onLongPress;
 
@@ -59,7 +59,6 @@ class MapWidget extends StatelessWidget {
     this.onTap,
     this.onLongPress,
   }) : super(key: key);
-
   @override
   Widget build(BuildContext context) {
     return GoogleMap(

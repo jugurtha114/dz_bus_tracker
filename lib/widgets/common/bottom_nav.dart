@@ -1,5 +1,7 @@
 // lib/widgets/common/bottom_nav.dart
 
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import '../../config/theme_config.dart';
 import 'notification_badge.dart';

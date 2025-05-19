@@ -191,6 +191,7 @@ class BusProvider with ChangeNotifier {
     int? capacity,
     bool? isAirConditioned,
     String? status,
+    String lineId='jugu_line_id_please_update', // todo add lineID
   }) async {
     _setLoading(true);
 

@@ -3,9 +3,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import '../../config/api_config.dart';
 import '../../config/app_config.dart';
 import '../../config/route_config.dart';
 import '../../config/theme_config.dart';
+import '../../helpers/dialog_helper.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/location_provider.dart';
 import '../../providers/passenger_provider.dart';
@@ -15,8 +17,9 @@ import '../../widgets/common/glassy_container.dart';
 import '../../widgets/common/loading_indicator.dart';
 import '../../widgets/map/map_widget.dart';
 import '../../helpers/permission_helper.dart';
-import 'widgets/nearby_buses_list.dart';
-import 'widgets/search_bar_widget.dart';
+import '../../widgets/passenger/nearby_buses_list.dart';
+import '../../widgets/passenger/search_bar_widget.dart';
+
 
 class PassengerHomeScreen extends StatefulWidget {
   const PassengerHomeScreen({Key? key}) : super(key: key);

@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import '../../config/api_config.dart';
 import '../../config/app_config.dart';
 import '../../config/route_config.dart';
 import '../../config/theme_config.dart';

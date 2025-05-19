@@ -5,10 +5,11 @@ import 'package:provider/provider.dart';
 import '../../config/route_config.dart';
 import '../../config/theme_config.dart';
 import '../../providers/auth_provider.dart';
+import '../../widgets/auth/register_form.dart';
 import '../../widgets/common/app_bar.dart';
 import '../../widgets/common/glassy_container.dart';
 import '../../helpers/error_handler.dart';
-import 'widgets/register_form.dart';
+
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({Key? key}) : super(key: key);

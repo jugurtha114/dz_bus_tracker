@@ -2,6 +2,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:timezone/timezone.dart' as tz;
+import 'package:timezone/data/latest.dart' as tz_data;
 
 class NotificationUtils {
   static final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin =
@@ -13,6 +15,9 @@ class NotificationUtils {
     if (_isInitialized) {
       return true;
     }
+
+    // Initialize timezone
+    tz_data.initializeTimeZones();
 
     const AndroidInitializationSettings initializationSettingsAndroid =
     AndroidInitializationSettings('@mipmap/ic_launcher');
@@ -76,18 +81,43 @@ class NotificationUtils {
 
     notificationDetails ??= _defaultNotificationDetails();
 
+    // Convert DateTime to TZDateTime
+    final tz.TZDateTime tzScheduledDate = _convertToTZDateTime(scheduledDate);
+
     await _flutterLocalNotificationsPlugin.zonedSchedule(
       id,
       title,
       body,
-      scheduledDate.isUtc
-          ? scheduledDate
-          : scheduledDate.subtract(scheduledDate.timeZoneOffset),
+      tzScheduledDate,
       notificationDetails,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       uiLocalNotificationDateInterpretation:
       UILocalNotificationDateInterpretation.absoluteTime,
       payload: payload,
+    );
+  }
+
+  // Convert DateTime to TZDateTime
+  static tz.TZDateTime _convertToTZDateTime(DateTime dateTime) {
+    // Get local timezone
+    final tz.Location location = tz.local;
+
+    // If the datetime is already UTC, convert it to local TZ
+    if (dateTime.isUtc) {
+      return tz.TZDateTime.from(dateTime, location);
+    }
+
+    // If it's a local datetime, create a TZDateTime with those values
+    return tz.TZDateTime(
+      location,
+      dateTime.year,
+      dateTime.month,
+      dateTime.day,
+      dateTime.hour,
+      dateTime.minute,
+      dateTime.second,
+      dateTime.millisecond,
+      dateTime.microsecond,
     );
   }
 

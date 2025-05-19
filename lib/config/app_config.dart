@@ -1,156 +1,136 @@
-// lib/config/route_config.dart (updated)
+// lib/config/app_config.dart
 
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 
-// Import all screens
-import '../screens/auth/login_screen.dart';
-import '../screens/auth/register_screen.dart';
-import '../screens/auth/driver_register_screen.dart';
-import '../screens/auth/forgot_password_screen.dart';
-import '../screens/common/splash_screen.dart';
-import '../screens/common/onboarding_screen.dart';
-import '../screens/common/profile_screen.dart';
-import '../screens/common/settings_screen.dart';
-import '../screens/common/about_screen.dart';
-import '../screens/common/notifications_screen.dart';
-import '../screens/common/error_screen.dart';
-import '../screens/driver/driver_home_screen.dart';
-import '../screens/driver/driver_profile_screen.dart';
-import '../screens/driver/bus_management_screen.dart';
-import '../screens/driver/tracking_screen.dart';
-import '../screens/driver/passenger_counter_screen.dart';
-import '../screens/driver/line_selection_screen.dart';
-import '../screens/driver/rating_screen.dart';
-import '../screens/passenger/passenger_home_screen.dart';
-import '../screens/passenger/line_search_screen.dart';
-import '../screens/passenger/stop_search_screen.dart';
-import '../screens/passenger/bus_tracking_screen.dart';
-import '../screens/passenger/bus_details_screen.dart';
-import '../screens/passenger/line_details_screen.dart';
-import '../screens/passenger/stop_details_screen.dart';
-import '../screens/passenger/rate_driver_screen.dart';
+/// App-wide configuration settings
+class AppConfig {
+  // App information
+  static const String appName = 'DZ Bus Tracker';
+  static const String appVersion = '1.0.0';
+  static const String appBuildNumber = '1';
+  static const String appDescription = 'Smart, real-time bus tracking for Algeria – connecting passengers and drivers like never before.';
+  static const String appCopyright = '© 2025 DZ Bus Tracker';
+  static const String appWebsite = 'https://dzbusttracker.dz';
+  static const String appSupportEmail = 'support@dzbusttracker.dz';
 
-class AppRoutes {
-  // Auth routes
-  static const String splash = '/';
-  static const String onboarding = '/onboarding';
-  static const String login = '/login';
-  static const String register = '/register';
-  static const String driverRegister = '/driver-register';
-  static const String forgotPassword = '/forgot-password';
-  static const String profile = '/profile';
+  // Environment
+  static const bool isProduction = false;
+  static const bool isDevelopment = true;
+  static const bool isStaging = false;
+  static const String environment = isDevelopment ? 'dev' : isStaging ? 'staging' : 'production';
 
-  // Driver routes
-  static const String driverHome = '/driver/home';
-  static const String driverProfile = '/driver/profile';
-  static const String busManagement = '/driver/bus-management';
-  static const String tracking = '/driver/tracking';
-  static const String passengerCounter = '/driver/passenger-counter';
-  static const String lineSelection = '/driver/line-selection';
-  static const String ratings = '/driver/ratings';
+  // Default configurations
+  static const String defaultLanguage = 'fr'; // French as default
+  static const List<String> supportedLanguages = ['fr', 'ar', 'en'];
+  static const String defaultCountryCode = 'DZ'; // Algeria
+  static const String defaultPhoneCode = '+213';
+  static const String defaultDateFormat = 'dd/MM/yyyy';
+  static const String defaultTimeFormat = 'HH:mm';
+  static const String defaultDateTimeFormat = 'dd/MM/yyyy HH:mm';
+  static const String defaultCurrency = 'DZD';
+  static const String defaultCurrencySymbol = 'دج';
 
-  // Passenger routes
-  static const String passengerHome = '/passenger/home';
-  static const String lineSearch = '/passenger/line-search';
-  static const String stopSearch = '/passenger/stop-search';
-  static const String busTracking = '/passenger/bus-tracking';
-  static const String busDetails = '/passenger/bus-details';
-  static const String lineDetails = '/passenger/line-details';
-  static const String stopDetails = '/passenger/stop-details';
-  static const String rateDriver = '/passenger/rate-driver';
+  // Timeouts
+  static const int connectionTimeout = 30000; // 30 seconds
+  static const int receiveTimeout = 30000; // 30 seconds
+  static const int sendTimeout = 30000; // 30 seconds
+  static const int cacheMaxAge = 86400; // 24 hours in seconds
+  static const int sessionTimeout = 3600; // 1 hour in seconds
+  static const int tokenRefreshThreshold = 300; // 5 minutes in seconds
+  static const int locationUpdateInterval = 10; // in seconds
+  static const int backgroundLocationUpdateInterval = 30; // in seconds
+  static const int busLocationRefreshInterval = 10; // in seconds
+  static const int nearbyBusesRefreshInterval = 30; // in seconds
 
-  // Common routes
-  static const String notifications = '/notifications';
-  static const String settings = '/settings';
-  static const String about = '/about';
-  static const String error = '/error';
-}
+  // Feature flags
+  static const bool enablePassengerCount = true;
+  static const bool enableWaitingPassengerReporting = true;
+  static const bool enableRatings = true;
+  static const bool enableNotifications = true;
+  static const bool enableCrowdInfo = false; // Coming soon
+  static const bool enableSmartPredictions = false; // Coming soon
+  static const bool enableOfflineMode = false; // Coming soon
+  static const bool enableMultiLanguage = true;
+  static const bool enableDarkMode = false; // Coming soon
+  static const bool enableAnalytics = isProduction;
+  static const bool enableCrashReporting = isProduction;
+  static const bool enablePerformanceMonitoring = isProduction;
 
-class AppRouter {
-  static Route<dynamic> generateRoute(RouteSettings settings) {
-    switch (settings.name) {
-    // Auth routes
-      case AppRoutes.splash:
-        return MaterialPageRoute(builder: (_) => const SplashScreen());
-      case AppRoutes.onboarding:
-        return MaterialPageRoute(builder: (_) => const OnboardingScreen());
-      case AppRoutes.login:
-        return MaterialPageRoute(builder: (_) => const LoginScreen());
-      case AppRoutes.register:
-        return MaterialPageRoute(builder: (_) => const RegisterScreen());
-      case AppRoutes.driverRegister:
-        return MaterialPageRoute(builder: (_) => const DriverRegisterScreen());
-      case AppRoutes.forgotPassword:
-        return MaterialPageRoute(builder: (_) => const ForgotPasswordScreen());
-      case AppRoutes.profile:
-        return MaterialPageRoute(builder: (_) => const ProfileScreen());
+  // Cache configuration
+  static const bool enableCache = true;
+  static const int maxCacheSize = 10 * 1024 * 1024; // 10 MB
+  static const List<String> cachedEndpoints = [
+    '/lines',
+    '/stops',
+    '/buses',
+  ];
 
-    // Driver routes
-      case AppRoutes.driverHome:
-        return MaterialPageRoute(builder: (_) => const DriverHomeScreen());
-      case AppRoutes.driverProfile:
-        return MaterialPageRoute(builder: (_) => const DriverProfileScreen());
-      case AppRoutes.busManagement:
-        return MaterialPageRoute(builder: (_) => const BusManagementScreen());
-      case AppRoutes.tracking:
-        return MaterialPageRoute(builder: (_) => const TrackingScreen());
-      case AppRoutes.passengerCounter:
-        return MaterialPageRoute(builder: (_) => const PassengerCounterScreen());
-      case AppRoutes.lineSelection:
-        return MaterialPageRoute(builder: (_) => const LineSelectionScreen());
-      case AppRoutes.ratings:
-        return MaterialPageRoute(builder: (_) => const RatingScreen());
+  // Map configuration
+  static const String mapType = 'google'; // 'google' or 'osm'
+  static const double defaultZoomLevel = 15.0;
+  static const double maxZoomLevel = 19.0;
+  static const double minZoomLevel = 5.0;
+  static const double nearbyStopsRadius = 1000; // in meters
+  static const double nearbyBusesRadius = 2000; // in meters
+  static const double defaultLatitude = 36.7538; // Algiers latitude
+  static const double defaultLongitude = 3.0588; // Algiers longitude
+  static const int defaultStopDisplayCount = 10;
+  static const int maxStopsToDisplay = 30;
+  static const int maxBusesToTrack = 20;
 
-    // Passenger routes
-      case AppRoutes.passengerHome:
-        return MaterialPageRoute(builder: (_) => const PassengerHomeScreen());
-      case AppRoutes.lineSearch:
-        return MaterialPageRoute(builder: (_) => const LineSearchScreen());
-      case AppRoutes.stopSearch:
-        return MaterialPageRoute(builder: (_) => const StopSearchScreen());
-      case AppRoutes.busTracking:
-        return MaterialPageRoute(builder: (_) => const BusTrackingScreen());
-      case AppRoutes.busDetails:
-        return MaterialPageRoute(builder: (_) => const BusDetailsScreen());
-      case AppRoutes.lineDetails:
-        return MaterialPageRoute(builder: (_) => const LineDetailsScreen());
-      case AppRoutes.stopDetails:
-        return MaterialPageRoute(builder: (_) => const StopDetailsScreen());
-      case AppRoutes.rateDriver:
-        return MaterialPageRoute(builder: (_) => const RateDriverScreen());
+  // Location configuration
+  static const int locationDistanceFilter = 10; // in meters
+  static const int locationRequiredAccuracy = 50; // in meters
+  static const bool useHighAccuracyLocation = true;
+  static const bool useBackgroundLocation = true;
 
-    // Common routes
-      case AppRoutes.notifications:
-        return MaterialPageRoute(builder: (_) => const NotificationsScreen());
-      case AppRoutes.settings:
-        return MaterialPageRoute(builder: (_) => const SettingsScreen());
-      case AppRoutes.about:
-        return MaterialPageRoute(builder: (_) => const AboutScreen());
+  // UI configuration
+  static const Duration splashScreenDuration = Duration(seconds: 2);
+  static const Duration animationDuration = Duration(milliseconds: 300);
+  static const Duration snackBarDuration = Duration(seconds: 3);
+  static const Duration toastDuration = Duration(seconds: 2);
+  static const double buttonHeight = 50.0;
+  static const double borderRadius = 8.0;
+  static const double glassMorphismOpacity = 0.7;
+  static const double glassMorphismBlur = 10.0;
 
-    // Default error route
-      default:
-        return MaterialPageRoute(
-          builder: (_) => ErrorScreen(
-            errorMessage: 'No route defined for ${settings.name}',
-          ),
-        );
-    }
-  }
+  // Notification configuration
+  static const String notificationChannelId = 'dz_bus_tracker_channel';
+  static const String notificationChannelName = 'DZ Bus Tracker Notifications';
+  static const String notificationChannelDescription = 'Notifications from DZ Bus Tracker app';
+  static const String notificationIcon = '@mipmap/ic_launcher';
+  static const bool enableFCM = true;
 
-  // Helper navigation methods
-  static Future<T?> navigateTo<T>(BuildContext context, String routeName, {Object? arguments}) {
-    return Navigator.pushNamed<T>(context, routeName, arguments: arguments);
-  }
+  // Security configuration
+  static const bool enableEncryption = true;
+  static const bool enableBiometricAuthentication = false; // Coming soon
+  static const bool enablePinAuthentication = false; // Coming soon
+  static const int maxLoginAttempts = 5;
+  static const int passwordMinLength = 8;
+  static const bool requireStrongPassword = true;
 
-  static Future<T?> navigateToReplacement<T>(BuildContext context, String routeName, {Object? arguments}) {
-    return Navigator.pushReplacementNamed<T, dynamic>(context, routeName, arguments: arguments);
-  }
+  // Retry configuration
+  static const int maxRetryAttempts = 3;
+  static const int retryDelayFactor = 1500; // in milliseconds
+  static const int maxRetryDelay = 10000; // 10 seconds
 
-  static Future<T?> navigateToAndClearStack<T>(BuildContext context, String routeName, {Object? arguments}) {
-    return Navigator.pushNamedAndRemoveUntil<T>(context, routeName, (route) => false, arguments: arguments);
-  }
+  // Social media
+  static const String facebookPage = 'https://facebook.com/dzbusttracker';
+  static const String twitterHandle = 'https://twitter.com/dzbusttracker';
+  static const String instagramAccount = 'https://instagram.com/dzbusttracker';
 
-  static void goBack<T>(BuildContext context, [T? result]) {
-    Navigator.pop<T>(context, result);
-  }
+  // Store URLs
+  static const String appStoreUrl = 'https://apps.apple.com/app/dzbusttracker';
+  static const String playStoreUrl = 'https://play.google.com/store/apps/details?id=dz.busttracker';
+
+  // Terms and Privacy
+  static const String termsUrl = 'https://dzbusttracker.dz/terms';
+  static const String privacyUrl = 'https://dzbusttracker.dz/privacy';
+  static const String helpUrl = 'https://dzbusttracker.dz/help';
+
+  // Debug configuration
+  static bool get showDebugBanner => kDebugMode && !isProduction;
+  static const bool enableDebugLogs = kDebugMode;
+  static const bool enableNetworkLogs = kDebugMode;
+  static const bool enablePerformanceLogs = kDebugMode;
 }

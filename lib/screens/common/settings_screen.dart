@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../config/api_config.dart';
 import '../../config/app_config.dart';
 import '../../config/theme_config.dart';
 import '../../core/constants/app_constants.dart';
@@ -78,8 +79,8 @@ class SettingsScreen extends StatelessWidget {
 
           // App info section
           _buildSectionHeader(context, 'About'),
-          ListTile(
-            title: const Text('App Version'),
+          const ListTile(
+            title: Text('App Version'),
             subtitle: Text('${AppConfig.appVersion} (${AppConfig.appBuildNumber})'),
           ),
           ListTile(

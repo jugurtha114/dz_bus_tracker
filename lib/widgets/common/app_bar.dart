@@ -1,5 +1,7 @@
 // lib/widgets/common/app_bar.dart
 
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import '../../config/theme_config.dart';
 import 'glassy_container.dart';

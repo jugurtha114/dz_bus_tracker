@@ -1,20 +1,23 @@
 // lib/widgets/map/route_polyline.dart
 
+import 'dart:math' as Math;
+
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../../config/theme_config.dart';
 
 class RoutePolyline {
   // Create a polyline from a list of coordinates
+// Alternative implementation for createRoutePolyline
   static Polyline createRoutePolyline({
     required String id,
     required List<LatLng> points,
     Color color = AppColors.primary,
     int width = 5,
     bool geodesic = true,
-    PolylineJointType jointType = PolylineJointType.round,
+    JointType jointType = JointType.round,
     bool visible = true,
-    PatternItem? pattern,
+    List<PatternItem>? patterns,
     int zIndex = 0,
   }) {
     return Polyline(
@@ -25,7 +28,7 @@ class RoutePolyline {
       geodesic: geodesic,
       jointType: jointType,
       visible: visible,
-      patterns: pattern != null ? [pattern] : null,
+      patterns: patterns ?? [], // Provide empty list if patterns is null
       zIndex: zIndex,
     );
   }
@@ -37,7 +40,7 @@ class RoutePolyline {
     Color color = AppColors.primary,
     int width = 5,
     bool geodesic = true,
-    PolylineJointType jointType = PolylineJointType.round,
+    JointType jointType = JointType.round,
     bool visible = true,
     int zIndex = 0,
   }) {
@@ -50,7 +53,7 @@ class RoutePolyline {
       jointType: jointType,
       visible: visible,
       patterns: [
-        PatternItem.dash(20),
+        PatternItem.dot,
         PatternItem.gap(10),
       ],
       zIndex: zIndex,
@@ -64,9 +67,9 @@ class RoutePolyline {
     Color color = AppColors.primary,
     int width = 5,
     bool geodesic = true,
-    PolylineJointType jointType = PolylineJointType.round,
+    JointType jointType = JointType.round,
     bool visible = true,
-    required List<PatternItem> pattern,
+    required List<PatternItem> patterns,
     int zIndex = 0,
   }) {
     return Polyline(
@@ -77,7 +80,7 @@ class RoutePolyline {
       geodesic: geodesic,
       jointType: jointType,
       visible: visible,
-      patterns: pattern,
+      patterns: patterns,
       zIndex: zIndex,
     );
   }
@@ -91,7 +94,7 @@ class RoutePolyline {
     int mainWidth = 5,
     int glowWidth = 9,
     bool geodesic = true,
-    PolylineJointType jointType = PolylineJointType.round,
+    JointType jointType = JointType.round,
     bool visible = true,
   }) {
     return {
@@ -127,7 +130,7 @@ class RoutePolyline {
     required List<Color> colors,
     int width = 5,
     bool geodesic = true,
-    PolylineJointType jointType = PolylineJointType.round,
+    JointType jointType = JointType.round,
     bool visible = true,
   }) {
     if (points.length <= 1 || colors.isEmpty) {
