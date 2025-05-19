@@ -1,11 +1,11 @@
 {
-    "name": "dz_bus_tracker",
-    "short_name": "dz_bus_tracker",
+    "name": "dz_bus_tracker_app",
+    "short_name": "dz_bus_tracker_app",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "DZ Bus Tracker – Scalable Flutter Front-End with Beautiful UI/UX & High Performance. (by Jugurtha-Green)",
+    "description": "**DZ Bus Tracker** is a mobile application designed to modernize and simplify public bus transportation in Algeria. It connects **bus drivers** and **passengers** in real time, allowing everyone to enjoy smoother, safer, and more reliable commutes.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

@@ -1,6 +1,6 @@
-# dz_bus_tracker
+# dz_bus_tracker_app
 
-DZ Bus Tracker – Scalable Flutter Front-End with Beautiful UI/UX & High Performance. (by Jugurtha-Green)
+**DZ Bus Tracker** is a mobile application designed to modernize and simplify public bus transportation in Algeria. It connects **bus drivers** and **passengers** in real time, allowing everyone to enjoy smoother, safer, and more reliable commutes.
 
 ## Getting Started
 

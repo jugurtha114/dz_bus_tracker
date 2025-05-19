@@ -1,79 +1,136 @@
-/// lib/core/utils/location_utils.dart
+// lib/core/utils/location_utils.dart
 
-import 'dart:math' show asin, cos, pow, sin, sqrt, pi;
+import 'dart:math' as math;
 
-/// Utility class providing helper methods for geographical calculations and formatting.
 class LocationUtils {
-  // Private constructor to prevent instantiation
-  LocationUtils._();
-
-  // Earth radius in meters (mean radius)
-  static const double _earthRadiusMeters = 6371000.0;
-
-  /// Calculates the great-circle distance between two points on Earth
-  /// specified by their latitude/longitude using the Haversine formula.
-  ///
-  /// Returns the distance in meters.
-  /// Returns 0.0 if either point is null or coordinates are invalid.
+  // Calculate distance between two coordinates in meters
   static double calculateDistance(
-      double? lat1, double? lon1, double? lat2, double? lon2) {
-    if (lat1 == null || lon1 == null || lat2 == null || lon2 == null) {
-      return 0.0;
-    }
+      double startLatitude,
+      double startLongitude,
+      double endLatitude,
+      double endLongitude,
+      ) {
+    const int earthRadius = 6371000; // in meters
 
     // Convert degrees to radians
-    final double lat1Rad = _degreesToRadians(lat1);
-    final double lon1Rad = _degreesToRadians(lon1);
-    final double lat2Rad = _degreesToRadians(lat2);
-    final double lon2Rad = _degreesToRadians(lon2);
+    final startLat = _toRadians(startLatitude);
+    final startLng = _toRadians(startLongitude);
+    final endLat = _toRadians(endLatitude);
+    final endLng = _toRadians(endLongitude);
 
     // Haversine formula
-    final double dLat = lat2Rad - lat1Rad;
-    final double dLon = lon2Rad - lon1Rad;
-    final double a = pow(sin(dLat / 2), 2) +
-        cos(lat1Rad) * cos(lat2Rad) * pow(sin(dLon / 2), 2);
-    final double c = 2 * asin(sqrt(a)); // 2 * atan2(sqrt(a), sqrt(1-a)) is also common
+    final dLat = endLat - startLat;
+    final dLng = endLng - startLng;
 
-    // Distance in meters
-    return _earthRadiusMeters * c;
+    final a = math.sin(dLat / 2) * math.sin(dLat / 2) +
+        math.cos(startLat) * math.cos(endLat) *
+            math.sin(dLng / 2) * math.sin(dLng / 2);
+
+    final c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
+
+    return earthRadius * c;
   }
 
-  /// Converts degrees to radians.
-  static double _degreesToRadians(double degrees) {
-    return degrees * pi / 180.0;
+  // Calculate bearing between two coordinates in degrees
+  static double calculateBearing(
+      double startLatitude,
+      double startLongitude,
+      double endLatitude,
+      double endLongitude,
+      ) {
+    // Convert degrees to radians
+    final startLat = _toRadians(startLatitude);
+    final startLng = _toRadians(startLongitude);
+    final endLat = _toRadians(endLatitude);
+    final endLng = _toRadians(endLongitude);
+
+    final dLng = endLng - startLng;
+
+    final y = math.sin(dLng) * math.cos(endLat);
+    final x = math.cos(startLat) * math.sin(endLat) -
+        math.sin(startLat) * math.cos(endLat) * math.cos(dLng);
+
+    final radiansBearing = math.atan2(y, x);
+
+    // Convert radians to degrees
+    return (_toDegrees(radiansBearing) + 360) % 360;
   }
 
-  /// Formats a distance given in [distanceMeters] into a human-readable string.
-  ///
-  /// Examples: "500 m", "1.2 km".
-  /// Returns '-' if the distance is null or negative.
-  static String formatDistance(double? distanceMeters) {
-    if (distanceMeters == null || distanceMeters < 0) {
-      return '-';
-    }
-
-    if (distanceMeters < 1000) {
-      // Show in meters
-      return '${distanceMeters.toStringAsFixed(0)} m'; // TODO: Localize 'm'
-    } else {
-      // Show in kilometers with one decimal place
-      final distanceKm = distanceMeters / 1000.0;
-      return '${distanceKm.toStringAsFixed(1)} km'; // TODO: Localize 'km'
-    }
+  // Format coordinates for display
+  static String formatCoordinates(double latitude, double longitude, {int precision = 6}) {
+    return '${latitude.toStringAsFixed(precision)}, ${longitude.toStringAsFixed(precision)}';
   }
 
-  /// Formats latitude and longitude coordinates into a standard string.
-  /// Example: "36.7753° N, 3.0603° E"
-  /// Returns '-' if latitude or longitude is null.
-  static String formatCoordinates(double? latitude, double? longitude, {int decimalPlaces = 4}) {
-     if (latitude == null || longitude == null) return '-';
+  // Convert decimal degrees to degrees, minutes, seconds
+  static String convertToDMS(double decimal, {bool isLatitude = true, int precision = 2}) {
+    final absDecimal = decimal.abs();
+    final degrees = absDecimal.floor();
+    final minutesDecimal = (absDecimal - degrees) * 60;
+    final minutes = minutesDecimal.floor();
+    final seconds = ((minutesDecimal - minutes) * 60).toStringAsFixed(precision);
 
-     final latDirection = latitude >= 0 ? 'N' : 'S';
-     final lonDirection = longitude >= 0 ? 'E' : 'W';
+    final direction = isLatitude
+        ? decimal >= 0 ? 'N' : 'S'
+        : decimal >= 0 ? 'E' : 'W';
 
-     final latStr = latitude.abs().toStringAsFixed(decimalPlaces);
-     final lonStr = longitude.abs().toStringAsFixed(decimalPlaces);
+    return '$degrees° $minutes\' $seconds" $direction';
+  }
 
-     return '$latStr° $latDirection, $lonStr° $lonDirection';
+  // Check if a location is within a radius of another location
+  static bool isWithinRadius(
+      double centerLatitude,
+      double centerLongitude,
+      double pointLatitude,
+      double pointLongitude,
+      double radiusInMeters,
+      ) {
+    final distance = calculateDistance(
+      centerLatitude,
+      centerLongitude,
+      pointLatitude,
+      pointLongitude,
+    );
+
+    return distance <= radiusInMeters;
+  }
+
+  // Find closest point among a list of points
+  static Map<String, dynamic>? findClosestPoint(
+  double latitude,
+  double longitude,
+  List<Map<String, dynamic>> points,
+  String latKey = 'latitude',
+  String lngKey = 'longitude',
+  ) {
+  if (points.isEmpty) {
+  return null;
+  }
+
+  double minDistance = double.infinity;
+  Map<String, dynamic>? closestPoint;
+
+  for (final point in points) {
+  final pointLat = double.tryParse(point[latKey].toString()) ?? 0;
+  final pointLng = double.tryParse(point[lngKey].toString()) ?? 0;
+
+  final distance = calculateDistance(latitude, longitude, pointLat, pointLng);
+
+  if (distance < minDistance) {
+  minDistance = distance;
+  closestPoint = point;
+  }
+  }
+
+  return closestPoint;
+  }
+
+  // Helper method to convert degrees to radians
+  static double _toRadians(double degrees) {
+  return degrees * math.pi / 180;
+  }
+
+  // Helper method to convert radians to degrees
+  static double _toDegrees(double radians) {
+  return radians * 180 / math.pi;
   }
 }

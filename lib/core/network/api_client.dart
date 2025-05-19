@@ -1,336 +1,428 @@
-/// lib/core/network/api_client.dart
+// lib/core/network/api_client.dart
 
-import 'package:dio/dio.dart';
-import '../exceptions/app_exceptions.dart'; // Import custom exceptions
-import '../constants/api_constants.dart'; // For content types, potentially
-import '../utils/logger.dart'; // For logging errors
+import 'dart:convert';
+import 'dart:io';
+import 'package:http/http.dart' as http;
+import 'package:flutter/foundation.dart';
+import '../constants/api_constants.dart';
+import '../exceptions/app_exceptions.dart';
+import '../utils/api_utils.dart';
+import 'interceptors.dart';
 
-/// Abstract interface for the API client.
-/// Defines the standard HTTP methods used to interact with the backend API.
-abstract class ApiClient {
-  /// Performs a GET request.
-  Future<Response> get(
-    String path, {
-    Map<String, dynamic>? queryParameters,
-    Options? options,
-    CancelToken? cancelToken,
-    ProgressCallback? onReceiveProgress,
-  });
+class ApiClient {
+  final http.Client _client;
+  final List<Interceptor> _interceptors;
 
-  /// Performs a POST request.
-  Future<Response> post(
-    String path, {
-    dynamic data,
-    Map<String, dynamic>? queryParameters,
-    Options? options,
-    CancelToken? cancelToken,
-    ProgressCallback? onSendProgress,
-    ProgressCallback? onReceiveProgress,
-  });
+  ApiClient({
+    http.Client? client,
+    List<Interceptor>? interceptors,
+  })
+      : _client = client ?? http.Client(),
+        _interceptors = interceptors ?? [LoggingInterceptor()];
 
-  /// Performs a PUT request.
-  Future<Response> put(
-    String path, {
-    dynamic data,
-    Map<String, dynamic>? queryParameters,
-    Options? options,
-    CancelToken? cancelToken,
-    ProgressCallback? onSendProgress,
-    ProgressCallback? onReceiveProgress,
-  });
+  // Add an interceptor
+  void addInterceptor(Interceptor interceptor) {
+    _interceptors.add(interceptor);
+  }
 
-  /// Performs a PATCH request.
-  Future<Response> patch(
-    String path, {
-    dynamic data,
-    Map<String, dynamic>? queryParameters,
-    Options? options,
-    CancelToken? cancelToken,
-    ProgressCallback? onSendProgress,
-    ProgressCallback? onReceiveProgress,
-  });
-
-  /// Performs a DELETE request.
-  Future<Response> delete(
-    String path, {
-    dynamic data,
-    Map<String, dynamic>? queryParameters,
-    Options? options,
-    CancelToken? cancelToken,
-  });
-
-  /// Performs a POST request with multipart/form-data (for file uploads).
-  Future<Response> postMultipart(
-    String path, {
-    required FormData data,
-    Map<String, dynamic>? queryParameters,
-    Options? options,
-    CancelToken? cancelToken,
-    ProgressCallback? onSendProgress,
-    ProgressCallback? onReceiveProgress,
-  });
-}
-
-
-/// Concrete implementation of the [ApiClient] using the Dio package.
-/// Relies on Dio interceptors (configured separately) to handle concerns like
-/// authentication, logging, dynamic serialization, and offline handling/retries.
-class ApiClientImpl implements ApiClient {
-  final Dio _dio;
-
-  ApiClientImpl(this._dio);
-
-  /// Handles GET requests.
-  @override
-  Future<Response> get(
-    String path, {
-    Map<String, dynamic>? queryParameters,
-    Options? options,
-    CancelToken? cancelToken,
-    ProgressCallback? onReceiveProgress,
-  }) async {
+  // HTTP GET request
+  Future<dynamic> get(
+      String url, {
+        Map<String, String>? headers,
+        Map<String, dynamic>? queryParameters,
+        bool forceRefresh = false,
+      }) async {
     try {
-      // Interceptors handle pre-request logic (auth, content-type, connectivity check etc.)
-      final response = await _dio.get(
-        path,
-        queryParameters: queryParameters,
-        options: options,
-        cancelToken: cancelToken,
-        onReceiveProgress: onReceiveProgress,
+      final Uri uri = _buildUri(url, queryParameters);
+      final requestHeaders = await _prepareHeaders(headers);
+
+      // Apply request interceptors
+      final interceptedRequest = await _applyRequestInterceptors(
+        uri,
+        requestHeaders,
+        null,
       );
-      // Interceptors handle post-response logic (parsing, potential errors)
-      return response;
-    } on DioException catch (e) {
-      // Handle errors *after* interceptors have done their work (e.g., retries)
-      throw _handleDioError(e);
-    } catch (e, stackTrace) {
-      Log.e('Unexpected GET error', error: e, stackTrace: stackTrace);
-      throw UnexpectedException(message: 'An unexpected error occurred during GET request.', details: e);
+
+      // Send request
+      final response = await _client
+          .get(interceptedRequest.uri, headers: interceptedRequest.headers)
+          .timeout(Duration(milliseconds: ApiConstants.connectTimeout));
+
+      // Apply response interceptors
+      final interceptedResponse = await _applyResponseInterceptors(response);
+
+      // Process response
+      return _processResponse(interceptedResponse);
+    } on SocketException {
+      throw NetworkException('No internet connection');
+    } on http.ClientException catch (e) {
+      throw NetworkException('Network error: ${e.message}');
+    } on TimeoutException {
+      throw NetworkException('Connection timeout');
+    } catch (e) {
+      if (e is AppException) {
+        rethrow;
+      }
+      throw NetworkException('An unexpected error occurred: ${e.toString()}');
     }
   }
 
-  /// Handles POST requests.
-  @override
-  Future<Response> post(
-    String path, {
-    dynamic data,
-    Map<String, dynamic>? queryParameters,
-    Options? options,
-    CancelToken? cancelToken,
-    ProgressCallback? onSendProgress,
-    ProgressCallback? onReceiveProgress,
-  }) async {
+  // HTTP POST request
+  Future<dynamic> post(
+      String url, {
+        Map<String, String>? headers,
+        Map<String, dynamic>? queryParameters,
+        dynamic body,
+      }) async {
     try {
-      // Interceptors handle pre-request logic
-      final response = await _dio.post(
-        path,
-        data: data, // Interceptor might serialize this (e.g., to Msgpack)
-        queryParameters: queryParameters,
-        options: options,
-        cancelToken: cancelToken,
-        onSendProgress: onSendProgress,
-        onReceiveProgress: onReceiveProgress,
+      final Uri uri = _buildUri(url, queryParameters);
+      final requestHeaders = await _prepareHeaders(headers);
+      final encodedBody = _encodeBody(body);
+
+      // Apply request interceptors
+      final interceptedRequest = await _applyRequestInterceptors(
+        uri,
+        requestHeaders,
+        encodedBody,
       );
-      // Interceptors handle post-response logic
-      return response;
-    } on DioException catch (e) {
-      throw _handleDioError(e);
-    } catch (e, stackTrace) {
-      Log.e('Unexpected POST error', error: e, stackTrace: stackTrace);
-      throw UnexpectedException(message: 'An unexpected error occurred during POST request.', details: e);
+
+      // Send request
+      final response = await _client
+          .post(
+        interceptedRequest.uri,
+        headers: interceptedRequest.headers,
+        body: interceptedRequest.body,
+      )
+          .timeout(Duration(milliseconds: ApiConstants.connectTimeout));
+
+      // Apply response interceptors
+      final interceptedResponse = await _applyResponseInterceptors(response);
+
+      // Process response
+      return _processResponse(interceptedResponse);
+    } on SocketException {
+      throw NetworkException('No internet connection');
+    } on http.ClientException catch (e) {
+      throw NetworkException('Network error: ${e.message}');
+    } on TimeoutException {
+      throw NetworkException('Connection timeout');
+    } catch (e) {
+      if (e is AppException) {
+        rethrow;
+      }
+      throw NetworkException('An unexpected error occurred: ${e.toString()}');
     }
   }
 
-  /// Handles PUT requests.
-  @override
-  Future<Response> put(
-    String path, {
-    dynamic data,
-    Map<String, dynamic>? queryParameters,
-    Options? options,
-    CancelToken? cancelToken,
-    ProgressCallback? onSendProgress,
-    ProgressCallback? onReceiveProgress,
-  }) async {
+  // HTTP PUT request
+  Future<dynamic> put(
+      String url, {
+        Map<String, String>? headers,
+        Map<String, dynamic>? queryParameters,
+        dynamic body,
+      }) async {
     try {
-      final response = await _dio.put(
-        path,
-        data: data,
-        queryParameters: queryParameters,
-        options: options,
-        cancelToken: cancelToken,
-        onSendProgress: onSendProgress,
-        onReceiveProgress: onReceiveProgress,
+      final Uri uri = _buildUri(url, queryParameters);
+      final requestHeaders = await _prepareHeaders(headers);
+      final encodedBody = _encodeBody(body);
+
+      // Apply request interceptors
+      final interceptedRequest = await _applyRequestInterceptors(
+        uri,
+        requestHeaders,
+        encodedBody,
       );
-      return response;
-    } on DioException catch (e) {
-      throw _handleDioError(e);
-    } catch (e, stackTrace) {
-       Log.e('Unexpected PUT error', error: e, stackTrace: stackTrace);
-      throw UnexpectedException(message: 'An unexpected error occurred during PUT request.', details: e);
+
+      // Send request
+      final response = await _client
+          .put(
+        interceptedRequest.uri,
+        headers: interceptedRequest.headers,
+        body: interceptedRequest.body,
+      )
+          .timeout(Duration(milliseconds: ApiConstants.connectTimeout));
+
+      // Apply response interceptors
+      final interceptedResponse = await _applyResponseInterceptors(response);
+
+      // Process response
+      return _processResponse(interceptedResponse);
+    } on SocketException {
+      throw NetworkException('No internet connection');
+    } on http.ClientException catch (e) {
+      throw NetworkException('Network error: ${e.message}');
+    } on TimeoutException {
+      throw NetworkException('Connection timeout');
+    } catch (e) {
+      if (e is AppException) {
+        rethrow;
+      }
+      throw NetworkException('An unexpected error occurred: ${e.toString()}');
     }
   }
 
-  /// Handles PATCH requests.
-  @override
-  Future<Response> patch(
-    String path, {
-    dynamic data,
-    Map<String, dynamic>? queryParameters,
-    Options? options,
-    CancelToken? cancelToken,
-    ProgressCallback? onSendProgress,
-    ProgressCallback? onReceiveProgress,
-  }) async {
+  // HTTP DELETE request
+  Future<dynamic> delete(
+      String url, {
+        Map<String, String>? headers,
+        Map<String, dynamic>? queryParameters,
+        dynamic body,
+      }) async {
     try {
-      final response = await _dio.patch(
-        path,
-        data: data,
-        queryParameters: queryParameters,
-        options: options,
-        cancelToken: cancelToken,
-        onSendProgress: onSendProgress,
-        onReceiveProgress: onReceiveProgress,
+      final Uri uri = _buildUri(url, queryParameters);
+      final requestHeaders = await _prepareHeaders(headers);
+      final encodedBody = _encodeBody(body);
+
+      // Apply request interceptors
+      final interceptedRequest = await _applyRequestInterceptors(
+        uri,
+        requestHeaders,
+        encodedBody,
       );
-      return response;
-    } on DioException catch (e) {
-      throw _handleDioError(e);
-    } catch (e, stackTrace) {
-       Log.e('Unexpected PATCH error', error: e, stackTrace: stackTrace);
-      throw UnexpectedException(message: 'An unexpected error occurred during PATCH request.', details: e);
+
+      // Send request
+      final response = await _client
+          .delete(
+        interceptedRequest.uri,
+        headers: interceptedRequest.headers,
+        body: interceptedRequest.body,
+      )
+          .timeout(Duration(milliseconds: ApiConstants.connectTimeout));
+
+      // Apply response interceptors
+      final interceptedResponse = await _applyResponseInterceptors(response);
+
+      // Process response
+      return _processResponse(interceptedResponse);
+    } on SocketException {
+      throw NetworkException('No internet connection');
+    } on http.ClientException catch (e) {
+      throw NetworkException('Network error: ${e.message}');
+    } on TimeoutException {
+      throw NetworkException('Connection timeout');
+    } catch (e) {
+      if (e is AppException) {
+        rethrow;
+      }
+      throw NetworkException('An unexpected error occurred: ${e.toString()}');
     }
   }
 
-  /// Handles DELETE requests.
-  @override
-  Future<Response> delete(
-    String path, {
-    dynamic data,
-    Map<String, dynamic>? queryParameters,
-    Options? options,
-    CancelToken? cancelToken,
-  }) async {
+  // HTTP PATCH request
+  Future<dynamic> patch(
+      String url, {
+        Map<String, String>? headers,
+        Map<String, dynamic>? queryParameters,
+        dynamic body,
+      }) async {
     try {
-      final response = await _dio.delete(
-        path,
-        data: data,
-        queryParameters: queryParameters,
-        options: options,
-        cancelToken: cancelToken,
+      final Uri uri = _buildUri(url, queryParameters);
+      final requestHeaders = await _prepareHeaders(headers);
+      final encodedBody = _encodeBody(body);
+
+      // Apply request interceptors
+      final interceptedRequest = await _applyRequestInterceptors(
+        uri,
+        requestHeaders,
+        encodedBody,
       );
-      return response;
-    } on DioException catch (e) {
-      throw _handleDioError(e);
-    } catch (e, stackTrace) {
-       Log.e('Unexpected DELETE error', error: e, stackTrace: stackTrace);
-      throw UnexpectedException(message: 'An unexpected error occurred during DELETE request.', details: e);
+
+      // Send request
+      final response = await _client
+          .patch(
+        interceptedRequest.uri,
+        headers: interceptedRequest.headers,
+        body: interceptedRequest.body,
+      )
+          .timeout(Duration(milliseconds: ApiConstants.connectTimeout));
+
+      // Apply response interceptors
+      final interceptedResponse = await _applyResponseInterceptors(response);
+
+      // Process response
+      return _processResponse(interceptedResponse);
+    } on SocketException {
+      throw NetworkException('No internet connection');
+    } on http.ClientException catch (e) {
+      throw NetworkException('Network error: ${e.message}');
+    } on TimeoutException {
+      throw NetworkException('Connection timeout');
+    } catch (e) {
+      if (e is AppException) {
+        rethrow;
+      }
+      throw NetworkException('An unexpected error occurred: ${e.toString()}');
     }
   }
 
-  /// Handles multipart POST requests (for file uploads).
-  @override
-  Future<Response> postMultipart(
-    String path, {
-    required FormData data,
-    Map<String, dynamic>? queryParameters,
-    Options? options,
-    CancelToken? cancelToken,
-    ProgressCallback? onSendProgress,
-    ProgressCallback? onReceiveProgress,
-  }) async {
+  // Multipart request for file uploads
+  Future<dynamic> multipartRequest(
+      String url, {
+        required String method,
+        Map<String, String>? headers,
+        Map<String, dynamic>? queryParameters,
+        Map<String, String>? fields,
+        Map<String, File>? files,
+      }) async {
     try {
-      // Ensure Content-Type is set correctly for multipart requests
-      final multipartOptions = (options ?? Options()).copyWith(
-         contentType: ApiConstants.multipartFormDataContentType,
-      );
+      final Uri uri = _buildUri(url, queryParameters);
+      final requestHeaders = await _prepareHeaders(headers);
 
-      final response = await _dio.post(
-        path,
-        data: data,
-        queryParameters: queryParameters,
-        options: multipartOptions,
-        cancelToken: cancelToken,
-        onSendProgress: onSendProgress,
-        onReceiveProgress: onReceiveProgress,
-      );
-      return response;
-    } on DioException catch (e) {
-      throw _handleDioError(e);
-    } catch (e, stackTrace) {
-       Log.e('Unexpected multipart POST error', error: e, stackTrace: stackTrace);
-      throw UnexpectedException(message: 'An unexpected error occurred during multipart POST request.', details: e);
+      // Create multipart request
+      final request = http.MultipartRequest(method, uri);
+
+      // Add headers
+      request.headers.addAll(requestHeaders);
+
+      // Add text fields
+      if (fields != null) {
+        request.fields.addAll(fields);
+      }
+
+      // Add files
+      if (files != null) {
+        for (final entry in files.entries) {
+          final file = entry.value;
+          final fileName = file.path.split('/').last;
+          request.files.add(
+            await http.MultipartFile.fromPath(
+              entry.key,
+              file.path,
+              filename: fileName,
+            ),
+          );
+        }
+      }
+
+      // Apply request interceptors (simplified for multipart)
+      for (final interceptor in _interceptors) {
+        if (interceptor is! AuthInterceptor) { // Skip auth interceptor for multipart
+          await interceptor.onRequest(request);
+        }
+      }
+
+      // Send request
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      // Apply response interceptors
+      final interceptedResponse = await _applyResponseInterceptors(response);
+
+      // Process response
+      return _processResponse(interceptedResponse);
+    } on SocketException {
+      throw NetworkException('No internet connection');
+    } on http.ClientException catch (e) {
+      throw NetworkException('Network error: ${e.message}');
+    } on TimeoutException {
+      throw NetworkException('Connection timeout');
+    } catch (e) {
+      if (e is AppException) {
+        rethrow;
+      }
+      throw NetworkException('An unexpected error occurred: ${e.toString()}');
     }
   }
 
+  // Build URI with query parameters
+  Uri _buildUri(String url, Map<String, dynamic>? queryParameters) {
+    if (queryParameters != null && queryParameters.isNotEmpty) {
+      final formattedParams = ApiUtils.formatQueryParameters(queryParameters);
+      return Uri.parse(url).replace(queryParameters: formattedParams);
+    }
+    return Uri.parse(url);
+  }
 
-  /// Centralized handler to convert [DioException] into custom [AppException] types.
-  /// This is called *after* interceptors have potentially handled retries or offline queueing.
-  AppException _handleDioError(DioException error) {
-    Log.w('DioException caught by ApiClient', error: error, stackTrace: error.stackTrace);
-    Log.w('DioException type: ${error.type}');
-    Log.w('DioException path: ${error.requestOptions.path}');
-    Log.w('DioException response status: ${error.response?.statusCode}');
-    Log.w('DioException response data: ${error.response?.data}');
+  // Prepare default headers
+  Future<Map<String, String>> _prepareHeaders(Map<String, String>? headers) async {
+    final defaultHeaders = {
+      ApiConstants.contentTypeKey: ApiConstants.contentTypeJson,
+    };
 
+    if (headers != null) {
+      defaultHeaders.addAll(headers);
+    }
 
-    // Check for specific DioException types first
-    switch (error.type) {
-      case DioExceptionType.connectionTimeout:
-      case DioExceptionType.sendTimeout:
-      case DioExceptionType.receiveTimeout:
-        return const NetworkException(message: 'Connection timeout. Please try again.'); // TODO: Localize
-      case DioExceptionType.connectionError:
-       // This often indicates DNS issues or no internet connection *before* request is sent
-       // Interceptor should ideally prevent request if offline, but handle here just in case.
-        return const NetworkException(message: 'Connection error. Please check your internet.'); // TODO: Localize
-      case DioExceptionType.cancel:
-        return const AppException(message: 'Request was cancelled.'); // TODO: Localize
-      case DioExceptionType.badCertificate:
-         return const NetworkException(message: 'Bad certificate error.'); // TODO: Localize
-      case DioExceptionType.badResponse:
-       // Handle errors based on HTTP status codes from the response
-        final statusCode = error.response?.statusCode;
-        final responseData = error.response?.data;
-        String serverMessage = 'Server error occurred.'; // Default server error message
+    return defaultHeaders;
+  }
 
-        // Try to extract a more specific message from the response body
-        if (responseData is Map<String, dynamic>) {
-            if (responseData.containsKey('detail')) {
-              serverMessage = responseData['detail'].toString();
-            } else if (responseData.isNotEmpty) {
-              // Combine multiple field errors if present
-              serverMessage = responseData.entries
-                  .map((e) => '${e.key}: ${e.value is List ? e.value.join(', ') : e.value}')
-                  .join('; ');
-            }
-        } else if (responseData is String && responseData.isNotEmpty) {
-            serverMessage = responseData;
-        }
+  // Encode request body
+  dynamic _encodeBody(dynamic body) {
+    if (body == null) return null;
 
-        if (statusCode == 401) {
-          return AuthenticationException(message: serverMessage, code: '401', details: responseData);
-        }
-        if (statusCode == 403) {
-          return AuthorizationException(message: serverMessage, code: '403', details: responseData);
-        }
-        // Handle other specific status codes (400 Bad Request, 404 Not Found, 5xx Server Errors)
-        if (statusCode != null && statusCode >= 400 && statusCode < 500) {
-             return ServerException(message: serverMessage, code: statusCode.toString(), statusCode: statusCode, details: responseData);
-        }
-        if (statusCode != null && statusCode >= 500) {
-             return ServerException(message: 'Server error occurred. Please try again later.', code: statusCode.toString(), statusCode: statusCode, details: responseData); // TODO: Localize generic 5xx
-        }
-        // Fallback for unknown bad response errors
-        return ServerException(message: serverMessage, code: statusCode?.toString(), statusCode: statusCode, details: responseData);
+    if (body is String) return body;
+    if (body is Map) return json.encode(body);
+    if (body is List) return json.encode(body);
 
-      case DioExceptionType.unknown:
-      default:
-       // Handle cases where the error type is unknown or doesn't fit other categories
-       // Could be a parsing error within Dio or other network issues.
-        if (error.error is FormatException || error.message?.contains('Deserialization error') == true) {
-           return DataParsingException(message: 'Error parsing server response.', details: error.error); // TODO: Localize
+    try {
+      return json.encode(body);
+    } catch (e) {
+      throw ApiException('Failed to encode request body: ${e.toString()}');
+    }
+  }
+
+  // Apply request interceptors
+  Future<InterceptedRequest> _applyRequestInterceptors(
+      Uri uri,
+      Map<String, String> headers,
+      dynamic body,
+      ) async {
+    var interceptedRequest = InterceptedRequest(uri, headers, body);
+
+    for (final interceptor in _interceptors) {
+      interceptedRequest = await interceptor.onRequest(interceptedRequest);
+    }
+
+    return interceptedRequest;
+  }
+
+  // Apply response interceptors
+  Future<http.Response> _applyResponseInterceptors(http.Response response) async {
+    var interceptedResponse = response;
+
+    for (final interceptor in _interceptors) {
+      interceptedResponse = await interceptor.onResponse(interceptedResponse);
+    }
+
+    return interceptedResponse;
+  }
+
+  // Process response
+  dynamic _processResponse(http.Response response) {
+    final statusCode = response.statusCode;
+    final responseBody = response.body;
+
+    debugPrint('Response status: $statusCode');
+    debugPrint('Response body: $responseBody');
+
+    if (statusCode >= 200 && statusCode < 300) {
+      // Success response
+      if (responseBody.isEmpty) {
+        return null;
+      }
+
+      try {
+        return json.decode(responseBody);
+      } catch (e) {
+        return responseBody;
+      }
+    } else {
+      // Error response
+      String errorMessage = 'Request failed with status: $statusCode';
+
+      try {
+        final errorJson = json.decode(responseBody);
+
+        if (errorJson is Map<String, dynamic>) {
+          throw ApiUtils.handleApiError(errorJson, defaultMessage: errorMessage);
         }
-        return UnexpectedException(message: 'An unknown network error occurred.', details: error.error); // TODO: Localize
+      } catch (e) {
+        if (e is AppException) {
+          throw e;
+        }
+      }
+
+      throw ApiException.fromStatusCode(statusCode, message: errorMessage);
     }
   }
 }

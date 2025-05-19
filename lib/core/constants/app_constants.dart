@@ -1,47 +1,38 @@
-/// lib/core/constants/app_constants.dart
+// lib/core/constants/app_constants.dart
 
-import 'package:flutter/material.dart';
-// ADDED: Import for LatLng
-import 'package:google_maps_flutter/google_maps_flutter.dart';
-
-/// Contains general application-wide constant values and settings.
 class AppConstants {
-  // Private constructor to prevent instantiation
-  AppConstants._();
-
-  // App Information
+  // App-wide constants
   static const String appName = 'DZ Bus Tracker';
-  static const String appVersion = '1.0.0+1'; // Example versioning (version+build)
+  static const String appVersion = '1.0.0';
 
-  // Feature Settings
-  static const int locationUpdateIntervalSeconds = 20; // Driver GPS update frequency
-  static const double defaultMapZoom = 14.0; // Initial zoom level for maps
-  static const double nearbySearchRadiusMeters = 1000; // Radius for searching nearby stops (1km)
-  static const int defaultPaginationSize = 20; // Default number of items per page in API responses
-  static const int defaultApiTimeoutMs = 15000; // Default network timeout (15 seconds)
-  static const int defaultCacheDurationDays = 7; // Default duration to keep cached data
+  // Shared preferences keys
+  static const String tokenKey = 'auth_token';
+  static const String refreshTokenKey = 'refresh_token';
+  static const String userKey = 'user_data';
+  static const String languageKey = 'language';
+  static const String themeKey = 'theme';
+  static const String firstLaunchKey = 'first_launch';
 
-  // Default Locale (French as per requirement)
-  static const Locale defaultLocale = Locale('fr', 'FR');
+  // Time constants
+  static const int tokenExpiryBuffer = 300; // 5 minutes in seconds
+  static const int defaultCacheDuration = 3600; // 1 hour in seconds
 
-  // Default Values
-  static const String defaultApiError = 'An unexpected error occurred. Please try again.'; // TODO: Localize this key
-  static const String defaultNetworkError = 'Please check your internet connection and try again.'; // TODO: Localize this key
-  static const double defaultMapLatitude = 36.7753; // Default map center (Algiers)
-  static const double defaultMapLongitude = 3.0603; // Default map center (Algiers)
+  // Map constants
+  static const double defaultLatitude = 36.7538; // Algiers latitude
+  static const double defaultLongitude = 3.0588; // Algiers longitude
+  static const double defaultZoom = 13.0;
 
-  /// ADDED: Default LatLng center for maps.
-  static const LatLng initialMapCenter = LatLng(defaultMapLatitude, defaultMapLongitude);
+  // User types
+  static const String userTypeAdmin = 'admin';
+  static const String userTypeDriver = 'driver';
+  static const String userTypePassenger = 'passenger';
 
-  // UI related defaults (can be moved to theme constants if preferred)
-  static const double defaultHorizontalPadding = 16.0;
-  static const double defaultVerticalPadding = 16.0;
-  static const double defaultListSpacing = 8.0;
-
-
-  // Storage Keys (optional, can also be managed by StorageService)
-  // static const String storageKeyAuthToken = 'auth_token';
-  // static const String storageKeyRefreshToken = 'refresh_token';
-  // static const String storageKeyThemeMode = 'theme_mode';
-  // static const String storageKeyLanguageCode = 'language_code';
+  // Localization
+  static const String defaultLanguage = 'fr';
+  static const List<String> supportedLanguages = ['fr', 'ar', 'en'];
+  static const Map<String, String> languageNames = {
+    'fr': 'Français',
+    'ar': 'العربية',
+    'en': 'English',
+  };
 }

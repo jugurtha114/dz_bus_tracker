@@ -1,6 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
-        android:label="dz_bus_tracker"
+        android:label="dz_bus_tracker_app"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
@@ -36,14 +36,6 @@
          https://developer.android.com/reference/android/content/Intent#ACTION_PROCESS_TEXT.
 
          In particular, this is used by the Flutter engine in io.flutter.plugin.text.ProcessTextPlugin. -->
-
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" /> <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
-    <meta-data android:name="com.google.android.geo.API_KEY"
-        android:value="YOUR_ANDROID_API_KEY_HERE"/>
     <queries>
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
