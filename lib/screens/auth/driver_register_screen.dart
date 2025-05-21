@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb, Uint8List;
+import 'dart:convert';
 import '../../config/route_config.dart';
 import '../../config/theme_config.dart';
 import '../../core/utils/validation_utils.dart';
@@ -39,9 +41,13 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
   final _driverLicenseNumberController = TextEditingController();
   final _yearsOfExperienceController = TextEditingController();
 
-  // Image files
+  // Image files and web image data
   File? _idCardPhoto;
   File? _driverLicensePhoto;
+  Uint8List? _webIdCardImage;
+  Uint8List? _webDriverLicenseImage;
+  XFile? _idCardXFile;
+  XFile? _driverLicenseXFile;
 
   bool _isLoading = false;
   int _currentStep = 0;
@@ -60,6 +66,8 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
     super.dispose();
   }
 
+// lib/screens/auth/driver_register_screen.dart
+
   Future<void> _pickImage(bool isIdCard) async {
     // Request permission
     final hasPermission = await PermissionHelper.requestCamera(context);
@@ -70,17 +78,41 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
 
     // Pick image
     final picker = ImagePicker();
+    final ImageSource source = kIsWeb ? ImageSource.gallery : ImageSource.camera;
+
     final pickedFile = await picker.pickImage(
-      source: ImageSource.camera,
+      source: source,
       imageQuality: 80,
     );
 
     if (pickedFile != null) {
       setState(() {
         if (isIdCard) {
-          _idCardPhoto = File(pickedFile.path);
+          _idCardXFile = pickedFile;
+          if (kIsWeb) {
+            // For web, read the XFile as bytes
+            pickedFile.readAsBytes().then((value) {
+              setState(() {
+                _webIdCardImage = value;
+              });
+            });
+          } else {
+            // For mobile, create a File object
+            _idCardPhoto = File(pickedFile.path);
+          }
         } else {
-          _driverLicensePhoto = File(pickedFile.path);
+          _driverLicenseXFile = pickedFile;
+          if (kIsWeb) {
+            // For web, read the XFile as bytes
+            pickedFile.readAsBytes().then((value) {
+              setState(() {
+                _webDriverLicenseImage = value;
+              });
+            });
+          } else {
+            // For mobile, create a File object
+            _driverLicensePhoto = File(pickedFile.path);
+          }
         }
       });
     }
@@ -96,12 +128,12 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
           _passwordController.text.isNotEmpty &&
           _passwordController.text == _confirmPasswordController.text;
     } else {
-      // Validate driver info
+      // Validate driver info - include all possible photo variables in the check
       return _idCardNumberController.text.isNotEmpty &&
           _driverLicenseNumberController.text.isNotEmpty &&
           _yearsOfExperienceController.text.isNotEmpty &&
-          _idCardPhoto != null &&
-          _driverLicensePhoto != null;
+          (_idCardPhoto != null || _webIdCardImage != null || _idCardXFile != null) &&
+          (_driverLicensePhoto != null || _webDriverLicenseImage != null || _driverLicenseXFile != null);
     }
   }
 
@@ -126,9 +158,16 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
     });
   }
 
+// lib/screens/auth/driver_register_screen.dart
+// lib/screens/auth/driver_register_screen.dart - just the _register method
+
   Future<void> _register() async {
     if (_formKey.currentState?.validate() ?? false) {
-      if (_idCardPhoto == null || _driverLicensePhoto == null) {
+      // Check if photos are available - more comprehensive check
+      bool hasIdCardPhoto = _idCardPhoto != null || _webIdCardImage != null || _idCardXFile != null;
+      bool hasDriverLicensePhoto = _driverLicensePhoto != null || _webDriverLicenseImage != null || _driverLicenseXFile != null;
+
+      if (!hasIdCardPhoto || !hasDriverLicensePhoto) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Please upload both ID card and driver license photos.'),
@@ -145,44 +184,55 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
       try {
         final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
-        // TODO: In a real app, we would upload the images to a server
-        // and get back URLs to use for registration
-        final idCardPhotoUrl = 'https://example.com/id_card.jpg';
-        final driverLicensePhotoUrl = 'https://example.com/driver_license.jpg';
+        // Determine which photo object to use based on platform
+        dynamic idCardPhoto;
+        dynamic driverLicensePhoto;
+
+        if (kIsWeb) {
+          // On web, prefer using the Uint8List for actual binary data
+          idCardPhoto = _webIdCardImage ?? _idCardXFile;
+          driverLicensePhoto = _webDriverLicenseImage ?? _driverLicenseXFile;
+        } else {
+          // On mobile, prefer File objects
+          idCardPhoto = _idCardPhoto ?? _idCardXFile;
+          driverLicensePhoto = _driverLicensePhoto ?? _driverLicenseXFile;
+        }
 
         final success = await authProvider.registerDriver(
-          email: _emailController.text,
+          email: _emailController.text.trim(),
           password: _passwordController.text,
           confirmPassword: _confirmPasswordController.text,
-          firstName: _firstNameController.text,
-          lastName: _lastNameController.text,
-          phoneNumber: _phoneController.text,
-          idCardNumber: _idCardNumberController.text,
-          idCardPhoto: idCardPhotoUrl,
-          driverLicenseNumber: _driverLicenseNumberController.text,
-          driverLicensePhoto: driverLicensePhotoUrl,
+          firstName: _firstNameController.text.trim(),
+          lastName: _lastNameController.text.trim(),
+          phoneNumber: _phoneController.text.trim(),
+          idCardNumber: _idCardNumberController.text.trim(),
+          idCardPhoto: idCardPhoto,
+          driverLicenseNumber: _driverLicenseNumberController.text.trim(),
+          driverLicensePhoto: driverLicensePhoto,
           yearsOfExperience: int.tryParse(_yearsOfExperienceController.text) ?? 0,
         );
 
-        if (success && mounted) {
-          // Show success message
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Registration submitted! Your application will be reviewed.'),
-              backgroundColor: AppColors.success,
-            ),
-          );
+        if (mounted) {
+          if (success) {
+            // Show success message
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Registration submitted! Your application will be reviewed.'),
+                backgroundColor: AppColors.success,
+              ),
+            );
 
-          // Navigate to login screen
-          AppRouter.navigateToReplacement(context, AppRoutes.login);
-        } else if (mounted) {
-          // Show error message
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(authProvider.error ?? 'Registration failed. Please try again.'),
-              backgroundColor: AppColors.error,
-            ),
-          );
+            // Navigate to login screen
+            AppRouter.navigateToReplacement(context, AppRoutes.login);
+          } else {
+            // Show error message
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(authProvider.error ?? 'Registration failed. Please try again.'),
+                backgroundColor: AppColors.error,
+              ),
+            );
+          }
         }
       } catch (e) {
         if (mounted) {
@@ -528,33 +578,10 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
                     color: AppColors.white.withOpacity(0.5),
                   ),
                 ),
-                child: _idCardPhoto != null
-                    ? ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.file(
-                    _idCardPhoto!,
-                    fit: BoxFit.cover,
-                    width: double.infinity,
-                  ),
-                )
-                    : Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(
-                        Icons.add_a_photo,
-                        color: AppColors.primary,
-                        size: 40,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Tap to take a photo',
-                        style: AppTextStyles.body.copyWith(
-                          color: AppColors.primary,
-                        ),
-                      ),
-                    ],
-                  ),
+                child: _buildPhotoPreview(
+                  isIdCard: true,
+                  photo: _idCardPhoto,
+                  webImage: _webIdCardImage,
                 ),
               ),
             ),
@@ -601,33 +628,10 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
                     color: AppColors.white.withOpacity(0.5),
                   ),
                 ),
-                child: _driverLicensePhoto != null
-                    ? ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.file(
-                    _driverLicensePhoto!,
-                    fit: BoxFit.cover,
-                    width: double.infinity,
-                  ),
-                )
-                    : Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(
-                        Icons.add_a_photo,
-                        color: AppColors.primary,
-                        size: 40,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Tap to take a photo',
-                        style: AppTextStyles.body.copyWith(
-                          color: AppColors.primary,
-                        ),
-                      ),
-                    ],
-                  ),
+                child: _buildPhotoPreview(
+                  isIdCard: false,
+                  photo: _driverLicensePhoto,
+                  webImage: _webDriverLicenseImage,
                 ),
               ),
             ),
@@ -682,6 +686,60 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
           ],
         ),
       ],
+    );
+  }
+
+  // Helper method to build the photo preview widget for both web and mobile
+  Widget _buildPhotoPreview({
+    required bool isIdCard,
+    required File? photo,
+    required Uint8List? webImage,
+  }) {
+    if (kIsWeb) {
+      // Web version
+      if (webImage != null) {
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Image.memory(
+            webImage,
+            fit: BoxFit.cover,
+            width: double.infinity,
+          ),
+        );
+      }
+    } else {
+      // Mobile version
+      if (photo != null) {
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Image.file(
+            photo,
+            fit: BoxFit.cover,
+            width: double.infinity,
+          ),
+        );
+      }
+    }
+
+    // No image selected yet
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(
+            Icons.add_a_photo,
+            color: AppColors.primary,
+            size: 40,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Tap to take a photo',
+            style: AppTextStyles.body.copyWith(
+              color: AppColors.primary,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

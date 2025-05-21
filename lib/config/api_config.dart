@@ -6,7 +6,7 @@ class ApiConfig {
   static const bool _useLocalServer = true;
 
   // API Base URLs
-  static const String _localBaseUrl = 'http://0.0.0.0:8000';
+  static const String _localBaseUrl = 'http://0.0.0.0:8001';
   static const String _devBaseUrl = 'https://dev-api.dzbusttracker.dz';
   static const String _stagingBaseUrl = 'https://staging-api.dzbusttracker.dz';
   static const String _productionBaseUrl = 'https://api.dzbusttracker.dz';

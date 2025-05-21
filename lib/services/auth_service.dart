@@ -1,5 +1,8 @@
 // lib/services/auth_service.dart
 
+import 'dart:io';
+import 'package:flutter/foundation.dart';
+import 'package:image_picker/image_picker.dart';
 import '../config/api_config.dart';
 import '../core/constants/api_constants.dart';
 import '../core/constants/app_constants.dart';
@@ -90,27 +93,36 @@ class AuthService {
     required String lastName,
     required String phoneNumber,
     required String idCardNumber,
-    required String idCardPhoto,
+    required dynamic idCardPhoto,
     required String driverLicenseNumber,
-    required String driverLicensePhoto,
+    required dynamic driverLicensePhoto,
     required int yearsOfExperience,
   }) async {
     try {
-      final response = await _apiClient.post(
+      // Create multipart form data
+      final Map<String, String> fields = {
+        'email': email,
+        'password': password,
+        'confirm_password': confirmPassword,
+        'first_name': firstName,
+        'last_name': lastName,
+        'phone_number': phoneNumber,
+        'id_card_number': idCardNumber,
+        'driver_license_number': driverLicenseNumber,
+        'years_of_experience': yearsOfExperience.toString(),
+      };
+
+      // Prepare files map - don't cast the file objects to String
+      final Map<String, dynamic> files = {
+        'id_card_photo': idCardPhoto,
+        'driver_license_photo': driverLicensePhoto,
+      };
+
+      final response = await _apiClient.multipartRequest(
         Endpoints.driverRegistration,
-        body: {
-          'email': email,
-          'password': password,
-          'confirm_password': confirmPassword,
-          'first_name': firstName,
-          'last_name': lastName,
-          'phone_number': phoneNumber,
-          'id_card_number': idCardNumber,
-          'id_card_photo': idCardPhoto,
-          'driver_license_number': driverLicenseNumber,
-          'driver_license_photo': driverLicensePhoto,
-          'years_of_experience': yearsOfExperience,
-        },
+        method: 'POST',
+        fields: fields,
+        files: files,
       );
 
       return response;

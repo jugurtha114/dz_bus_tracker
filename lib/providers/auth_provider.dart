@@ -126,6 +126,8 @@ class AuthProvider with ChangeNotifier {
   }
 
   // Register driver
+// lib/providers/auth_provider.dart (updated registerDriver method)
+
   Future<bool> registerDriver({
     required String email,
     required String password,
@@ -134,9 +136,9 @@ class AuthProvider with ChangeNotifier {
     required String lastName,
     required String phoneNumber,
     required String idCardNumber,
-    required String idCardPhoto,
+    required dynamic idCardPhoto, // Can be File or XFile or Uint8List
     required String driverLicenseNumber,
-    required String driverLicensePhoto,
+    required dynamic driverLicensePhoto, // Can be File or XFile or Uint8List
     required int yearsOfExperience,
   }) async {
     _setLoading(true);
