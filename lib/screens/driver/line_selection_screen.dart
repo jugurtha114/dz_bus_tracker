@@ -178,7 +178,7 @@ class _LineSelectionScreenState extends State<LineSelectionScreen> {
                 ),
                 child: Row(
                   children: [
-                    Icon(
+                    const Icon(
                       Icons.directions_bus,
                       color: AppColors.white,
                       size: 32,
@@ -191,7 +191,7 @@ class _LineSelectionScreenState extends State<LineSelectionScreen> {
                           Text(
                             'Selected Bus',
                             style: AppTextStyles.body.copyWith(
-                              color: AppColors.white.withOpacity(0.7),
+                              color: AppColors.white.withValues(alpha: 0.7),
                             ),
                           ),
                           Text(
@@ -247,7 +247,7 @@ class _LineSelectionScreenState extends State<LineSelectionScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.search_off,
                     size: 48,
                     color: AppColors.mediumGrey,
@@ -274,7 +274,7 @@ class _LineSelectionScreenState extends State<LineSelectionScreen> {
                   line: line,
                   onTap: () => _onLineSelected(line),
                   showStops: true,
-                  showSchedule: true,
+                  showStatus: true,
                 );
               },
             ),

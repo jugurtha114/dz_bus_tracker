@@ -1,3 +1,4 @@
+
 // lib/widgets/passenger/bus_list_item.dart
 
 import 'package:flutter/material.dart';
@@ -42,10 +43,8 @@ class BusListItem extends StatelessWidget {
     final occupancyPercent = capacity > 0 ? (currentPassengers / capacity * 100).round() : 0;
 
     // Get line info if available
-    String lineName = '';
     String lineCode = '';
     if (bus.containsKey('line') && bus['line'] != null) {
-      lineName = bus['line']['name'] ?? '';
       lineCode = bus['line']['code'] ?? '';
     }
 
