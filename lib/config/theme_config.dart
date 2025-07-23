@@ -38,21 +38,21 @@ class AppTextStyles {
   static const String fontFamily = 'Roboto';
 
   // Headings
-  static TextStyle h1 = TextStyle(
+  static const TextStyle h1 = TextStyle(
     fontFamily: fontFamily,
     fontSize: 24,
     fontWeight: FontWeight.bold,
     color: AppColors.darkGrey,
   );
 
-  static TextStyle h2 = TextStyle(
+  static const TextStyle h2 = TextStyle(
     fontFamily: fontFamily,
     fontSize: 20,
     fontWeight: FontWeight.bold,
     color: AppColors.darkGrey,
   );
 
-  static TextStyle h3 = TextStyle(
+  static const TextStyle h3 = TextStyle(
     fontFamily: fontFamily,
     fontSize: 18,
     fontWeight: FontWeight.bold,
@@ -60,20 +60,20 @@ class AppTextStyles {
   );
 
   // Body text
-  static TextStyle body = TextStyle(
+  static const TextStyle body = TextStyle(
     fontFamily: fontFamily,
     fontSize: 16,
     color: AppColors.darkGrey,
   );
 
-  static TextStyle bodySmall = TextStyle(
+  static const TextStyle bodySmall = TextStyle(
     fontFamily: fontFamily,
     fontSize: 14,
     color: AppColors.mediumGrey,
   );
 
   // Button text
-  static TextStyle button = TextStyle(
+  static const TextStyle button = TextStyle(
     fontFamily: fontFamily,
     fontSize: 16,
     fontWeight: FontWeight.w500,
@@ -81,7 +81,7 @@ class AppTextStyles {
   );
 
   // Caption
-  static TextStyle caption = TextStyle(
+  static const TextStyle caption = TextStyle(
     fontFamily: fontFamily,
     fontSize: 12,
     color: AppColors.mediumGrey,
@@ -96,12 +96,12 @@ class AppTheme {
       primaryColor: AppColors.primary,
       primaryColorDark: AppColors.primaryDark,
       primaryColorLight: AppColors.primaryLight,
-      colorScheme: ColorScheme.light(
+      colorScheme: const ColorScheme.light(
         primary: AppColors.primary,
         secondary: AppColors.accent,
         onPrimary: AppColors.white,
         onSecondary: AppColors.white,
-        background: AppColors.background,
+        surface: AppColors.background,
         error: AppColors.error,
       ),
       scaffoldBackgroundColor: AppColors.background,
@@ -110,9 +110,9 @@ class AppTheme {
         elevation: 0,
         centerTitle: true,
         titleTextStyle: AppTextStyles.h2.copyWith(color: AppColors.white),
-        iconTheme: IconThemeData(color: AppColors.white),
+        iconTheme: const IconThemeData(color: AppColors.white),
       ),
-      textTheme: TextTheme(
+      textTheme: const TextTheme(
         displayLarge: AppTextStyles.h1,
         displayMedium: AppTextStyles.h2,
         displaySmall: AppTextStyles.h3,
@@ -204,9 +204,9 @@ class AppTheme {
       borderRadius: BorderRadius.circular(borderRadius),
       boxShadow: [
         BoxShadow(
-          color: AppColors.black.withOpacity(0.1),
+          color: AppColors.black.withValues(alpha: 0.1),
           blurRadius: 8,
-          offset: Offset(0, 4),
+          offset: const Offset(0, 4),
         ),
       ],
     );
@@ -229,7 +229,7 @@ class AppTheme {
             color: color,
             borderRadius: BorderRadius.circular(borderRadius),
             border: Border.all(
-              color: Colors.white.withOpacity(0.2),
+              color: Colors.white.withValues(alpha: 0.2),
               width: 1,
             ),
           ),
