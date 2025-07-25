@@ -60,11 +60,11 @@ class _LoginFormState extends State<LoginForm> {
             prefixIcon: const Icon(Icons.email_outlined),
             validator: ValidationUtils.validateEmail,
             textInputAction: TextInputAction.next,
-            fillColor: AppColors.white.withOpacity(0.8),
-            borderColor: AppColors.white.withOpacity(0.5),
+            fillColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+            borderColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
           ),
 
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
 
           // Password field
           CustomTextField(
@@ -78,8 +78,8 @@ class _LoginFormState extends State<LoginForm> {
               fieldName: 'Password',
             ),
             textInputAction: TextInputAction.done,
-            fillColor: AppColors.white.withOpacity(0.8),
-            borderColor: AppColors.white.withOpacity(0.5),
+            fillColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+            borderColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
             onSubmitted: (_) => _submit(),
           ),
 
@@ -94,7 +94,7 @@ class _LoginFormState extends State<LoginForm> {
                 children: [
                   SizedBox(
                     width: 24,
-                    height: 24,
+        
                     child: Checkbox(
                       value: _rememberMe,
                       onChanged: (value) {
@@ -102,14 +102,14 @@ class _LoginFormState extends State<LoginForm> {
                           _rememberMe = value ?? false;
                         });
                       },
-                      activeColor: AppColors.primary,
-                      checkColor: AppColors.white,
+                      activeColor: Theme.of(context).colorScheme.primary,
+                      checkColor: Theme.of(context).colorScheme.primary,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(4),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 8, height: 40),
                   GestureDetector(
                     onTap: () {
                       setState(() {
@@ -118,8 +118,8 @@ class _LoginFormState extends State<LoginForm> {
                     },
                     child: Text(
                       'Remember me',
-                      style: AppTextStyles.bodySmall.copyWith(
-                        color: AppColors.white,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.primary,
                       ),
                     ),
                   ),
@@ -132,8 +132,8 @@ class _LoginFormState extends State<LoginForm> {
                   onTap: widget.onForgotPassword,
                   child: Text(
                     'Forgot Password?',
-                    style: AppTextStyles.bodySmall.copyWith(
-                      color: AppColors.white,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.primary,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -141,17 +141,15 @@ class _LoginFormState extends State<LoginForm> {
             ],
           ),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
 
           // Login button
           CustomButton(
-            text: 'Login',
-            onPressed: _submit,
-            isLoading: widget.isLoading,
-            height: 50,
-            color: AppColors.white,
-            textColor: AppColors.primary,
-          ),
+        text: 'Login',
+        onPressed: _submit,
+        isLoading: widget.isLoading,
+        color: Theme.of(context).colorScheme.primary
+      ),
         ],
       ),
     );

@@ -14,7 +14,7 @@ class UserService {
   // Get user profile
   Future<Map<String, dynamic>> getUserProfile() async {
     try {
-      final response = await _apiClient.get(Endpoints.currentUser);
+      final response = await _apiClient.get(ApiEndpoints.buildUrl(ApiEndpoints.currentUser));
       return response;
     } catch (e) {
       if (e is ApiException) {
@@ -42,7 +42,7 @@ class UserService {
       }
 
       final response = await _apiClient.patch(
-        Endpoints.currentUser,
+        ApiEndpoints.buildUrl(ApiEndpoints.currentUser),
         body: body,
       );
 
@@ -63,7 +63,7 @@ class UserService {
   }) async {
     try {
       final response = await _apiClient.post(
-        Endpoints.changePassword,
+        ApiEndpoints.buildUrl(ApiEndpoints.changePassword('me')),
         body: {
           'current_password': currentPassword,
           'new_password': newPassword,
@@ -83,7 +83,7 @@ class UserService {
   // Get user profile details
   Future<Map<String, dynamic>> getProfileDetails() async {
     try {
-      final response = await _apiClient.get(Endpoints.currentProfile);
+      final response = await _apiClient.get(ApiEndpoints.buildUrl(ApiEndpoints.currentProfile));
       return response;
     } catch (e) {
       if (e is ApiException) {
@@ -115,7 +115,7 @@ class UserService {
       }
 
       final response = await _apiClient.patch(
-        Endpoints.updateProfile,
+        ApiEndpoints.buildUrl(ApiEndpoints.updateProfile),
         body: body,
       );
 

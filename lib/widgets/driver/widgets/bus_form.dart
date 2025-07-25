@@ -94,8 +94,8 @@ class _BusFormState extends State<BusForm> {
               value,
               fieldName: 'License plate',
             ),
-            fillColor: AppColors.white.withOpacity(0.8),
-            borderColor: AppColors.white.withOpacity(0.5),
+            fillColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+            borderColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
           ),
 
           const SizedBox(height: 16),
@@ -108,8 +108,8 @@ class _BusFormState extends State<BusForm> {
               value,
               fieldName: 'Manufacturer',
             ),
-            fillColor: AppColors.white.withOpacity(0.8),
-            borderColor: AppColors.white.withOpacity(0.5),
+            fillColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+            borderColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
           ),
 
           const SizedBox(height: 16),
@@ -122,8 +122,8 @@ class _BusFormState extends State<BusForm> {
               value,
               fieldName: 'Model',
             ),
-            fillColor: AppColors.white.withOpacity(0.8),
-            borderColor: AppColors.white.withOpacity(0.5),
+            fillColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+            borderColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
           ),
 
           const SizedBox(height: 16),
@@ -147,12 +147,12 @@ class _BusFormState extends State<BusForm> {
                     min: 1990,
                     max: DateTime.now().year + 1,
                   ),
-                  fillColor: AppColors.white.withOpacity(0.8),
-                  borderColor: AppColors.white.withOpacity(0.5),
+                  fillColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                  borderColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                 ),
               ),
 
-              const SizedBox(width: 16),
+              const SizedBox(width: 16, height: 40),
 
               // Capacity
               Expanded(
@@ -169,8 +169,8 @@ class _BusFormState extends State<BusForm> {
                     min: 1,
                     max: 200,
                   ),
-                  fillColor: AppColors.white.withOpacity(0.8),
-                  borderColor: AppColors.white.withOpacity(0.5),
+                  fillColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                  borderColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                 ),
               ),
             ],
@@ -181,10 +181,10 @@ class _BusFormState extends State<BusForm> {
           // Air conditioned checkbox
           Container(
             decoration: BoxDecoration(
-              color: AppColors.white.withOpacity(0.8),
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
-                color: AppColors.white.withOpacity(0.5),
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
               ),
             ),
             child: CheckboxListTile(
@@ -200,7 +200,7 @@ class _BusFormState extends State<BusForm> {
             ),
           ),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
 
           // Actions
           Row(
@@ -211,18 +211,18 @@ class _BusFormState extends State<BusForm> {
                 onPressed: widget.onCancel,
                 child: Text(
                   'Cancel',
-                  style: AppTextStyles.body.copyWith(
-                    color: AppColors.white,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.primary,
                   ),
                 ),
               ),
 
               // Save button
               CustomButton(
-                text: widget.isEditing ? 'Update' : 'Save',
-                onPressed: _submitForm,
-                color: AppColors.primary,
-              ),
+        text: widget.isEditing ? 'Update' : 'Save',
+        onPressed: _submitForm,
+        color: Theme.of(context).colorScheme.primary
+      ),
             ],
           ),
         ],

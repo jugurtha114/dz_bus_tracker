@@ -7,6 +7,7 @@ import '../../providers/tracking_provider.dart';
 import '../../providers/bus_provider.dart';
 import '../../widgets/common/app_bar.dart';
 import '../../widgets/common/custom_button.dart';
+import '../../widgets/common/custom_card.dart';
 import '../../widgets/common/glassy_container.dart';
 import '../../helpers/dialog_helper.dart';
 import '../../helpers/error_handler.dart';
@@ -48,16 +49,12 @@ class _PassengerCounterScreenState extends State<PassengerCounterScreen> {
 
       // Get current passenger count if tracking
       if (trackingProvider.isTracking && trackingProvider.currentTrip != null) {
-        _passengerCount = trackingProvider.currentTrip!['passenger_count'] != null
-            ? int.tryParse(trackingProvider.currentTrip!['passenger_count'].toString()) ?? 0
-            : 0;
+        _passengerCount = trackingProvider.currentTrip!.maxPassengers;
       }
 
       // Get bus capacity
       if (busProvider.selectedBus != null) {
-        _capacity = busProvider.selectedBus!['capacity'] != null
-            ? int.tryParse(busProvider.selectedBus!['capacity'].toString()) ?? 0
-            : 0;
+        _capacity = busProvider.selectedBus!.capacity;
       }
     } catch (e) {
       if (mounted) {
@@ -82,9 +79,9 @@ class _PassengerCounterScreenState extends State<PassengerCounterScreen> {
       });
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text('Maximum capacity reached'),
-          backgroundColor: AppColors.warning,
+          backgroundColor: Theme.of(context).colorScheme.primary,
         ),
       );
     }
@@ -117,16 +114,16 @@ class _PassengerCounterScreenState extends State<PassengerCounterScreen> {
       }
 
       await trackingProvider.updatePassengers(
-        busId: busProvider.selectedBus!['id'],
+        busId: busProvider.selectedBus!.id,
         count: _passengerCount,
-        stopId: _selectedStopId,
+        // stopId: _selectedStopId, // stopId parameter not supported
       );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text('Passenger count updated successfully'),
-            backgroundColor: AppColors.success,
+            backgroundColor: Theme.of(context).colorScheme.primary,
           ),
         );
       }
@@ -171,8 +168,8 @@ class _PassengerCounterScreenState extends State<PassengerCounterScreen> {
         children: [
           Text(
             'Select Stop',
-            style: AppTextStyles.h2.copyWith(
-              color: AppColors.white,
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+              color: Theme.of(context).colorScheme.primary,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -183,7 +180,7 @@ class _PassengerCounterScreenState extends State<PassengerCounterScreen> {
               hintText: 'Search stops',
               prefixIcon: const Icon(Icons.search),
               filled: true,
-              fillColor: AppColors.white,
+              fillColor: Theme.of(context).colorScheme.primary,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -191,7 +188,6 @@ class _PassengerCounterScreenState extends State<PassengerCounterScreen> {
           ),
           const SizedBox(height: 16),
           SizedBox(
-            height: 300,
             child: ListView.builder(
               itemCount: stops.length,
               itemBuilder: (context, index) {
@@ -199,7 +195,7 @@ class _PassengerCounterScreenState extends State<PassengerCounterScreen> {
                 return ListTile(
                   title: Text(
                     stop['name']!,
-                    style: TextStyle(color: AppColors.white),
+                    style: TextStyle(color: Theme.of(context).colorScheme.primary),
                   ),
                   onTap: () {
                     setState(() {
@@ -228,11 +224,11 @@ class _PassengerCounterScreenState extends State<PassengerCounterScreen> {
     // Determine color based on occupancy
     Color occupancyColor;
     if (occupancyPercent < 50) {
-      occupancyColor = AppColors.success;
+      occupancyColor = Theme.of(context).colorScheme.primary;
     } else if (occupancyPercent < 85) {
-      occupancyColor = AppColors.warning;
+      occupancyColor = Theme.of(context).colorScheme.primary;
     } else {
-      occupancyColor = AppColors.error;
+      occupancyColor = Theme.of(context).colorScheme.primary;
     }
 
     return Scaffold(
@@ -247,32 +243,32 @@ class _PassengerCounterScreenState extends State<PassengerCounterScreen> {
           children: [
             // Bus info card
             if (busProvider.selectedBus != null)
-              GlassyContainer(
-                color: AppColors.primary.withOpacity(0.1),
+              CustomCard(type: CardType.elevated, 
+                backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                 child: Column(
                   children: [
                     // Bus details
                     Row(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.directions_bus,
                           size: 40,
-                          color: AppColors.primary,
+                          color: Theme.of(context).colorScheme.primary,
                         ),
-                        const SizedBox(width: 16),
+                        const SizedBox(width: 16, height: 40),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Bus ${busProvider.selectedBus!['license_plate']}',
-                                style: AppTextStyles.h3.copyWith(
+                                'Bus ${busProvider.selectedBus!.licensePlate}',
+                                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
                               Text(
                                 'Capacity: $_capacity passengers',
-                                style: AppTextStyles.body,
+                                style: Theme.of(context).textTheme.bodyLarge,
                               ),
                             ],
                           ),
@@ -287,8 +283,8 @@ class _PassengerCounterScreenState extends State<PassengerCounterScreen> {
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
                         color: trackingProvider.isTracking
-                            ? AppColors.success
-                            : AppColors.error,
+                            ? Theme.of(context).colorScheme.primary
+                            : Theme.of(context).colorScheme.primary,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
@@ -298,16 +294,16 @@ class _PassengerCounterScreenState extends State<PassengerCounterScreen> {
                             trackingProvider.isTracking
                                 ? Icons.gps_fixed
                                 : Icons.gps_off,
-                            color: AppColors.white,
+                            color: Theme.of(context).colorScheme.primary,
                             size: 16,
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 8, height: 40),
                           Text(
                             trackingProvider.isTracking
                                 ? 'Tracking Active'
                                 : 'Tracking Inactive',
-                            style: AppTextStyles.body.copyWith(
-                              color: AppColors.white,
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: Theme.of(context).colorScheme.primary,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -318,41 +314,41 @@ class _PassengerCounterScreenState extends State<PassengerCounterScreen> {
                 ),
               )
             else
-              GlassyContainer(
-                color: AppColors.warning.withOpacity(0.1),
+              CustomCard(type: CardType.elevated, 
+                backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                 child: Column(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.warning_amber_rounded,
                       size: 40,
-                      color: AppColors.warning,
+                      color: Theme.of(context).colorScheme.primary,
                     ),
                     const SizedBox(height: 16),
                     Text(
                       'No Bus Selected',
-                      style: AppTextStyles.h3.copyWith(
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 16),
                     Text(
                       'Please select a bus on the home screen first.',
-                      style: AppTextStyles.body,
+                      style: Theme.of(context).textTheme.bodyLarge,
                       textAlign: TextAlign.center,
                     ),
                   ],
                 ),
               ),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
 
             // Passenger count display
-            GlassyContainer(
+            CustomCard(type: CardType.elevated, 
               child: Column(
                 children: [
                   Text(
                     'Current Passengers',
-                    style: AppTextStyles.h3.copyWith(
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -375,17 +371,17 @@ class _PassengerCounterScreenState extends State<PassengerCounterScreen> {
                       children: [
                         Text(
                           '$_passengerCount',
-                          style: AppTextStyles.h1.copyWith(
+                          style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                             fontWeight: FontWeight.bold,
                             color: occupancyColor,
                             fontSize: 64,
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 8, height: 40),
                         Text(
                           '/ $_capacity',
-                          style: AppTextStyles.h3.copyWith(
-                            color: AppColors.mediumGrey,
+                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                            color: Theme.of(context).colorScheme.primary,
                           ),
                         ),
                       ],
@@ -397,7 +393,7 @@ class _PassengerCounterScreenState extends State<PassengerCounterScreen> {
                   // Occupancy percentage
                   Text(
                     'Occupancy: $occupancyPercent%',
-                    style: AppTextStyles.body.copyWith(
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: occupancyColor,
                     ),
@@ -412,22 +408,22 @@ class _PassengerCounterScreenState extends State<PassengerCounterScreen> {
                       _buildCounterButton(
                         icon: Icons.exposure_minus_2,
                         onPressed: () => _decrement(2),
-                        color: AppColors.error,
+                        color: Theme.of(context).colorScheme.primary,
                       ),
                       _buildCounterButton(
                         icon: Icons.exposure_neg_1,
                         onPressed: () => _decrement(1),
-                        color: AppColors.error,
+                        color: Theme.of(context).colorScheme.primary,
                       ),
                       _buildCounterButton(
                         icon: Icons.exposure_plus_1,
                         onPressed: () => _increment(1),
-                        color: AppColors.success,
+                        color: Theme.of(context).colorScheme.primary,
                       ),
                       _buildCounterButton(
                         icon: Icons.exposure_plus_2,
                         onPressed: () => _increment(2),
-                        color: AppColors.success,
+                        color: Theme.of(context).colorScheme.primary,
                       ),
                     ],
                   ),
@@ -435,21 +431,21 @@ class _PassengerCounterScreenState extends State<PassengerCounterScreen> {
               ),
             ),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
 
             // Stop selection
-            GlassyContainer(
+            CustomCard(type: CardType.elevated, 
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     'Current Stop',
-                    style: AppTextStyles.body.copyWith(
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
                   ),
 
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 16),
 
                   // Stop selection field
                   TextField(
@@ -461,7 +457,7 @@ class _PassengerCounterScreenState extends State<PassengerCounterScreen> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       filled: true,
-                      fillColor: AppColors.white,
+                      fillColor: Theme.of(context).colorScheme.primary,
                       suffixIcon: IconButton(
                         icon: const Icon(Icons.location_on),
                         onPressed: _showStopSelectionDialog,
@@ -470,11 +466,11 @@ class _PassengerCounterScreenState extends State<PassengerCounterScreen> {
                     onTap: _showStopSelectionDialog,
                   ),
 
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 16),
 
                   Text(
                     'Optional: Select the stop where you are counting passengers',
-                    style: AppTextStyles.caption.copyWith(
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       fontStyle: FontStyle.italic,
                     ),
                   ),
@@ -482,7 +478,7 @@ class _PassengerCounterScreenState extends State<PassengerCounterScreen> {
               ),
             ),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
 
             // Update button
             CustomButton(
@@ -491,7 +487,6 @@ class _PassengerCounterScreenState extends State<PassengerCounterScreen> {
                   ? _updateCount
                   : _showNoBusSelectedDialog,
               isLoading: _isLoading,
-              icon: Icons.save,
             ),
           ],
         ),
@@ -516,7 +511,7 @@ class _PassengerCounterScreenState extends State<PassengerCounterScreen> {
           padding: const EdgeInsets.all(16),
           child: Icon(
             icon,
-            color: AppColors.white,
+            color: Theme.of(context).colorScheme.primary,
             size: 32,
           ),
         ),

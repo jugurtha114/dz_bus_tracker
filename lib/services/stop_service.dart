@@ -22,7 +22,7 @@ class StopService {
       if (lineId != null) queryParams[ApiConstants.lineIdKey] = lineId;
 
       final response = await _apiClient.get(
-        Endpoints.stops,
+        ApiEndpoints.buildUrl(ApiEndpoints.stops),
         queryParameters: queryParams,
       );
 
@@ -46,7 +46,7 @@ class StopService {
   // Get stop by ID
   Future<Map<String, dynamic>> getStopById(String stopId) async {
     try {
-      final response = await _apiClient.get('${Endpoints.stops}$stopId/');
+      final response = await _apiClient.get(ApiEndpoints.buildUrl(ApiEndpoints.stopById(stopId)));
       return response;
     } catch (e) {
       if (e is ApiException) {
@@ -77,7 +77,7 @@ class StopService {
       if (photo != null) body['photo'] = photo;
 
       final response = await _apiClient.post(
-        Endpoints.stops,
+        ApiEndpoints.buildUrl(ApiEndpoints.stops),
         body: body,
       );
 
@@ -117,7 +117,7 @@ class StopService {
       }
 
       final response = await _apiClient.patch(
-        '${Endpoints.stops}$stopId/',
+        ApiEndpoints.buildUrl(ApiEndpoints.stopById(stopId)),
         body: body,
       );
 
@@ -138,7 +138,7 @@ class StopService {
   }) async {
     try {
       final response = await _apiClient.get(
-        Endpoints.nearbyStops,
+        ApiEndpoints.buildUrl(ApiEndpoints.nearbyStops),
         queryParameters: {
           'latitude': latitude.toString(),
           'longitude': longitude.toString(),
@@ -178,7 +178,7 @@ class StopService {
       if (lineId != null) body['line'] = lineId;
 
       final response = await _apiClient.post(
-        Endpoints.waitingPassengers,
+        ApiEndpoints.buildUrl(ApiEndpoints.waitingPassengers),
         body: body,
       );
 

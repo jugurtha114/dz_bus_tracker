@@ -12,7 +12,7 @@ class RoutePolyline {
   static Polyline createRoutePolyline({
     required String id,
     required List<LatLng> points,
-    Color color = AppColors.primary,
+    Color? color,
     int width = 5,
     bool geodesic = true,
     JointType jointType = JointType.round,
@@ -23,7 +23,7 @@ class RoutePolyline {
     return Polyline(
       polylineId: PolylineId(id),
       points: points,
-      color: color,
+      color: color ?? Colors.blue,
       width: width,
       geodesic: geodesic,
       jointType: jointType,
@@ -37,7 +37,7 @@ class RoutePolyline {
   static Polyline createDashedRoutePolyline({
     required String id,
     required List<LatLng> points,
-    Color color = AppColors.primary,
+    Color? color,
     int width = 5,
     bool geodesic = true,
     JointType jointType = JointType.round,
@@ -47,7 +47,7 @@ class RoutePolyline {
     return Polyline(
       polylineId: PolylineId(id),
       points: points,
-      color: color,
+      color: color ?? Colors.blue,
       width: width,
       geodesic: geodesic,
       jointType: jointType,
@@ -64,7 +64,7 @@ class RoutePolyline {
   static Polyline createPatternedRoutePolyline({
     required String id,
     required List<LatLng> points,
-    Color color = AppColors.primary,
+    Color? color,
     int width = 5,
     bool geodesic = true,
     JointType jointType = JointType.round,
@@ -75,7 +75,7 @@ class RoutePolyline {
     return Polyline(
       polylineId: PolylineId(id),
       points: points,
-      color: color,
+      color: color ?? Colors.blue,
       width: width,
       geodesic: geodesic,
       jointType: jointType,
@@ -89,7 +89,7 @@ class RoutePolyline {
   static Set<Polyline> createHighlightedRoute({
     required String id,
     required List<LatLng> points,
-    Color color = AppColors.primary,
+    Color? color,
     Color glowColor = Colors.white,
     int mainWidth = 5,
     int glowWidth = 9,
@@ -113,7 +113,7 @@ class RoutePolyline {
       Polyline(
         polylineId: PolylineId(id),
         points: points,
-        color: color,
+        color: color ?? Colors.blue,
         width: mainWidth,
         geodesic: geodesic,
         jointType: jointType,
@@ -150,7 +150,7 @@ class RoutePolyline {
         Polyline(
           polylineId: PolylineId('${id}_segment_$i'),
           points: [points[i], points[i + 1]],
-          color: color,
+          color: color ?? Colors.blue,
           width: width,
           geodesic: geodesic,
           jointType: jointType,
@@ -167,9 +167,9 @@ class RoutePolyline {
   static Set<Marker> createRouteArrows({
     required String id,
     required List<LatLng> points,
-    Color color = AppColors.primary,
+    Color? color,
     int arrowCount = 3, // Number of arrows to show along the route
-    double arrowSize = 20.0,
+    double arrowSize = 20,
   }) {
     if (points.length <= 1 || arrowCount <= 0) {
       return {};
@@ -199,7 +199,7 @@ class RoutePolyline {
         position: current,
         icon: BitmapDescriptor.defaultMarker, // In real app, use custom arrow icon
         rotation: bearing.toDouble(),
-        anchor: const Offset(0.5, 0.5),
+        anchor: const Offset(0, 0),
         flat: true,
       );
 

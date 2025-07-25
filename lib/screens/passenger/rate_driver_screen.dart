@@ -10,6 +10,7 @@ import '../../widgets/common/app_bar.dart';
 import '../../widgets/common/custom_button.dart';
 import '../../widgets/common/glassy_container.dart';
 import '../../helpers/error_handler.dart';
+import '../../widgets/common/custom_card.dart';
 
 class RateDriverScreen extends StatefulWidget {
   final String driverId;
@@ -28,15 +29,15 @@ class RateDriverScreen extends StatefulWidget {
 }
 
 class _RateDriverScreenState extends State<RateDriverScreen> {
-  double _rating = 3.0;
+  double _rating = 3;
   final _commentController = TextEditingController();
   bool _isLoading = false;
 
   // Rating aspects
-  double _drivingRating = 3.0;
-  double _safetyRating = 3.0;
-  double _cleanlinessRating = 3.0;
-  double _punctualityRating = 3.0;
+  double _drivingRating = 3;
+  double _safetyRating = 3;
+  double _cleanlinessRating = 3;
+  double _punctualityRating = 3;
 
   @override
   void dispose() {
@@ -47,9 +48,9 @@ class _RateDriverScreenState extends State<RateDriverScreen> {
   Future<void> _submitRating() async {
     if (_rating == 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select a rating'),
-          backgroundColor: AppColors.warning,
+        SnackBar(
+          content: const Text('Please select a rating'),
+          backgroundColor: Theme.of(context).colorScheme.primary,
         ),
       );
       return;
@@ -74,9 +75,9 @@ class _RateDriverScreenState extends State<RateDriverScreen> {
       if (success && mounted) {
         // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Thank you for your feedback!'),
-            backgroundColor: AppColors.success,
+          SnackBar(
+            content: const Text('Thank you for your feedback!'),
+            backgroundColor: Theme.of(context).colorScheme.primary,
           ),
         );
 
@@ -114,8 +115,8 @@ class _RateDriverScreenState extends State<RateDriverScreen> {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  AppColors.background,
-                  AppColors.primary.withOpacity(0.1),
+                  Theme.of(context).colorScheme.primary,
+                  Theme.of(context).colorScheme.primary.withOpacity(0.1),
                 ],
               ),
             ),
@@ -128,13 +129,13 @@ class _RateDriverScreenState extends State<RateDriverScreen> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 // Driver Avatar
-                const CircleAvatar(
+                CircleAvatar(
                   radius: 50,
-                  backgroundColor: AppColors.primary,
+                  backgroundColor: Theme.of(context).colorScheme.primary,
                   child: Icon(
                     Icons.person,
                     size: 60,
-                    color: AppColors.white,
+                    color: Theme.of(context).colorScheme.onPrimary,
                   ),
                 ),
 
@@ -143,25 +144,25 @@ class _RateDriverScreenState extends State<RateDriverScreen> {
                 // Driver name (in a real app, we would fetch this)
                 Text(
                   'Your Driver',
-                  style: AppTextStyles.h2.copyWith(
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
                 ),
 
-                const SizedBox(height: 8),
+                const SizedBox(height: 16),
 
                 // Rating prompt
                 Text(
                   'How was your ride?',
-                  style: AppTextStyles.body.copyWith(
-                    color: AppColors.mediumGrey,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.primary,
                   ),
                 ),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
 
                 // Rating card
-                GlassyContainer(
+                CustomCard(type: CardType.elevated, 
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -222,21 +223,21 @@ class _RateDriverScreenState extends State<RateDriverScreen> {
                   ),
                 ),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
 
                 // Comment field
-                GlassyContainer(
+                CustomCard(type: CardType.elevated, 
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         'Additional Comments',
-                        style: AppTextStyles.body.copyWith(
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
                       ),
 
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 16),
 
                       TextField(
                         controller: _commentController,
@@ -252,15 +253,14 @@ class _RateDriverScreenState extends State<RateDriverScreen> {
                   ),
                 ),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
 
                 // Submit button
                 CustomButton(
-                  text: 'Submit Rating',
-                  onPressed: _submitRating,
-                  isLoading: _isLoading,
-                  icon: Icons.send,
-                ),
+        text: 'Submit Rating',
+        onPressed: _submitRating,
+        isLoading: _isLoading,
+        ),
 
                 const SizedBox(height: 16),
 
@@ -269,8 +269,8 @@ class _RateDriverScreenState extends State<RateDriverScreen> {
                   onPressed: () => Navigator.pop(context),
                   child: Text(
                     'Skip',
-                    style: AppTextStyles.body.copyWith(
-                      color: AppColors.mediumGrey,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.primary,
                     ),
                   ),
                 ),
@@ -296,7 +296,7 @@ class _RateDriverScreenState extends State<RateDriverScreen> {
           // Title
           Text(
             title,
-            style: AppTextStyles.body.copyWith(
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -304,12 +304,12 @@ class _RateDriverScreenState extends State<RateDriverScreen> {
           // Description
           Text(
             description,
-            style: AppTextStyles.bodySmall.copyWith(
-              color: AppColors.mediumGrey,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.primary,
             ),
           ),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
 
           // Rating bar
           Center(
@@ -319,7 +319,7 @@ class _RateDriverScreenState extends State<RateDriverScreen> {
               direction: Axis.horizontal,
               allowHalfRating: true,
               itemCount: 5,
-              itemPadding: const EdgeInsets.symmetric(horizontal: 4.0),
+              itemPadding: const EdgeInsets.symmetric(horizontal: 4),
               itemBuilder: (context, _) => const Icon(
                 Icons.star,
                 color: Colors.amber,
@@ -332,7 +332,7 @@ class _RateDriverScreenState extends State<RateDriverScreen> {
           Center(
             child: Text(
               value.toStringAsFixed(1),
-              style: AppTextStyles.body.copyWith(
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: _getRatingColor(value),
               ),
@@ -345,11 +345,11 @@ class _RateDriverScreenState extends State<RateDriverScreen> {
 
   Color _getRatingColor(double rating) {
     if (rating >= 4) {
-      return AppColors.success;
+      return Theme.of(context).colorScheme.primary;
     } else if (rating >= 3) {
       return Colors.amber;
     } else {
-      return AppColors.error;
+      return Theme.of(context).colorScheme.primary;
     }
   }
 }

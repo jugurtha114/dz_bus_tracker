@@ -25,7 +25,7 @@ class NearbyBusesList extends StatelessWidget {
     if (buses.isEmpty && showEmpty) {
       return Center(
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(16),
           child: Text(
             emptyMessage,
             textAlign: TextAlign.center,

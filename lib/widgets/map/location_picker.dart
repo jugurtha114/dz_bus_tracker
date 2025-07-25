@@ -155,7 +155,7 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
-        backgroundColor: AppColors.primary,
+        backgroundColor: Theme.of(context).colorScheme.primary,
       ),
       body: Stack(
         children: [
@@ -182,11 +182,11 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
               right: 16,
               child: Container(
                 decoration: BoxDecoration(
-                  color: AppColors.white,
+                  color: Theme.of(context).colorScheme.primary,
                   borderRadius: BorderRadius.circular(8),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.black.withOpacity(0.1),
+                      color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
@@ -228,8 +228,8 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
             right: 16,
             child: FloatingActionButton(
               mini: true,
-              backgroundColor: AppColors.white,
-              foregroundColor: AppColors.primary,
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              foregroundColor: Theme.of(context).colorScheme.primary,
               child: const Icon(Icons.my_location),
               onPressed: _getCurrentLocation,
             ),
@@ -243,11 +243,11 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
             child: Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.white,
+                color: Theme.of(context).colorScheme.primary,
                 borderRadius: BorderRadius.circular(8),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.black.withOpacity(0.1),
+                    color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -264,7 +264,7 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
                       fontSize: 16,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 16),
                   Text(
                     'Latitude: ${_selectedPosition.latitude.toStringAsFixed(6)}',
                     style: const TextStyle(fontSize: 14),
@@ -273,13 +273,13 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
                     'Longitude: ${_selectedPosition.longitude.toStringAsFixed(6)}',
                     style: const TextStyle(fontSize: 14),
                   ),
-                  const SizedBox(height: 4),
-                  const Text(
+                  const SizedBox(height: 16),
+                  Text(
                     'Tap on the map to change the location',
                     style: TextStyle(
                       fontSize: 12,
                       fontStyle: FontStyle.italic,
-                      color: AppColors.mediumGrey,
+                      color: Theme.of(context).colorScheme.primary,
                     ),
                   ),
                 ],
@@ -295,7 +295,7 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
             child: ElevatedButton(
               onPressed: _confirmLocation,
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
+                backgroundColor: Theme.of(context).colorScheme.primary,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
@@ -314,7 +314,7 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
           // Loading indicator
           if (_isLoading)
             Container(
-              color: AppColors.black.withOpacity(0.3),
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
               child: const Center(
                 child: CircularProgressIndicator(),
               ),

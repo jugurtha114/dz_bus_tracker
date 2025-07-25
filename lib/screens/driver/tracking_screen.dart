@@ -13,6 +13,7 @@ import '../../providers/bus_provider.dart';
 import '../../providers/driver_provider.dart';
 import '../../widgets/common/app_bar.dart';
 import '../../widgets/common/glassy_container.dart';
+import '../../widgets/common/custom_card.dart';
 import '../../widgets/common/loading_indicator.dart';
 import '../../widgets/common/custom_button.dart';
 import '../../widgets/map/map_widget.dart';
@@ -74,7 +75,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
 
       // Get initial passenger count
       _passengerCount = trackingProvider.currentTrip != null
-          ? int.tryParse(trackingProvider.currentTrip!['passenger_count']?.toString() ?? '0') ?? 0
+          ? trackingProvider.currentTrip!.maxPassengers
           : 0;
 
       // Set up location update timer
@@ -118,10 +119,10 @@ class _TrackingScreenState extends State<TrackingScreen> {
 
     try {
       await trackingProvider.sendLocation(
-        busId: busProvider.selectedBus!['id'],
+        busId: busProvider.selectedBus!.id,
         latitude: locationProvider.latitude,
         longitude: locationProvider.longitude,
-        altitude: locationProvider.currentLocation!.altitude,
+        // altitude: locationProvider.currentLocation!.altitude, // altitude parameter not supported
         speed: locationProvider.currentLocation!.speed,
         heading: locationProvider.currentLocation!.heading,
         accuracy: locationProvider.currentLocation!.accuracy,
@@ -143,7 +144,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
 
     try {
       await trackingProvider.updatePassengers(
-        busId: busProvider.selectedBus!['id'],
+        busId: busProvider.selectedBus!.id,
         count: _passengerCount,
       );
     } catch (e) {
@@ -200,8 +201,8 @@ class _TrackingScreenState extends State<TrackingScreen> {
             children: [
               Text(
                 'Report Anomaly',
-                style: AppTextStyles.h2.copyWith(
-                  color: AppColors.white,
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.primary,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -210,10 +211,10 @@ class _TrackingScreenState extends State<TrackingScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
-                  color: AppColors.white.withOpacity(0.8),
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: AppColors.white.withOpacity(0.5),
+                    color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                   ),
                 ),
                 child: DropdownButtonHideUnderline(
@@ -256,18 +257,18 @@ class _TrackingScreenState extends State<TrackingScreen> {
                 children: [
                   Text(
                     'Severity',
-                    style: AppTextStyles.body.copyWith(
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       fontWeight: FontWeight.w500,
-                      color: AppColors.white,
+                      color: Theme.of(context).colorScheme.primary,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 16),
                   Container(
                     decoration: BoxDecoration(
-                      color: AppColors.white.withOpacity(0.8),
+                      color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                        color: AppColors.white.withOpacity(0.5),
+                        color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                       ),
                     ),
                     child: Column(
@@ -313,10 +314,10 @@ class _TrackingScreenState extends State<TrackingScreen> {
               // Description
               Container(
                 decoration: BoxDecoration(
-                  color: AppColors.white.withOpacity(0.8),
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: AppColors.white.withOpacity(0.5),
+                    color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                   ),
                 ),
                 child: TextField(
@@ -330,7 +331,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
                 ),
               ),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
 
               // Action buttons
               Row(
@@ -342,8 +343,8 @@ class _TrackingScreenState extends State<TrackingScreen> {
                     },
                     child: Text(
                       'Cancel',
-                      style: AppTextStyles.body.copyWith(
-                        color: AppColors.white,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.primary,
                       ),
                     ),
                   ),
@@ -351,9 +352,9 @@ class _TrackingScreenState extends State<TrackingScreen> {
                     onPressed: () {
                       if (anomalyTypeController.text.isEmpty) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
+                          SnackBar(
                             content: Text('Please select an anomaly type'),
-                            backgroundColor: AppColors.warning,
+                            backgroundColor: Theme.of(context).colorScheme.primary,
                           ),
                         );
                         return;
@@ -361,9 +362,9 @@ class _TrackingScreenState extends State<TrackingScreen> {
 
                       if (anomalyDescriptionController.text.isEmpty) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
+                          SnackBar(
                             content: Text('Please enter a description'),
-                            backgroundColor: AppColors.warning,
+                            backgroundColor: Theme.of(context).colorScheme.primary,
                           ),
                         );
                         return;
@@ -379,7 +380,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
                       Navigator.pop(context);
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
+                      backgroundColor: Theme.of(context).colorScheme.primary,
                     ),
                     child: const Text('Submit'),
                   ),
@@ -411,7 +412,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
       });
 
       final success = await trackingProvider.reportAnomaly(
-        busId: busProvider.selectedBus!['id'],
+        busId: busProvider.selectedBus!.id,
         type: type,
         description: description,
         severity: severity,
@@ -421,9 +422,9 @@ class _TrackingScreenState extends State<TrackingScreen> {
 
       if (success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text('Anomaly reported successfully'),
-            backgroundColor: AppColors.success,
+            backgroundColor: Theme.of(context).colorScheme.primary,
           ),
         );
       }
@@ -449,25 +450,23 @@ class _TrackingScreenState extends State<TrackingScreen> {
 
     if (trip == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('No active trip information available'),
-          backgroundColor: AppColors.warning,
+        SnackBar(
+          content: const Text('No active trip information available'),
+          backgroundColor: Theme.of(context).colorScheme.primary,
         ),
       );
       return;
     }
 
     // Format trip data for display
-    final startTime = trip['start_time'] != null
-        ? DateTime.parse(trip['start_time'].toString())
-        : null;
+    final startTime = trip.startTime;
     final formattedStartTime = startTime != null
         ? '${startTime.hour.toString().padLeft(2, '0')}:${startTime.minute.toString().padLeft(2, '0')}'
         : 'Unknown';
-    final tripId = trip['id'] ?? 'Unknown';
-    final lineId = trip['line'] ?? 'Unknown';
-    final busId = trip['bus'] ?? 'Unknown';
-    final notes = trip['notes'] ?? '';
+    final tripId = trip.id;
+    final lineId = trip.lineId;
+    final busId = trip.busId;
+    final notes = trip.notes ?? '';
 
     DialogHelper.showGlassyDialog(
       context,
@@ -476,8 +475,8 @@ class _TrackingScreenState extends State<TrackingScreen> {
         children: [
           Text(
             'Trip Information',
-            style: AppTextStyles.h2.copyWith(
-              color: AppColors.white,
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+              color: Theme.of(context).colorScheme.primary,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -485,14 +484,14 @@ class _TrackingScreenState extends State<TrackingScreen> {
           ListTile(
             title: Text(
               'Start Time',
-              style: AppTextStyles.body.copyWith(
-                color: AppColors.white.withOpacity(0.7),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
               ),
             ),
             subtitle: Text(
               formattedStartTime,
-              style: AppTextStyles.body.copyWith(
-                color: AppColors.white,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.primary,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -500,14 +499,14 @@ class _TrackingScreenState extends State<TrackingScreen> {
           ListTile(
             title: Text(
               'Current Passengers',
-              style: AppTextStyles.body.copyWith(
-                color: AppColors.white.withOpacity(0.7),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
               ),
             ),
             subtitle: Text(
               _passengerCount.toString(),
-              style: AppTextStyles.body.copyWith(
-                color: AppColors.white,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.primary,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -516,14 +515,14 @@ class _TrackingScreenState extends State<TrackingScreen> {
             ListTile(
               title: Text(
                 'Notes',
-                style: AppTextStyles.body.copyWith(
-                  color: AppColors.white.withOpacity(0.7),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                 ),
               ),
               subtitle: Text(
                 notes,
-                style: AppTextStyles.body.copyWith(
-                  color: AppColors.white,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.primary,
                 ),
               ),
             ),
@@ -534,8 +533,8 @@ class _TrackingScreenState extends State<TrackingScreen> {
             },
             child: Text(
               'Close',
-              style: AppTextStyles.body.copyWith(
-                color: AppColors.white,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.primary,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -589,21 +588,21 @@ class _TrackingScreenState extends State<TrackingScreen> {
                 FloatingActionButton(
                   heroTag: 'location_btn',
                   mini: true,
-                  backgroundColor: AppColors.white,
-                  foregroundColor: AppColors.primary,
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  foregroundColor: Theme.of(context).colorScheme.primary,
                   child: const Icon(Icons.my_location),
                   onPressed: _centerOnCurrentLocation,
                   tooltip: 'My Location',
                 ),
 
-                const SizedBox(height: 8),
+                const SizedBox(height: 16),
 
                 // Report anomaly button
                 FloatingActionButton(
                   heroTag: 'anomaly_btn',
                   mini: true,
-                  backgroundColor: AppColors.warning,
-                  foregroundColor: AppColors.white,
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  foregroundColor: Theme.of(context).colorScheme.primary,
                   child: const Icon(Icons.warning_amber_rounded),
                   onPressed: _reportAnomaly,
                   tooltip: 'Report Anomaly',
@@ -617,10 +616,9 @@ class _TrackingScreenState extends State<TrackingScreen> {
             bottom: 0,
             left: 0,
             right: 0,
-            child: GlassyContainer(
-              borderRadius: 24,
-              color: AppColors.glassDark,
-              border: Border.all(color: Colors.white.withOpacity(0.1)),
+            child: CustomCard(type: CardType.elevated, 
+              borderRadius: BorderRadius.circular(24),
+              backgroundColor: Theme.of(context).colorScheme.surface,
               margin: const EdgeInsets.only(bottom: 16, left: 16, right: 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -635,17 +633,17 @@ class _TrackingScreenState extends State<TrackingScreen> {
                         children: [
                           Container(
                             width: 12,
-                            height: 12,
+        
                             decoration: BoxDecoration(
-                              color: trackingProvider.isTracking ? AppColors.success : AppColors.error,
+                              color: trackingProvider.isTracking ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.primary,
                               shape: BoxShape.circle,
                             ),
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 8, height: 40),
                           Text(
                             'Tracking: ${trackingProvider.isTracking ? 'Active' : 'Inactive'}',
-                            style: AppTextStyles.body.copyWith(
-                              color: AppColors.white,
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: Theme.of(context).colorScheme.primary,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -655,9 +653,9 @@ class _TrackingScreenState extends State<TrackingScreen> {
                       // Bus info
                       if (busProvider.selectedBus != null)
                         Text(
-                          'Bus ${busProvider.selectedBus!['license_plate']}',
-                          style: AppTextStyles.body.copyWith(
-                            color: AppColors.white,
+                          'Bus ${busProvider.selectedBus!.licensePlate}',
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Theme.of(context).colorScheme.primary,
                           ),
                         ),
                     ],
@@ -676,8 +674,9 @@ class _TrackingScreenState extends State<TrackingScreen> {
 
                   // End trip button
                   CustomButton(
-                    text: 'End Trip',
-                    onPressed: () {
+        text: 'End Trip',
+        onPressed: (
+      ) {
                       // Confirm end trip
                       DialogHelper.showConfirmDialog(
                         context,
@@ -689,14 +688,19 @@ class _TrackingScreenState extends State<TrackingScreen> {
                         if (confirm) {
                           // End trip and go back
                           final trackingProvider = Provider.of<TrackingProvider>(context, listen: false);
-                          trackingProvider.stopTracking().then((_) {
+                          final busProvider = Provider.of<BusProvider>(context, listen: false);
+                          
+                          // Use bus line ID if available, otherwise use a placeholder
+                          final busLineId = busProvider.selectedBus?.id ?? 'default';
+                          
+                          trackingProvider.stopTracking(busLineId).then((_) {
                             Navigator.pop(context);
                           });
                         }
                       });
                     },
-                    type: ButtonType.outlined,
-                    color: AppColors.error,
+                    type: ButtonType.outline,
+                    color: Theme.of(context).colorScheme.primary,
                   ),
                 ],
               ),
@@ -723,7 +727,6 @@ class _TrackingScreenState extends State<TrackingScreen> {
             locationProvider.latitude,
             locationProvider.longitude,
           ),
-          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
           infoWindow: const InfoWindow(title: 'Your Location (Bus)'),
         ),
       );
@@ -739,7 +742,6 @@ class _TrackingScreenState extends State<TrackingScreen> {
             position.latitude,
             position.longitude,
           ),
-          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
           alpha: 0.5, // Make historical markers semi-transparent
         ),
       );
@@ -770,8 +772,8 @@ class _TrackingScreenState extends State<TrackingScreen> {
         Polyline(
           polylineId: const PolylineId('route'),
           points: points,
-          color: AppColors.primary,
-          width: 5,
+          color: Theme.of(context).colorScheme.primary,
+          width: 5
         ),
       );
     }

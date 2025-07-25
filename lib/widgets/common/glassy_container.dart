@@ -48,11 +48,11 @@ class GlassyContainer extends StatelessWidget {
           child: Container(
             padding: padding,
             decoration: BoxDecoration(
-              color: color ?? AppColors.glassWhite,
+              color: color ?? Theme.of(context).colorScheme.primary,
               borderRadius: BorderRadius.circular(borderRadius),
               border: border ?? Border.all(
-                color: Colors.white.withOpacity(0.2),
-                width: 1.5,
+                color: Colors.white.withOpacity(0.1),
+                width: 1
               ),
               boxShadow: boxShadow,
             ),

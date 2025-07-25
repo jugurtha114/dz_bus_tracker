@@ -4,6 +4,9 @@ import '../config/api_config.dart';
 import '../core/constants/api_constants.dart';
 import '../core/exceptions/app_exceptions.dart';
 import '../core/network/api_client.dart';
+import '../models/driver_model.dart';
+import '../models/api_response_models.dart' hide DriverRatingQueryParameters;
+import '../models/driver_model.dart' show DriverRatingQueryParameters;
 
 class DriverService {
   final ApiClient _apiClient;
@@ -11,18 +14,18 @@ class DriverService {
   DriverService({ApiClient? apiClient}) : _apiClient = apiClient ?? ApiClient();
 
   // Get driver profile
-  Future<Map<String, dynamic>> getDriverProfile() async {
+  Future<ApiResponse<Driver>> getDriverProfile() async {
     try {
       // First, get the user ID
-      final userResponse = await _apiClient.get(Endpoints.currentUser);
+      final userResponse = await _apiClient.get(ApiEndpoints.buildUrl(ApiEndpoints.currentUser));
 
       if (!userResponse.containsKey('id')) {
-        throw ApiException('Failed to get user ID');
+        return ApiResponse.error(message: 'Failed to get user ID');
       }
 
       // Then get the driver details
       final response = await _apiClient.get(
-        Endpoints.drivers,
+        ApiEndpoints.buildUrl(ApiEndpoints.drivers),
         queryParameters: {
           'user_id': userResponse['id'],
         },
@@ -32,117 +35,180 @@ class DriverService {
         final drivers = List<Map<String, dynamic>>.from(response[ApiConstants.resultsKey]);
 
         if (drivers.isNotEmpty) {
-          return drivers.first;
+          final driver = Driver.fromJson(drivers.first);
+          return ApiResponse.success(data: driver);
         }
       }
 
-      throw ApiException('Driver profile not found');
+      return ApiResponse.error(message: 'Driver profile not found');
     } catch (e) {
       if (e is ApiException) {
-        rethrow;
+        return ApiResponse.error(message: e.message);
       }
-      throw ApiException('Failed to get driver profile: ${e.toString()}');
+      return ApiResponse.error(message: 'Failed to get driver profile: ${e.toString()}');
     }
   }
 
   // Update driver profile
-  Future<Map<String, dynamic>> updateProfile({
-    required String driverId,
-    String? phoneNumber,
-    int? yearsOfExperience,
-  }) async {
+  Future<ApiResponse<Driver>> updateProfile(String driverId, DriverUpdateRequest request) async {
     try {
-      final Map<String, dynamic> body = {};
-
-      if (phoneNumber != null) body['phone_number'] = phoneNumber;
-      if (yearsOfExperience != null) body['years_of_experience'] = yearsOfExperience;
-
+      final body = request.toJson();
+      
       if (body.isEmpty) {
-        throw ApiException('No data provided for update');
+        return ApiResponse.error(message: 'No data provided for update');
       }
 
       final response = await _apiClient.patch(
-        '${Endpoints.drivers}$driverId/',
+        ApiEndpoints.buildUrl(ApiEndpoints.driverById(driverId)),
         body: body,
       );
 
-      return response;
+      final driver = Driver.fromJson(response);
+      return ApiResponse.success(data: driver);
     } catch (e) {
       if (e is ApiException) {
-        rethrow;
+        return ApiResponse.error(message: e.message);
       }
-      throw ApiException('Failed to update driver profile: ${e.toString()}');
+      return ApiResponse.error(message: 'Failed to update driver profile: ${e.toString()}');
     }
   }
 
   // Get driver ratings
-  Future<List<Map<String, dynamic>>> getRatings(String driverId) async {
+  Future<ApiResponse<PaginatedResponse<DriverRating>>> getRatings({
+    String? driverId,
+    DriverRatingQueryParameters? queryParams,
+  }) async {
     try {
-      final response = await _apiClient.get('${Endpoints.drivers}$driverId/ratings/');
+      String endpoint = driverId != null 
+          ? ApiEndpoints.driverRatings(driverId)
+          : ApiEndpoints.driverRatings('');
+      
+      final response = await _apiClient.get(
+        ApiEndpoints.buildUrl(endpoint),
+        queryParameters: queryParams?.toMap(),
+      );
 
-      if (response is Map<String, dynamic> && response.containsKey(ApiConstants.resultsKey)) {
-        return List<Map<String, dynamic>>.from(response[ApiConstants.resultsKey]);
-      }
+      final paginatedResponse = PaginatedResponse<DriverRating>.fromJson(
+        response,
+        (json) => DriverRating.fromJson(json as Map<String, dynamic>),
+      );
 
-      if (response is List) {
-        return List<Map<String, dynamic>>.from(response);
-      }
-
-      return [];
+      return ApiResponse.success(data: paginatedResponse);
     } catch (e) {
       if (e is ApiException) {
-        rethrow;
+        return ApiResponse.error(message: e.message);
       }
-      throw ApiException('Failed to get driver ratings: ${e.toString()}');
+      return ApiResponse.error(message: 'Failed to get driver ratings: ${e.toString()}');
     }
   }
 
   // Update driver availability
-  Future<Map<String, dynamic>> updateAvailability({
-    required String driverId,
-    required bool isAvailable,
-  }) async {
+  Future<ApiResponse<Driver>> updateAvailability(String driverId, DriverAvailabilityRequest request) async {
     try {
       final response = await _apiClient.post(
-        '${Endpoints.drivers}$driverId/update_availability/',
-        body: {
-          'is_available': isAvailable,
-        },
+        ApiEndpoints.buildUrl(ApiEndpoints.updateDriverAvailability(driverId)),
+        body: request.toJson(),
       );
 
-      return response;
+      final driver = Driver.fromJson(response);
+      return ApiResponse.success(data: driver);
     } catch (e) {
       if (e is ApiException) {
-        rethrow;
+        return ApiResponse.error(message: e.message);
       }
-      throw ApiException('Failed to update driver availability: ${e.toString()}');
+      return ApiResponse.error(message: 'Failed to update driver availability: ${e.toString()}');
     }
   }
 
   // Rate a driver
-  Future<Map<String, dynamic>> rateDriver({
-    required String driverId,
-    required int rating,
-    String? comment,
-  }) async {
+  Future<ApiResponse<DriverRating>> rateDriver(String driverId, DriverRatingCreateRequest request) async {
     try {
-      final Map<String, dynamic> body = {
-        'rating': rating,
-      };
-
-      if (comment != null) body['comment'] = comment;
-
       final response = await _apiClient.post(
-        '${Endpoints.drivers}$driverId/ratings/',
-        body: body,
+        ApiEndpoints.buildUrl(ApiEndpoints.driverRatings(driverId)),
+        body: request.toJson(),
       );
 
-      return response;
+      final rating = DriverRating.fromJson(response);
+      return ApiResponse.success(data: rating);
     } catch (e) {
       if (e is ApiException) {
-        rethrow;
+        return ApiResponse.error(message: e.message);
       }
-      throw ApiException('Failed to rate driver: ${e.toString()}');
+      return ApiResponse.error(message: 'Failed to rate driver: ${e.toString()}');
+    }
+  }
+
+  // Approve driver
+  Future<ApiResponse<Driver>> approveDriver(String driverId, DriverApprovalRequest request) async {
+    try {
+      final response = await _apiClient.post(
+        ApiEndpoints.buildUrl(ApiEndpoints.approveDriver(driverId)),
+        body: request.toJson(),
+      );
+      
+      final driver = Driver.fromJson(response);
+      return ApiResponse.success(data: driver);
+    } catch (e) {
+      if (e is ApiException) {
+        return ApiResponse.error(message: e.message);
+      }
+      return ApiResponse.error(message: 'Failed to ${request.approve ? 'approve' : 'reject'} driver: ${e.toString()}');
+    }
+  }
+
+  // Reject driver (separate endpoint)
+  Future<ApiResponse<Driver>> rejectDriver(String driverId, DriverApprovalRequest request) async {
+    try {
+      final response = await _apiClient.post(
+        ApiEndpoints.buildUrl(ApiEndpoints.rejectDriver(driverId)),
+        body: request.toJson(),
+      );
+      
+      final driver = Driver.fromJson(response);
+      return ApiResponse.success(data: driver);
+    } catch (e) {
+      if (e is ApiException) {
+        return ApiResponse.error(message: e.message);
+      }
+      return ApiResponse.error(message: 'Failed to reject driver: ${e.toString()}');
+    }
+  }
+
+  // Get all drivers (for admin)
+  Future<ApiResponse<PaginatedResponse<Driver>>> getDrivers({
+    DriverQueryParameters? queryParams,
+  }) async {
+    try {
+      final response = await _apiClient.get(
+        ApiEndpoints.buildUrl(ApiEndpoints.drivers),
+        queryParameters: queryParams?.toMap(),
+      );
+
+      final paginatedResponse = PaginatedResponse<Driver>.fromJson(
+        response,
+        (json) => Driver.fromJson(json as Map<String, dynamic>),
+      );
+
+      return ApiResponse.success(data: paginatedResponse);
+    } catch (e) {
+      if (e is ApiException) {
+        return ApiResponse.error(message: e.message);
+      }
+      return ApiResponse.error(message: 'Failed to get drivers: ${e.toString()}');
+    }
+  }
+
+  // Get driver by ID
+  Future<ApiResponse<Driver>> getDriverById(String driverId) async {
+    try {
+      final response = await _apiClient.get(ApiEndpoints.buildUrl(ApiEndpoints.driverById(driverId)));
+      final driver = Driver.fromJson(response);
+      return ApiResponse.success(data: driver);
+    } catch (e) {
+      if (e is ApiException) {
+        return ApiResponse.error(message: e.message);
+      }
+      return ApiResponse.error(message: 'Failed to get driver details: ${e.toString()}');
     }
   }
 }

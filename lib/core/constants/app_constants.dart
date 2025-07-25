@@ -3,7 +3,7 @@
 class AppConstants {
   // App-wide constants
   static const String appName = 'DZ Bus Tracker';
-  static const String appVersion = '1.0.0';
+  static const String appVersion = '1.0';
 
   // Shared preferences keys
   static const String tokenKey = 'auth_token';
@@ -18,9 +18,9 @@ class AppConstants {
   static const int defaultCacheDuration = 3600; // 1 hour in seconds
 
   // Map constants
-  static const double defaultLatitude = 36.7538; // Algiers latitude
-  static const double defaultLongitude = 3.0588; // Algiers longitude
-  static const double defaultZoom = 13.0;
+  static const double defaultLatitude = 36; // Algiers latitude
+  static const double defaultLongitude = 3; // Algiers longitude
+  static const double defaultZoom = 13;
 
   // User types
   static const String userTypeAdmin = 'admin';

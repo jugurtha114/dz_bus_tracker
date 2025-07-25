@@ -38,7 +38,7 @@ class LineListItem extends StatelessWidget {
     final description = line['description'] ?? '';
     final color = line['color'] != null
         ? Color(int.parse(line['color'].toString().replaceFirst('#', '0xFF')))
-        : AppColors.primary;
+        : Theme.of(context).colorScheme.primary;
     final isActive = line['is_active'] == true;
     final frequency = line['frequency'];
 
@@ -58,14 +58,14 @@ class LineListItem extends StatelessWidget {
               // Line color indicator
               Container(
                 width: 4,
-                height: 60,
+        
                 decoration: BoxDecoration(
                   color: color,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
 
-              const SizedBox(width: 16),
+              const SizedBox(width: 16, height: 40),
 
               // Line info
               Expanded(
@@ -78,7 +78,7 @@ class LineListItem extends StatelessWidget {
                         Expanded(
                           child: Text(
                             name,
-                            style: AppTextStyles.body.copyWith(
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
                             maxLines: 1,
@@ -86,20 +86,20 @@ class LineListItem extends StatelessWidget {
                           ),
                         ),
                         if (code.isNotEmpty) ...[
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 8, height: 40),
                           Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 8,
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: color.withValues(alpha: 0.1),
+                              color: color.withValues(alpha: 0),
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: color.withValues(alpha: 0.3)),
+                              border: Border.all(color: color.withValues(alpha: 0)),
                             ),
                             child: Text(
                               code,
-                              style: AppTextStyles.caption.copyWith(
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                 color: color,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -109,20 +109,20 @@ class LineListItem extends StatelessWidget {
                       ],
                     ),
 
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 16),
 
                     // Description
                     if (description.isNotEmpty)
                       Text(
                         description,
-                        style: AppTextStyles.bodySmall.copyWith(
-                          color: AppColors.mediumGrey,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.primary,
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
 
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 16),
 
                     // Additional info
                     Row(
@@ -131,31 +131,31 @@ class LineListItem extends StatelessWidget {
                         if (showStatus) ...[
                           Icon(
                             isActive ? Icons.check_circle : Icons.cancel,
-                            color: isActive ? AppColors.success : AppColors.error,
+                            color: isActive ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.primary,
                             size: 16,
                           ),
-                          const SizedBox(width: 4),
+                          const SizedBox(width: 4, height: 40),
                           Text(
                             isActive ? 'Active' : 'Inactive',
-                            style: AppTextStyles.caption.copyWith(
-                              color: isActive ? AppColors.success : AppColors.error,
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: isActive ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.primary,
                             ),
                           ),
-                          const SizedBox(width: 12),
+                          const SizedBox(width: 12, height: 40),
                         ],
 
                         // Frequency
                         if (frequency != null) ...[
-                          const Icon(
+                          Icon(
                             Icons.schedule,
-                            color: AppColors.mediumGrey,
+                            color: Theme.of(context).colorScheme.primary,
                             size: 16,
                           ),
-                          const SizedBox(width: 4),
+                          const SizedBox(width: 4, height: 40),
                           Text(
                             'Every ${frequency}min',
-                            style: AppTextStyles.caption.copyWith(
-                              color: AppColors.mediumGrey,
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Theme.of(context).colorScheme.primary,
                             ),
                           ),
                         ],
@@ -170,13 +170,13 @@ class LineListItem extends StatelessWidget {
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: badgeColor ?? AppColors.warning,
+                              color: badgeColor ?? Theme.of(context).colorScheme.primary,
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
                               badgeText!,
-                              style: AppTextStyles.caption.copyWith(
-                                color: AppColors.white,
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: Theme.of(context).colorScheme.primary,
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -198,7 +198,7 @@ class LineListItem extends StatelessWidget {
                     IconButton(
                       icon: Icon(
                         isFavorite ? Icons.favorite : Icons.favorite_border,
-                        color: isFavorite ? AppColors.error : AppColors.mediumGrey,
+                        color: isFavorite ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.primary,
                         size: 20,
                       ),
                       onPressed: onFavoriteToggle,
@@ -210,9 +210,9 @@ class LineListItem extends StatelessWidget {
                     ),
 
                   // More options
-                  const Icon(
+                  Icon(
                     Icons.arrow_forward_ios,
-                    color: AppColors.mediumGrey,
+                    color: Theme.of(context).colorScheme.primary,
                     size: 16,
                   ),
                 ],

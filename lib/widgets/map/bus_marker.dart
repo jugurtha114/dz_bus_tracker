@@ -10,7 +10,7 @@ class BusMarker {
     required BuildContext context,
     required Color color,
     required String label,
-    double size = 40.0,
+    double size = 40,
   }) async {
     final pictureRecorder = PictureRecorder();
     final canvas = Canvas(pictureRecorder);
@@ -23,21 +23,21 @@ class BusMarker {
 
     // Bus body
     final RRect busRRect = RRect.fromRectAndRadius(
-      Rect.fromLTWH(0, 0, size, size * 0.6),
-      Radius.circular(size * 0.15),
+      Rect.fromLTWH(0, 0, size, size * 0),
+      Radius.circular(size * 0),
     );
     canvas.drawRRect(busRRect, paint);
 
     // Bus windows
     final Paint windowPaint = Paint()
-      ..color = Colors.white.withOpacity(0.7)
+      ..color = Colors.white.withOpacity(0.1)
       ..style = PaintingStyle.fill;
 
     // Front windshield
     canvas.drawRRect(
       RRect.fromRectAndRadius(
-        Rect.fromLTWH(size * 0.05, size * 0.05, size * 0.2, size * 0.15),
-        Radius.circular(size * 0.05),
+        Rect.fromLTWH(size * 0, size * 0, size * 0, size * 0),
+        Radius.circular(size * 0),
       ),
       windowPaint,
     );
@@ -47,12 +47,12 @@ class BusMarker {
       canvas.drawRRect(
         RRect.fromRectAndRadius(
           Rect.fromLTWH(
-            size * 0.35 + (i * size * 0.2),
-            size * 0.05,
-            size * 0.15,
-            size * 0.15,
+            size * 0 + (i * size * 0),
+            size * 0,
+            size * 0,
+            size * 0,
           ),
-          Radius.circular(size * 0.05),
+          Radius.circular(size * 0),
         ),
         windowPaint,
       );
@@ -63,15 +63,15 @@ class BusMarker {
       ..color = Colors.black
       ..style = PaintingStyle.fill;
 
-    canvas.drawCircle(Offset(size * 0.25, size * 0.6), size * 0.1, wheelPaint);
-    canvas.drawCircle(Offset(size * 0.75, size * 0.6), size * 0.1, wheelPaint);
+    canvas.drawCircle(Offset(size * 0, size * 0), size * 0, wheelPaint);
+    canvas.drawCircle(Offset(size * 0, size * 0), size * 0, wheelPaint);
 
     // Label
     textPainter.text = TextSpan(
       text: label,
       style: TextStyle(
         color: Colors.white,
-        fontSize: size * 0.3,
+        fontSize: size * 0,
         fontWeight: FontWeight.bold,
       ),
     );
@@ -80,13 +80,13 @@ class BusMarker {
       canvas,
       Offset(
         (size - textPainter.width) / 2,
-        size * 0.7,
+        size * 0,
       ),
     );
 
     // Convert to image
     final picture = pictureRecorder.endRecording();
-    final img = await picture.toImage(size.toInt(), (size * 1.0).toInt());
+    final img = await picture.toImage(size.toInt(), (size * 1).toInt());
     final byteData = await img.toByteData(format: ImageByteFormat.png);
 
     return BitmapDescriptor.fromBytes(byteData!.buffer.asUint8List());

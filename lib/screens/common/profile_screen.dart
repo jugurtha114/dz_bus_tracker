@@ -4,12 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../config/theme_config.dart';
 import '../../providers/auth_provider.dart';
-import '../../widgets/common/app_bar.dart';
+import '../../models/user_model.dart';
+import '../../widgets/common/app_layout.dart';
 import '../../widgets/common/custom_button.dart';
 import '../../widgets/common/custom_text_field.dart';
 import '../../widgets/common/glassy_container.dart';
+import '../../widgets/common/custom_card.dart';
 import '../../widgets/common/loading_indicator.dart';
 import '../../core/utils/validation_utils.dart';
+import '../../services/navigation_service.dart';
 import '../../helpers/error_handler.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -49,10 +52,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final user = authProvider.user;
 
     if (user != null) {
-      _firstNameController.text = user['first_name'] ?? '';
-      _lastNameController.text = user['last_name'] ?? '';
-      _phoneController.text = user['phone_number'] ?? '';
-      _emailController.text = user['email'] ?? '';
+      _firstNameController.text = user.firstName ?? '';
+      _lastNameController.text = user.lastName ?? '';
+      _phoneController.text = user.phoneNumber ?? '';
+      _emailController.text = user.email;
     }
   }
 
@@ -77,9 +80,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
           });
 
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
+            SnackBar(
               content: Text('Profile updated successfully'),
-              backgroundColor: AppColors.success,
+              backgroundColor: Theme.of(context).colorScheme.primary,
             ),
           );
         } else {
@@ -118,35 +121,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final authProvider = Provider.of<AuthProvider>(context);
     final user = authProvider.user;
 
-    return Scaffold(
-      appBar: DzAppBar(
-        title: 'Profile',
-        actions: [
-          IconButton(
-            icon: Icon(_isEditing ? Icons.close : Icons.edit),
-            onPressed: _toggleEdit,
-          ),
-        ],
-      ),
-      body: user == null
+    return AppLayout(
+      title: 'Profile',
+      currentIndex: 3, // Profile tab
+      actions: [
+        IconButton(
+          icon: Icon(_isEditing ? Icons.close : Icons.edit),
+          onPressed: _toggleEdit,
+        ),
+      ],
+      child: user == null
           ? const Center(child: LoadingIndicator())
           : SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
             // Profile header
-            GlassyContainer(
+            CustomCard(type: CardType.elevated, 
               padding: const EdgeInsets.all(24),
               child: Column(
                 children: [
                   // Avatar
                   CircleAvatar(
                     radius: 50,
-                    backgroundColor: AppColors.primary,
+                    backgroundColor: Theme.of(context).colorScheme.primary,
                     child: Text(
                       _getInitials(user),
-                      style: AppTextStyles.h1.copyWith(
-                        color: AppColors.white,
+                      style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                        color: Theme.of(context).colorScheme.primary,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -158,14 +160,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.1),
+                      color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.primary),
+                      border: Border.all(color: Theme.of(context).colorScheme.primary),
                     ),
                     child: Text(
-                      authProvider.userType?.toUpperCase() ?? 'USER',
-                      style: AppTextStyles.caption.copyWith(
-                        color: AppColors.primary,
+                      authProvider.userType?.name.toUpperCase() ?? 'USER',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.primary,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -174,10 +176,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
 
             // Profile form
-            GlassyContainer(
+            CustomCard(type: CardType.elevated, 
               padding: const EdgeInsets.all(24),
               child: Form(
                 key: _formKey,
@@ -227,29 +229,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
                       enabled: false,
-                      fillColor: AppColors.lightGrey.withValues(alpha: 0.3),
+                      fillColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0),
                     ),
 
                     if (_isEditing) ...[
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 16),
 
                       // Save button
                       CustomButton(
-                        text: 'Save Changes',
-                        onPressed: _saveProfile,
-                        isLoading: _isLoading,
-                        icon: Icons.save,
-                      ),
+        text: 'Save Changes',
+        onPressed: _saveProfile,
+        isLoading: _isLoading,
+        ),
                     ],
                   ],
                 ),
               ),
             ),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
 
             // Additional options
-            GlassyContainer(
+            CustomCard(type: CardType.elevated, 
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
@@ -286,11 +287,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  String _getInitials(Map<String, dynamic>? user) {
+  String _getInitials(User? user) {
     if (user == null) return 'U';
     
-    final firstName = user['first_name']?.toString() ?? '';
-    final lastName = user['last_name']?.toString() ?? '';
+    final firstName = user.firstName ?? '';
+    final lastName = user.lastName ?? '';
     
     String initials = '';
     if (firstName.isNotEmpty) initials += firstName[0].toUpperCase();
@@ -302,9 +303,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void _showChangePasswordDialog() {
     // Implementation for change password dialog
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
+      SnackBar(
         content: Text('Change password feature coming soon'),
-        backgroundColor: AppColors.info,
+        backgroundColor: Theme.of(context).colorScheme.primary,
       ),
     );
   }
@@ -312,9 +313,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void _showNotificationSettings() {
     // Implementation for notification settings
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
+      SnackBar(
         content: Text('Notification settings feature coming soon'),
-        backgroundColor: AppColors.info,
+        backgroundColor: Theme.of(context).colorScheme.primary,
       ),
     );
   }
@@ -322,9 +323,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void _showLanguageSelection() {
     // Implementation for language selection
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
+      SnackBar(
         content: Text('Language selection feature coming soon'),
-        backgroundColor: AppColors.info,
+        backgroundColor: Theme.of(context).colorScheme.primary,
       ),
     );
   }
@@ -339,24 +340,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
       contentPadding: EdgeInsets.zero,
       leading: Icon(
         icon,
-        color: AppColors.primary,
+        color: Theme.of(context).colorScheme.primary,
       ),
       title: Text(
         title,
-        style: AppTextStyles.body.copyWith(
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
           fontWeight: FontWeight.w500,
         ),
       ),
       subtitle: Text(
         subtitle,
-        style: AppTextStyles.bodySmall.copyWith(
-          color: AppColors.mediumGrey,
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+          color: Theme.of(context).colorScheme.primary,
         ),
       ),
-      trailing: const Icon(
+      trailing: Icon(
         Icons.arrow_forward_ios,
         size: 16,
-        color: AppColors.mediumGrey,
+        color: Theme.of(context).colorScheme.primary,
       ),
       onTap: onTap,
     );

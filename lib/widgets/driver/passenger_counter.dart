@@ -88,37 +88,32 @@ class _PassengerCounterState extends State<PassengerCounter> {
 
   @override
   Widget build(BuildContext context) {
-    final Color enabledColor = widget.isEnabled ? AppColors.white : AppColors.white.withOpacity(0.5);
+    final Color enabledColor = widget.isEnabled ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.primary.withOpacity(0.1);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Passenger Count',
-          style: AppTextStyles.body.copyWith(
-            color: AppColors.white,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: Theme.of(context).colorScheme.primary,
             fontWeight: FontWeight.bold,
           ),
         ),
 
-        const SizedBox(height: 8),
+        const SizedBox(height: 16),
 
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             // Decrement button
             IconButton(
-              icon: Container(
-                decoration: BoxDecoration(
-                  color: widget.isEnabled ? AppColors.primary : AppColors.mediumGrey,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.remove,
-                  color: AppColors.white,
-                ),
-              ),
+              icon: const Icon(Icons.remove),
               onPressed: widget.isEnabled ? _decrement : null,
+              style: IconButton.styleFrom(
+                foregroundColor: enabledColor,
+                backgroundColor: enabledColor.withOpacity(0.1),
+              ),
             ),
 
             // Count field
@@ -127,23 +122,23 @@ class _PassengerCounterState extends State<PassengerCounter> {
                 controller: _controller,
                 keyboardType: TextInputType.number,
                 textAlign: TextAlign.center,
-                style: AppTextStyles.h2.copyWith(
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                   color: enabledColor,
                   fontWeight: FontWeight.bold,
                 ),
                 decoration: InputDecoration(
                   filled: true,
-                  fillColor: AppColors.primary.withOpacity(0.1),
+                  fillColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide(
-                      color: enabledColor.withOpacity(0.3),
+                      color: enabledColor.withOpacity(0.1),
                     ),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide(
-                      color: enabledColor.withOpacity(0.3),
+                      color: enabledColor.withOpacity(0.1),
                     ),
                   ),
                   focusedBorder: OutlineInputBorder(
@@ -161,17 +156,12 @@ class _PassengerCounterState extends State<PassengerCounter> {
 
             // Increment button
             IconButton(
-              icon: Container(
-                decoration: BoxDecoration(
-                  color: widget.isEnabled ? AppColors.primary : AppColors.mediumGrey,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.add,
-                  color: AppColors.white,
-                ),
-              ),
+              icon: const Icon(Icons.add),
               onPressed: widget.isEnabled ? _increment : null,
+              style: IconButton.styleFrom(
+                foregroundColor: enabledColor,
+                backgroundColor: enabledColor.withOpacity(0.1),
+              ),
             ),
           ],
         ),
@@ -182,8 +172,8 @@ class _PassengerCounterState extends State<PassengerCounter> {
             padding: const EdgeInsets.only(top: 8),
             child: Text(
               'Tap + or - to update passenger count',
-              style: AppTextStyles.caption.copyWith(
-                color: AppColors.white.withOpacity(0.7),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                 fontStyle: FontStyle.italic,
               ),
               textAlign: TextAlign.center,
@@ -194,8 +184,8 @@ class _PassengerCounterState extends State<PassengerCounter> {
             padding: const EdgeInsets.only(top: 8),
             child: Text(
               'Start tracking to update passenger count',
-              style: AppTextStyles.caption.copyWith(
-                color: AppColors.white.withOpacity(0.7),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                 fontStyle: FontStyle.italic,
               ),
               textAlign: TextAlign.center,

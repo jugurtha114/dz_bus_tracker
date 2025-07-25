@@ -42,34 +42,34 @@ class AppTextStyles {
     fontFamily: fontFamily,
     fontSize: 24,
     fontWeight: FontWeight.bold,
-    color: AppColors.darkGrey,
+    color: AppColors.primary,
   );
 
   static const TextStyle h2 = TextStyle(
     fontFamily: fontFamily,
     fontSize: 20,
     fontWeight: FontWeight.bold,
-    color: AppColors.darkGrey,
+    color: AppColors.primary,
   );
 
   static const TextStyle h3 = TextStyle(
     fontFamily: fontFamily,
     fontSize: 18,
     fontWeight: FontWeight.bold,
-    color: AppColors.darkGrey,
+    color: AppColors.primary,
   );
 
   // Body text
   static const TextStyle body = TextStyle(
     fontFamily: fontFamily,
     fontSize: 16,
-    color: AppColors.darkGrey,
+    color: AppColors.primary,
   );
 
   static const TextStyle bodySmall = TextStyle(
     fontFamily: fontFamily,
     fontSize: 14,
-    color: AppColors.mediumGrey,
+    color: AppColors.primary,
   );
 
   // Button text
@@ -77,14 +77,14 @@ class AppTextStyles {
     fontFamily: fontFamily,
     fontSize: 16,
     fontWeight: FontWeight.w500,
-    color: AppColors.white,
+    color: AppColors.primary,
   );
 
   // Caption
   static const TextStyle caption = TextStyle(
     fontFamily: fontFamily,
     fontSize: 12,
-    color: AppColors.mediumGrey,
+    color: AppColors.primary,
   );
 }
 
@@ -101,7 +101,7 @@ class AppTheme {
         secondary: AppColors.accent,
         onPrimary: AppColors.white,
         onSecondary: AppColors.white,
-        surface: AppColors.background,
+        surface: AppColors.white,
         error: AppColors.error,
       ),
       scaffoldBackgroundColor: AppColors.background,
@@ -109,13 +109,13 @@ class AppTheme {
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
-        titleTextStyle: AppTextStyles.h2.copyWith(color: AppColors.white),
-        iconTheme: const IconThemeData(color: AppColors.white),
+        titleTextStyle: AppTextStyles.h2.copyWith(color: AppColors.primary),
+        iconTheme: const IconThemeData(color: AppColors.primary),
       ),
       textTheme: const TextTheme(
-        displayLarge: AppTextStyles.h1,
-        displayMedium: AppTextStyles.h2,
-        displaySmall: AppTextStyles.h3,
+        headlineLarge: AppTextStyles.h1,
+        headlineMedium: AppTextStyles.h2,
+        headlineSmall: AppTextStyles.h3,
         bodyLarge: AppTextStyles.body,
         bodyMedium: AppTextStyles.bodySmall,
         labelLarge: AppTextStyles.button,
@@ -132,7 +132,7 @@ class AppTheme {
         style: ElevatedButton.styleFrom(
           foregroundColor: AppColors.white,
           backgroundColor: AppColors.primary,
-          padding: EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
           ),
@@ -142,7 +142,7 @@ class AppTheme {
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: AppColors.primary,
-          padding: EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
           ),
@@ -151,8 +151,8 @@ class AppTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.primary,
-          padding: EdgeInsets.symmetric(vertical: 12, horizontal: 24),
-          side: BorderSide(color: AppColors.primary),
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+          side: const BorderSide(color: AppColors.primary),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
           ),
@@ -161,21 +161,21 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: AppColors.lightGrey),
+          borderSide: const BorderSide(color: AppColors.lightGrey),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: AppColors.lightGrey),
+          borderSide: const BorderSide(color: AppColors.lightGrey),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: AppColors.primary),
+          borderSide: const BorderSide(color: AppColors.primary),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: AppColors.error),
+          borderSide: const BorderSide(color: AppColors.error),
         ),
-        contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+        contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
         filled: true,
         fillColor: AppColors.white,
       ),

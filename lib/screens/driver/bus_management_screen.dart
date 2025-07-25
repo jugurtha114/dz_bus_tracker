@@ -5,6 +5,8 @@ import 'package:provider/provider.dart';
 import '../../config/theme_config.dart';
 import '../../providers/bus_provider.dart';
 import '../../providers/driver_provider.dart';
+import '../../models/api_response_models.dart';
+import '../../models/bus_model.dart';
 import '../../widgets/common/app_bar.dart';
 import '../../widgets/common/custom_button.dart';
 import '../../widgets/common/glassy_container.dart';
@@ -41,7 +43,8 @@ class _BusManagementScreenState extends State<BusManagementScreen> {
       final busProvider = Provider.of<BusProvider>(context, listen: false);
 
       await driverProvider.fetchProfile();
-      await busProvider.fetchBuses(driverId: driverProvider.driverId);
+      final queryParams = BusQueryParameters(driverId: driverProvider.driverId);
+      await busProvider.fetchBuses(queryParams: queryParams);
     } catch (e) {
       if (mounted) {
         ErrorHandler.showErrorSnackBar(
@@ -68,8 +71,8 @@ class _BusManagementScreenState extends State<BusManagementScreen> {
         children: [
           Text(
             'Add New Bus',
-            style: AppTextStyles.h2.copyWith(
-              color: AppColors.white,
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+              color: Theme.of(context).colorScheme.primary,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -98,21 +101,23 @@ class _BusManagementScreenState extends State<BusManagementScreen> {
       final busProvider = Provider.of<BusProvider>(context, listen: false);
       final driverProvider = Provider.of<DriverProvider>(context, listen: false);
 
-      await busProvider.registerBus(
+      final request = BusCreateRequest(
         licensePlate: busData['license_plate'],
-        driverId: driverProvider.driverId,
+        driver: driverProvider.driverId,
         model: busData['model'],
         manufacturer: busData['manufacturer'],
         year: int.parse(busData['year']),
         capacity: int.parse(busData['capacity']),
         isAirConditioned: busData['is_air_conditioned'] ?? false,
       );
+      
+      await busProvider.registerBus(request);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Bus added successfully'),
-            backgroundColor: AppColors.success,
+          SnackBar(
+            content: const Text('Bus added successfully'),
+            backgroundColor: Theme.of(context).colorScheme.primary,
           ),
         );
       }
@@ -132,7 +137,7 @@ class _BusManagementScreenState extends State<BusManagementScreen> {
     }
   }
 
-  void _showEditBusDialog(Map<String, dynamic> bus) {
+  void _showEditBusDialog(Bus bus) {
     DialogHelper.showGlassyDialog(
       context,
       child: Column(
@@ -140,19 +145,19 @@ class _BusManagementScreenState extends State<BusManagementScreen> {
         children: [
           Text(
             'Edit Bus',
-            style: AppTextStyles.h2.copyWith(
-              color: AppColors.white,
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+              color: Theme.of(context).colorScheme.primary,
               fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(height: 16),
           BusForm(
-            driverId: bus['driver'],
-            initialData: bus,
+            driverId: bus.driver,
+            initialData: bus.toMap(),  // Convert bus model to map for the form
             isEditing: true,
             onSaved: (busData) async {
               Navigator.pop(context);
-              await _updateBus(bus['id'], busData);
+              await _updateBus(bus.id, busData);
             },
             onCancel: () {
               Navigator.pop(context);
@@ -171,8 +176,7 @@ class _BusManagementScreenState extends State<BusManagementScreen> {
     try {
       final busProvider = Provider.of<BusProvider>(context, listen: false);
 
-      await busProvider.updateBus(
-        busId: busId,
+      final request = BusUpdateRequest(
         licensePlate: busData['license_plate'],
         model: busData['model'],
         manufacturer: busData['manufacturer'],
@@ -180,12 +184,14 @@ class _BusManagementScreenState extends State<BusManagementScreen> {
         capacity: int.parse(busData['capacity']),
         isAirConditioned: busData['is_air_conditioned'] ?? false,
       );
+      
+      await busProvider.updateBus(busId, request);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Bus updated successfully'),
-            backgroundColor: AppColors.success,
+          SnackBar(
+            content: const Text('Bus updated successfully'),
+            backgroundColor: Theme.of(context).colorScheme.primary,
           ),
         );
       }
@@ -205,15 +211,15 @@ class _BusManagementScreenState extends State<BusManagementScreen> {
     }
   }
 
-  void _selectBus(Map<String, dynamic> bus) {
+  void _selectBus(Bus bus) {
     final busProvider = Provider.of<BusProvider>(context, listen: false);
     busProvider.selectBus(bus);
 
     // Show confirmation
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Bus ${bus['license_plate']} selected'),
-        backgroundColor: AppColors.success,
+        content: Text('Bus ${bus.licensePlate} selected'),
+        backgroundColor: Theme.of(context).colorScheme.primary,
       ),
     );
   }
@@ -235,7 +241,7 @@ class _BusManagementScreenState extends State<BusManagementScreen> {
           : _buildBusList(),
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddBusDialog,
-        backgroundColor: AppColors.primary,
+        backgroundColor: Theme.of(context).colorScheme.primary,
         child: const Icon(Icons.add),
       ),
     );
@@ -249,28 +255,27 @@ class _BusManagementScreenState extends State<BusManagementScreen> {
           Icon(
             Icons.directions_bus_outlined,
             size: 64,
-            color: AppColors.mediumGrey,
+            color: Theme.of(context).colorScheme.primary,
           ),
           const SizedBox(height: 16),
           Text(
             'No buses registered yet',
-            style: AppTextStyles.h3.copyWith(
-              color: AppColors.darkGrey,
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+              color: Theme.of(context).colorScheme.primary,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 16),
           Text(
             'Add your first bus to start tracking',
-            style: AppTextStyles.body.copyWith(
-              color: AppColors.mediumGrey,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.primary,
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
           CustomButton(
-            text: 'Add Bus',
-            onPressed: _showAddBusDialog,
-            icon: Icons.add,
-          ),
+        text: 'Add Bus',
+        onPressed: _showAddBusDialog,
+        ),
         ],
       ),
     );
@@ -286,7 +291,7 @@ class _BusManagementScreenState extends State<BusManagementScreen> {
       itemCount: buses.length,
       itemBuilder: (context, index) {
         final bus = buses[index];
-        final isSelected = selectedBus != null && selectedBus['id'] == bus['id'];
+        final isSelected = selectedBus != null && selectedBus.id == bus.id;
 
         return BusCard(
           bus: bus,

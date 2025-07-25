@@ -3,6 +3,8 @@
 import 'package:flutter/foundation.dart';
 import '../core/exceptions/app_exceptions.dart';
 import '../services/bus_service.dart';
+import '../models/bus_model.dart';
+import '../models/api_response_models.dart';
 
 class BusProvider with ChangeNotifier {
   final BusService _busService;
@@ -11,35 +13,48 @@ class BusProvider with ChangeNotifier {
       : _busService = busService ?? BusService();
 
   // State
-  List<Map<String, dynamic>> _buses = [];
-  Map<String, dynamic>? _selectedBus;
-  List<Map<String, dynamic>> _busLocations = [];
+  List<Bus> _buses = [];
+  Bus? _selectedBus;
+  List<BusLocation> _busLocations = [];
   bool _isLoading = false;
   String? _error;
+  PaginatedResponse<Bus>? _busesResponse;
+  PaginatedResponse<BusLocation>? _locationsResponse;
 
   // Getters
-  List<Map<String, dynamic>> get buses => _buses;
-  Map<String, dynamic>? get selectedBus => _selectedBus;
-  List<Map<String, dynamic>> get busLocations => _busLocations;
+  List<Bus> get buses => _buses;
+  Bus? get selectedBus => _selectedBus;
+  List<BusLocation> get busLocations => _busLocations;
   bool get isLoading => _isLoading;
   String? get error => _error;
+  PaginatedResponse<Bus>? get busesResponse => _busesResponse;
+  PaginatedResponse<BusLocation>? get locationsResponse => _locationsResponse;
+  
+  // Helper getters
+  bool get hasMoreBuses => _busesResponse?.hasNextPage ?? false;
+  bool get hasMoreLocations => _locationsResponse?.hasNextPage ?? false;
 
   // Fetch buses
   Future<void> fetchBuses({
-    bool? isActive,
-    bool? isApproved,
-    String? driverId,
+    BusQueryParameters? queryParams,
+    bool append = false,
   }) async {
     _setLoading(true);
 
     try {
-      _buses = await _busService.getBuses(
-        isActive: isActive,
-        isApproved: isApproved,
-        driverId: driverId,
-      );
-
-      notifyListeners();
+      final response = await _busService.getBuses(queryParams: queryParams);
+      
+      if (response.isSuccess && response.data != null) {
+        _busesResponse = response.data!;
+        if (append) {
+          _buses.addAll(response.data!.results);
+        } else {
+          _buses = response.data!.results;
+        }
+        _clearError();
+      } else {
+        _setError(response.message ?? 'Failed to fetch buses');
+      }
     } catch (e) {
       _setError(e);
     } finally {
@@ -52,10 +67,14 @@ class BusProvider with ChangeNotifier {
     _setLoading(true);
 
     try {
-      final bus = await _busService.getBusById(busId);
-      _selectedBus = bus;
-
-      notifyListeners();
+      final response = await _busService.getBusById(busId);
+      
+      if (response.isSuccess && response.data != null) {
+        _selectedBus = response.data!;
+        _clearError();
+      } else {
+        _setError(response.message ?? 'Failed to fetch bus details');
+      }
     } catch (e) {
       _setError(e);
     } finally {
@@ -64,7 +83,7 @@ class BusProvider with ChangeNotifier {
   }
 
   // Select bus
-  void selectBus(Map<String, dynamic> bus) {
+  void selectBus(Bus bus) {
     _selectedBus = bus;
     notifyListeners();
   }
@@ -76,16 +95,28 @@ class BusProvider with ChangeNotifier {
   }
 
   // Track bus (get locations)
-  Future<void> trackBus(String busId) async {
+  Future<void> trackBus(String busId, {bool append = false}) async {
     _setLoading(true);
 
     try {
-      _busLocations = await _busService.getBusLocations(
+      final queryParams = BusLocationQueryParameters(
         busId: busId,
         isTrackingActive: true,
       );
-
-      notifyListeners();
+      
+      final response = await _busService.getBusLocations(queryParams: queryParams);
+      
+      if (response.isSuccess && response.data != null) {
+        _locationsResponse = response.data!;
+        if (append) {
+          _busLocations.addAll(response.data!.results);
+        } else {
+          _busLocations = response.data!.results;
+        }
+        _clearError();
+      } else {
+        _setError(response.message ?? 'Failed to track bus');
+      }
     } catch (e) {
       _setError(e);
     } finally {
@@ -94,85 +125,66 @@ class BusProvider with ChangeNotifier {
   }
 
   // Update bus location
-  Future<void> updateLocation({
-    required String busId,
-    required double latitude,
-    required double longitude,
-    double? altitude,
-    double? speed,
-    double? heading,
-    double? accuracy,
-    int? passengerCount,
-  }) async {
+  Future<bool> updateLocation(String busId, BusLocationUpdateRequest request) async {
     try {
-      await _busService.updateLocation(
-        busId: busId,
-        latitude: latitude,
-        longitude: longitude,
-        altitude: altitude,
-        speed: speed,
-        heading: heading,
-        accuracy: accuracy,
-        passengerCount: passengerCount,
-      );
-
-      // Update bus locations list if the bus is being tracked
-      if (_selectedBus != null && _selectedBus!['id'] == busId) {
-        await trackBus(busId);
+      final response = await _busService.updateLocation(busId, request);
+      
+      if (response.isSuccess) {
+        // Update bus locations list if the bus is being tracked
+        if (_selectedBus != null && _selectedBus!.id == busId) {
+          await trackBus(busId);
+        }
+        _clearError();
+        return true;
+      } else {
+        _setError(response.message ?? 'Failed to update location');
+        return false;
       }
     } catch (e) {
       _setError(e);
+      return false;
     }
   }
 
   // Update passenger count
-  Future<void> updatePassengerCount({
-    required String busId,
-    required int count,
-  }) async {
+  Future<bool> updatePassengerCount(String busId, PassengerCountUpdateRequest request) async {
     try {
-      await _busService.updatePassengerCount(
-        busId: busId,
-        count: count,
-      );
-
-      // Update selected bus if it's the same bus
-      if (_selectedBus != null && _selectedBus!['id'] == busId) {
-        await fetchBusById(busId);
+      final response = await _busService.updatePassengerCount(busId, request);
+      
+      if (response.isSuccess) {
+        // Update selected bus if it's the same bus
+        if (_selectedBus != null && _selectedBus!.id == busId) {
+          await fetchBusById(busId);
+        }
+        _clearError();
+        return true;
+      } else {
+        _setError(response.message ?? 'Failed to update passenger count');
+        return false;
       }
     } catch (e) {
       _setError(e);
+      return false;
     }
   }
 
   // Register new bus
-  Future<bool> registerBus({
-    required String licensePlate,
-    required String driverId,
-    required String model,
-    required String manufacturer,
-    required int year,
-    required int capacity,
-    required bool isAirConditioned,
-  }) async {
+  Future<bool> registerBus(BusCreateRequest request) async {
     _setLoading(true);
 
     try {
-      final newBus = await _busService.registerBus(
-        licensePlate: licensePlate,
-        driverId: driverId,
-        model: model,
-        manufacturer: manufacturer,
-        year: year,
-        capacity: capacity,
-        isAirConditioned: isAirConditioned,
-      );
-
-      // Add to buses list
-      _buses.add(newBus);
-      notifyListeners();
-
-      return true;
+      final response = await _busService.registerBus(request);
+      
+      if (response.isSuccess && response.data != null) {
+        // Add to buses list
+        _buses.add(response.data!);
+        _clearError();
+        notifyListeners();
+        return true;
+      } else {
+        _setError(response.message ?? 'Failed to register bus');
+        return false;
+      }
     } catch (e) {
       _setError(e);
       return false;
@@ -181,46 +193,34 @@ class BusProvider with ChangeNotifier {
     }
   }
 
-  // Update bus details
-  Future<bool> updateBus({
-    required String busId,
-    String? licensePlate,
-    String? model,
-    String? manufacturer,
-    int? year,
-    int? capacity,
-    bool? isAirConditioned,
-    String? status,
-    String lineId='jugu_line_id_please_update', // todo add lineID
-  }) async {
+  // Update bus details  
+  Future<bool> updateBus(String busId, BusUpdateRequest request) async {
     _setLoading(true);
 
     try {
-      final updatedBus = await _busService.updateBus(
-        busId: busId,
-        licensePlate: licensePlate,
-        model: model,
-        manufacturer: manufacturer,
-        year: year,
-        capacity: capacity,
-        isAirConditioned: isAirConditioned,
-        status: status,
-      );
+      final response = await _busService.updateBus(busId, request);
+      
+      if (response.isSuccess && response.data != null) {
+        final updatedBus = response.data!;
+        
+        // Update buses list
+        final index = _buses.indexWhere((bus) => bus.id == busId);
+        if (index != -1) {
+          _buses[index] = updatedBus;
+        }
 
-      // Update buses list
-      final index = _buses.indexWhere((bus) => bus['id'] == busId);
-      if (index != -1) {
-        _buses[index] = updatedBus;
+        // Update selected bus if it's the same bus
+        if (_selectedBus != null && _selectedBus!.id == busId) {
+          _selectedBus = updatedBus;
+        }
+
+        _clearError();
+        notifyListeners();
+        return true;
+      } else {
+        _setError(response.message ?? 'Failed to update bus');
+        return false;
       }
-
-      // Update selected bus if it's the same bus
-      if (_selectedBus != null && _selectedBus!['id'] == busId) {
-        _selectedBus = updatedBus;
-      }
-
-      notifyListeners();
-
-      return true;
     } catch (e) {
       _setError(e);
       return false;
@@ -249,5 +249,131 @@ class BusProvider with ChangeNotifier {
   void clearError() {
     _error = null;
     notifyListeners();
+  }
+  
+  void _clearError() {
+    _error = null;
+  }
+
+  // Bus activation methods
+  Future<bool> activateBus(String busId) async {
+    try {
+      final response = await _busService.activateBus(busId);
+      
+      if (response.isSuccess && response.data != null) {
+        _updateBusInList(response.data!);
+        _clearError();
+        return true;
+      } else {
+        _setError(response.message ?? 'Failed to activate bus');
+        return false;
+      }
+    } catch (e) {
+      _setError(e);
+      return false;
+    }
+  }
+
+  Future<bool> deactivateBus(String busId) async {
+    try {
+      final response = await _busService.deactivateBus(busId);
+      
+      if (response.isSuccess && response.data != null) {
+        _updateBusInList(response.data!);
+        _clearError();
+        return true;
+      } else {
+        _setError(response.message ?? 'Failed to deactivate bus');
+        return false;
+      }
+    } catch (e) {
+      _setError(e);
+      return false;
+    }
+  }
+
+  // Bus tracking methods
+  Future<bool> startTracking(String busId) async {
+    try {
+      final response = await _busService.startTracking(busId);
+      
+      if (response.isSuccess) {
+        _clearError();
+        return true;
+      } else {
+        _setError(response.message ?? 'Failed to start tracking');
+        return false;
+      }
+    } catch (e) {
+      _setError(e);
+      return false;
+    }
+  }
+
+  Future<bool> stopTracking(String busId) async {
+    try {
+      final response = await _busService.stopTracking(busId);
+      
+      if (response.isSuccess) {
+        _clearError();
+        return true;
+      } else {
+        _setError(response.message ?? 'Failed to stop tracking');
+        return false;
+      }
+    } catch (e) {
+      _setError(e);
+      return false;
+    }
+  }
+
+  // Bus approval method
+  Future<bool> approveBus(String busId, BusApprovalRequest request) async {
+    try {
+      final response = await _busService.approveBus(busId, request);
+      
+      if (response.isSuccess && response.data != null) {
+        _updateBusInList(response.data!);
+        _clearError();
+        return true;
+      } else {
+        _setError(response.message ?? 'Failed to process bus approval');
+        return false;
+      }
+    } catch (e) {
+      _setError(e);
+      return false;
+    }
+  }
+
+  // Helper method to update bus in the list
+  void _updateBusInList(Bus updatedBus) {
+    final index = _buses.indexWhere((bus) => bus.id == updatedBus.id);
+    if (index != -1) {
+      _buses[index] = updatedBus;
+    }
+    
+    // Update selected bus if it's the same bus
+    if (_selectedBus != null && _selectedBus!.id == updatedBus.id) {
+      _selectedBus = updatedBus;
+    }
+    
+    notifyListeners();
+  }
+
+  // Load more buses for pagination
+  Future<void> loadMoreBuses() async {
+    if (!hasMoreBuses || _isLoading) return;
+    
+    // Extract next page parameters from the next URL if needed
+    // For now, we'll implement basic pagination
+    await fetchBuses(append: true);
+  }
+
+  // Load more locations for pagination
+  Future<void> loadMoreLocations(String busId) async {
+    if (!hasMoreLocations || _isLoading) return;
+    
+    await trackBus(busId, append: true);
   }
 }

@@ -313,10 +313,10 @@ class _BusTrackerMapState extends State<BusTrackerMap> {
           bottom: 16,
           child: FloatingActionButton(
             mini: true,
-            backgroundColor: AppColors.white,
+            backgroundColor: Theme.of(context).colorScheme.primary,
             child: Icon(
               Icons.my_location,
-              color: AppColors.primary,
+              color: Theme.of(context).colorScheme.primary,
             ),
             onPressed: _centerMap,
           ),

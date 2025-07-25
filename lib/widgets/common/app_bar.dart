@@ -40,10 +40,10 @@ class DzAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     final effectiveBackgroundColor = backgroundColor ??
-        (isTransparent ? Colors.transparent : AppColors.primary);
+        (isTransparent ? Colors.transparent : Theme.of(context).colorScheme.primary);
 
     final effectiveTextColor = textColor ??
-        (isTransparent ? AppColors.primary : AppColors.white);
+        (isTransparent ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.primary);
 
     if (useGlassEffect && !isTransparent) {
       return PreferredSize(
@@ -57,7 +57,7 @@ class DzAppBar extends StatelessWidget implements PreferredSizeWidget {
                 toolbarHeight: height,
                 title: Text(
                   title,
-                  style: AppTextStyles.h2.copyWith(color: effectiveTextColor),
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(color: effectiveTextColor),
                 ),
                 centerTitle: centerTitle,
                 leading: leading ??
@@ -74,7 +74,7 @@ class DzAppBar extends StatelessWidget implements PreferredSizeWidget {
                 child: BackdropFilter(
                   filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                   child: Container(
-                    color: effectiveBackgroundColor.withOpacity(0.7),
+                    color: effectiveBackgroundColor.withOpacity(0.1),
                   ),
                 ),
               ),
@@ -83,8 +83,7 @@ class DzAppBar extends StatelessWidget implements PreferredSizeWidget {
                 left: 0,
                 right: 0,
                 child: Container(
-                  height: 1,
-                  color: Colors.white.withOpacity(0.2),
+                  color: Colors.white.withOpacity(0.1),
                 ),
               ),
             ],
@@ -99,7 +98,7 @@ class DzAppBar extends StatelessWidget implements PreferredSizeWidget {
       centerTitle: centerTitle,
       title: Text(
         title,
-        style: AppTextStyles.h2.copyWith(color: effectiveTextColor),
+        style: Theme.of(context).textTheme.headlineMedium?.copyWith(color: effectiveTextColor),
       ),
       leading: leading ??
           (Navigator.canPop(context)

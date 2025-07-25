@@ -12,8 +12,8 @@ class RatingInput extends StatefulWidget {
   final Future<void> Function(double rating, String comment)? onSubmit;
   final bool allowHalfRating;
   final double itemSize;
-  final Color activeColor;
-  final Color inactiveColor;
+  final Color? activeColor;
+  final Color? inactiveColor;
   final bool showSubmitButton;
   final String submitButtonText;
   final bool isLoading;
@@ -22,14 +22,14 @@ class RatingInput extends StatefulWidget {
 
   const RatingInput({
     Key? key,
-    this.initialRating = 0.0,
+    this.initialRating = 0,
     required this.onRatingChanged,
     this.onCommentChanged,
     this.onSubmit,
     this.allowHalfRating = false,
-    this.itemSize = 40.0,
-    this.activeColor = AppColors.warning,
-    this.inactiveColor = AppColors.lightGrey,
+    this.itemSize = 40,
+    this.activeColor,
+    this.inactiveColor,
     this.showSubmitButton = true,
     this.submitButtonText = 'Submit Rating',
     this.isLoading = false,
@@ -93,14 +93,14 @@ class _RatingInputState extends State<RatingInput> {
           allowHalfRating: widget.allowHalfRating,
           itemCount: 5,
           itemSize: widget.itemSize,
-          itemPadding: const EdgeInsets.symmetric(horizontal: 4.0),
+          itemPadding: const EdgeInsets.symmetric(horizontal: 4),
           itemBuilder: (context, _) => Icon(
             Icons.star,
-            color: widget.activeColor,
+            color: widget.activeColor ?? Theme.of(context).colorScheme.primary,
           ),
           unratedColor: widget.useGlassyContainer
-              ? AppColors.white.withOpacity(0.3)
-              : widget.inactiveColor,
+              ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
+              : widget.inactiveColor ?? Theme.of(context).colorScheme.primary,
           onRatingUpdate: _handleRatingUpdate,
         ),
 
@@ -109,10 +109,10 @@ class _RatingInputState extends State<RatingInput> {
         // Rating description
         Text(
           _getRatingDescription(_currentRating),
-          style: AppTextStyles.body.copyWith(
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             color: widget.useGlassyContainer
-                ? AppColors.white
-                : AppColors.darkGrey,
+                ? Theme.of(context).colorScheme.primary
+                : Theme.of(context).colorScheme.primary,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -123,13 +123,13 @@ class _RatingInputState extends State<RatingInput> {
         Container(
           decoration: BoxDecoration(
             color: widget.useGlassyContainer
-                ? AppColors.white.withOpacity(0.2)
-                : AppColors.white,
+                ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
+                : Theme.of(context).colorScheme.primary,
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
               color: widget.useGlassyContainer
-                  ? AppColors.white.withOpacity(0.5)
-                  : AppColors.lightGrey,
+                  ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
+                  : Theme.of(context).colorScheme.primary,
             ),
           ),
           child: TextField(
@@ -138,16 +138,16 @@ class _RatingInputState extends State<RatingInput> {
               hintText: widget.commentHint,
               hintStyle: TextStyle(
                 color: widget.useGlassyContainer
-                    ? AppColors.white.withOpacity(0.7)
-                    : AppColors.mediumGrey,
+                    ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
+                    : Theme.of(context).colorScheme.primary,
               ),
               border: InputBorder.none,
               contentPadding: const EdgeInsets.all(16),
             ),
             style: TextStyle(
               color: widget.useGlassyContainer
-                  ? AppColors.white
-                  : AppColors.darkGrey,
+                  ? Theme.of(context).colorScheme.primary
+                  : Theme.of(context).colorScheme.primary,
             ),
             maxLines: 3,
             onChanged: _handleCommentChanged,
@@ -155,20 +155,17 @@ class _RatingInputState extends State<RatingInput> {
         ),
 
         if (widget.showSubmitButton) ...[
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
 
           // Submit button
           CustomButton(
-            text: widget.submitButtonText,
-            onPressed: _hasRated ? _handleSubmit : () {},
+        text: widget.submitButtonText,
+        onPressed: _hasRated ? _handleSubmit : () {},
             isLoading: widget.isLoading,
             isDisabled: !_hasRated,
             color: widget.useGlassyContainer
-                ? AppColors.white
-                : AppColors.primary,
-            textColor: widget.useGlassyContainer
-                ? AppColors.primary
-                : AppColors.white,
+                ? Theme.of(context).colorScheme.primary
+                : Theme.of(context).colorScheme.primary,
           ),
         ],
       ],
@@ -179,11 +176,11 @@ class _RatingInputState extends State<RatingInput> {
         margin: const EdgeInsets.all(16),
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: AppColors.primary.withOpacity(0.7),
+          color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: AppColors.primary.withOpacity(0.2),
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
               blurRadius: 8,
               offset: const Offset(0, 4),
             ),
@@ -268,7 +265,7 @@ class _RateDriverDialogState extends State<RateDriverDialog> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to submit rating: ${e.toString()}'),
-            backgroundColor: AppColors.error,
+            backgroundColor: Theme.of(context).colorScheme.primary,
           ),
         );
       }
@@ -308,12 +305,12 @@ class _RateDriverDialogState extends State<RateDriverDialog> {
         ElevatedButton(
           onPressed: _rating > 0 ? (_isLoading ? null : _handleSubmit) : null,
           child: _isLoading
-              ? const SizedBox(
+              ? SizedBox(
             width: 20,
-            height: 20,
+        
             child: CircularProgressIndicator(
               strokeWidth: 2,
-              valueColor: AlwaysStoppedAnimation<Color>(AppColors.white),
+              valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.primary),
             ),
           )
               : const Text('Submit'),

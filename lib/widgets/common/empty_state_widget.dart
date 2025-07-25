@@ -20,24 +20,24 @@ class EmptyStateWidget extends StatelessWidget {
     required this.message,
     this.buttonText,
     this.onButtonPressed,
-    this.iconSize = 80.0,
-    this.spacing = 16.0,
+    this.iconSize = 80,
+    this.spacing = 16,
     this.useAnimation = false,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     final Widget iconWidget = useAnimation
-        ? _buildAnimatedIcon()
+        ? _buildAnimatedIcon(context)
         : Icon(
       icon,
       size: iconSize,
-      color: AppColors.mediumGrey,
+      color: Theme.of(context).colorScheme.primary,
     );
 
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24.0),
+        padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -46,8 +46,8 @@ class EmptyStateWidget extends StatelessWidget {
             SizedBox(height: spacing),
             Text(
               title,
-              style: AppTextStyles.h2.copyWith(
-                color: AppColors.darkGrey,
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                color: Theme.of(context).colorScheme.primary,
                 fontWeight: FontWeight.bold,
               ),
               textAlign: TextAlign.center,
@@ -55,8 +55,8 @@ class EmptyStateWidget extends StatelessWidget {
             SizedBox(height: spacing / 2),
             Text(
               message,
-              style: AppTextStyles.body.copyWith(
-                color: AppColors.mediumGrey,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.primary,
               ),
               textAlign: TextAlign.center,
             ),
@@ -66,7 +66,7 @@ class EmptyStateWidget extends StatelessWidget {
                 child: ElevatedButton(
                   onPressed: onButtonPressed,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
+                    backgroundColor: Theme.of(context).colorScheme.primary,
                     padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
@@ -81,9 +81,9 @@ class EmptyStateWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildAnimatedIcon() {
+  Widget _buildAnimatedIcon(BuildContext context) {
     return TweenAnimationBuilder(
-      tween: Tween<double>(begin: 0.8, end: 1.0),
+      tween: Tween<double>(begin: 0, end: 1),
       duration: const Duration(seconds: 2),
       curve: Curves.elasticOut,
       builder: (context, double value, child) {
@@ -95,7 +95,7 @@ class EmptyStateWidget extends StatelessWidget {
       child: Icon(
         icon,
         size: iconSize,
-        color: AppColors.mediumGrey,
+        color: Theme.of(context).colorScheme.primary,
       ),
     );
   }

@@ -38,21 +38,21 @@ class ErrorScreen extends StatelessWidget {
       body: SafeArea(
         child: Center(
           child: Padding(
-            padding: const EdgeInsets.all(24.0),
+            padding: const EdgeInsets.all(24),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 // Error icon
-                _buildErrorIcon(),
+                _buildErrorIcon(context),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
 
                 // Error title
                 Text(
                   _getErrorTitle(),
-                  style: AppTextStyles.h2.copyWith(
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: AppColors.darkGrey,
+                    color: Theme.of(context).colorScheme.primary,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -62,41 +62,39 @@ class ErrorScreen extends StatelessWidget {
                 // Error message
                 Text(
                   message,
-                  style: AppTextStyles.body.copyWith(
-                    color: AppColors.mediumGrey,
-                    height: 1.5,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.primary,
                   ),
                   textAlign: TextAlign.center,
                 ),
 
-                const SizedBox(height: 32),
+                const SizedBox(height: 16),
 
                 // Retry button
                 if (onRetry != null)
                   CustomButton(
-                    text: 'Try Again',
-                    onPressed: onRetry!,
-                    icon: Icons.refresh,
-                  ),
+        text: 'Try Again',
+        onPressed: onRetry!,
+        ),
 
                 const SizedBox(height: 16),
 
                 // Go back button
                 if (onGoBack != null)
                   CustomButton(
-                    text: 'Go Back',
-                    onPressed: onGoBack!,
-                    type: ButtonType.outlined,
-                    icon: Icons.arrow_back,
-                  ),
+        text: 'Go Back',
+        onPressed: onGoBack!,
+        type: ButtonType.outline,
+        ),
 
                 // Home button
                 if (showHomeButton)
                   Padding(
                     padding: const EdgeInsets.only(top: 16),
                     child: CustomButton(
-                      text: 'Return to Home',
-                      onPressed: () {
+        text: 'Return to Home',
+        onPressed: (
+      ) {
                         final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
                         // Navigate to appropriate home based on user type
@@ -118,35 +116,35 @@ class ErrorScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildErrorIcon() {
+  Widget _buildErrorIcon(BuildContext context) {
     IconData iconData;
     Color iconColor;
 
     switch (errorType) {
       case ErrorType.network:
         iconData = Icons.signal_wifi_off;
-        iconColor = AppColors.warning;
+        iconColor = Theme.of(context).colorScheme.primary;
         break;
       case ErrorType.server:
         iconData = Icons.cloud_off;
-        iconColor = AppColors.error;
+        iconColor = Theme.of(context).colorScheme.primary;
         break;
       case ErrorType.notFound:
         iconData = Icons.search_off;
-        iconColor = AppColors.warning;
+        iconColor = Theme.of(context).colorScheme.primary;
         break;
       case ErrorType.permission:
         iconData = Icons.no_accounts;
-        iconColor = AppColors.warning;
+        iconColor = Theme.of(context).colorScheme.primary;
         break;
       case ErrorType.authentication:
         iconData = Icons.lock;
-        iconColor = AppColors.error;
+        iconColor = Theme.of(context).colorScheme.primary;
         break;
       case ErrorType.unknown:
       default:
         iconData = Icons.error_outline;
-        iconColor = AppColors.error;
+        iconColor = Theme.of(context).colorScheme.primary;
     }
 
     return Icon(

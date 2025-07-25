@@ -5,15 +5,19 @@ import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'firebase_options.dart';
 
 import 'config/api_config.dart';
 import 'config/app_config.dart';
 import 'config/route_config.dart';
-import 'config/theme_config.dart';
+import 'config/app_theme.dart';
 import 'core/constants/app_constants.dart';
 import 'core/utils/storage_utils.dart';
 import 'localization/app_localizations.dart';
 import 'localization/localization_provider.dart';
+import 'services/navigation_service.dart';
 
 // Providers
 import 'providers/auth_provider.dart';
@@ -25,9 +29,32 @@ import 'providers/notification_provider.dart';
 import 'providers/passenger_provider.dart';
 import 'providers/stop_provider.dart';
 import 'providers/tracking_provider.dart';
+import 'providers/theme_provider.dart';
+
+/// Firebase background message handler
+/// This must be a top-level function
+@pragma('vm:entry-point')
+Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  // Ensure Firebase is initialized
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  
+  print('Handling a background message: ${message.messageId}');
+  print('Message data: ${message.data}');
+  print('Message notification: ${message.notification?.title} - ${message.notification?.body}');
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Firebase
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  
+  // Set Firebase background message handler
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
   // Set preferred orientations
   await SystemChrome.setPreferredOrientations([
@@ -49,6 +76,9 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        // Theme provider
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        
         // Localization provider
         ChangeNotifierProvider(create: (_) => LocalizationProvider()),
 
@@ -92,12 +122,15 @@ class _AppWithLocalizationState extends State<AppWithLocalization> {
 
   @override
   Widget build(BuildContext context) {
-    // Get the current locale from the provider
+    // Get the current locale and theme from providers
     final localizationProvider = Provider.of<LocalizationProvider>(context);
+    final themeProvider = Provider.of<ThemeProvider>(context);
 
     return MaterialApp(
       title: AppConfig.appName,
-      theme: AppTheme.lightTheme,
+      theme: themeProvider.lightTheme,
+      darkTheme: themeProvider.darkTheme,
+      themeMode: _getThemeMode(themeProvider.themeMode),
       locale: localizationProvider.locale,
       localizationsDelegates: [
         AppLocalizations.delegate,
@@ -107,8 +140,20 @@ class _AppWithLocalizationState extends State<AppWithLocalization> {
       ],
       supportedLocales: AppLocalizations.supportedLocales,
       debugShowCheckedModeBanner: !AppConfig.isProduction,
+      navigatorKey: NavigationService.navigatorKey,
       initialRoute: AppRoutes.splash,
       onGenerateRoute: AppRouter.generateRoute,
     );
+  }
+  
+  ThemeMode _getThemeMode(AppThemeMode themeMode) {
+    switch (themeMode) {
+      case AppThemeMode.light:
+        return ThemeMode.light;
+      case AppThemeMode.dark:
+        return ThemeMode.dark;
+      case AppThemeMode.system:
+        return ThemeMode.system;
+    }
   }
 }

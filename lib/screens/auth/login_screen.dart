@@ -3,16 +3,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../config/route_config.dart';
-import '../../config/theme_config.dart';
 import '../../core/utils/validation_utils.dart';
 import '../../providers/auth_provider.dart';
-import '../../widgets/common/app_bar.dart';
 import '../../widgets/common/custom_button.dart';
 import '../../widgets/common/custom_text_field.dart';
-import '../../widgets/common/glassy_container.dart';
-import '../../helpers/dialog_helper.dart';
+import '../../widgets/common/custom_card.dart';
 import '../../helpers/error_handler.dart';
-import '../../widgets/auth/login_form.dart';
+import '../../models/user_model.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -50,10 +47,19 @@ class _LoginScreenState extends State<LoginScreen> {
 
         if (success) {
           // Navigate to home screen based on user type
-          if (authProvider.isDriver) {
-            AppRouter.navigateToAndClearStack(context, AppRoutes.driverHome);
-          } else {
-            AppRouter.navigateToAndClearStack(context, AppRoutes.passengerHome);
+          final userType = authProvider.userType;
+          
+          switch (userType) {
+            case UserType.driver:
+              AppRouter.navigateToAndClearStack(context, AppRoutes.driverHome);
+              break;
+            case UserType.admin:
+              AppRouter.navigateToAndClearStack(context, AppRoutes.adminDashboard);
+              break;
+            case UserType.passenger:
+            default:
+              AppRouter.navigateToAndClearStack(context, AppRoutes.passengerHome);
+              break;
           }
         } else {
           // Show error message
@@ -97,7 +103,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).colorScheme.primary,
       body: Stack(
         children: [
           // Background image or gradient
@@ -107,8 +113,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  AppColors.primary,
-                  AppColors.primaryDark,
+                  Theme.of(context).colorScheme.primary,
+                  Theme.of(context).colorScheme.primary,
                 ],
               ),
             ),
@@ -121,19 +127,19 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 16),
 
                   // App Logo
                   Center(
                     child: Container(
                       width: 100,
-                      height: 100,
+        
                       decoration: BoxDecoration(
-                        color: AppColors.white,
+                        color: Theme.of(context).colorScheme.primary,
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.black.withOpacity(0.1),
+                            color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                             blurRadius: 10,
                             spreadRadius: 1,
                           ),
@@ -143,39 +149,39 @@ class _LoginScreenState extends State<LoginScreen> {
                         child: Icon(
                           Icons.directions_bus_rounded,
                           size: 60,
-                          color: AppColors.primary,
+                          color: Theme.of(context).colorScheme.primary,
                         ),
                       ),
                     ),
                   ),
 
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 16),
 
                   // Title
                   Text(
                     'Welcome Back',
-                    style: AppTextStyles.h1.copyWith(
-                      color: AppColors.white,
+                    style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                      color: Theme.of(context).colorScheme.primary,
                       fontWeight: FontWeight.bold,
                     ),
                     textAlign: TextAlign.center,
                   ),
 
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 16),
 
                   // Subtitle
                   Text(
                     'Sign in to continue',
-                    style: AppTextStyles.body.copyWith(
-                      color: AppColors.white.withOpacity(0.9),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                     ),
                     textAlign: TextAlign.center,
                   ),
 
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 16),
 
                   // Login Form in a Glass Container
-                  GlassyContainer(
+                  CustomCard(type: CardType.elevated, 
                     padding: const EdgeInsets.all(24),
                     child: Form(
                       key: _formKey,
@@ -191,11 +197,11 @@ class _LoginScreenState extends State<LoginScreen> {
                             prefixIcon: const Icon(Icons.email_outlined),
                             validator: ValidationUtils.validateEmail,
                             textInputAction: TextInputAction.next,
-                            fillColor: AppColors.white.withOpacity(0.8),
-                            borderColor: AppColors.white.withOpacity(0.5),
+                            fillColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                            borderColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                           ),
 
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 16),
 
                           // Password field
                           CustomTextField(
@@ -209,8 +215,8 @@ class _LoginScreenState extends State<LoginScreen> {
                               fieldName: 'Password',
                             ),
                             textInputAction: TextInputAction.done,
-                            fillColor: AppColors.white.withOpacity(0.8),
-                            borderColor: AppColors.white.withOpacity(0.5),
+                            fillColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                            borderColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                           ),
 
                           const SizedBox(height: 16),
@@ -222,31 +228,29 @@ class _LoginScreenState extends State<LoginScreen> {
                               onPressed: _goToForgotPassword,
                               child: Text(
                                 'Forgot Password?',
-                                style: AppTextStyles.body.copyWith(
-                                  color: AppColors.white,
+                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  color: Theme.of(context).colorScheme.primary,
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
                             ),
                           ),
 
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 16),
 
                           // Login button
                           CustomButton(
-                            text: 'Login',
-                            onPressed: _login,
-                            isLoading: _isLoading,
-                            height: 50,
-                            color: AppColors.white,
-                            textColor: AppColors.primary,
-                          ),
+        text: 'Login',
+        onPressed: _login,
+        isLoading: _isLoading,
+        customColor: Theme.of(context).colorScheme.primary
+      ),
                         ],
                       ),
                     ),
                   ),
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
 
                   // Register link
                   Row(
@@ -254,16 +258,16 @@ class _LoginScreenState extends State<LoginScreen> {
                     children: [
                       Text(
                         'Don\'t have an account? ',
-                        style: AppTextStyles.body.copyWith(
-                          color: AppColors.white,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.primary,
                         ),
                       ),
                       TextButton(
                         onPressed: _goToRegister,
                         child: Text(
                           'Register',
-                          style: AppTextStyles.body.copyWith(
-                            color: AppColors.white,
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Theme.of(context).colorScheme.primary,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -277,8 +281,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   OutlinedButton(
                     onPressed: _goToDriverRegister,
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.white,
-                      side: BorderSide(color: AppColors.white),
+                      foregroundColor: Theme.of(context).colorScheme.primary,
+                      side: BorderSide(color: Theme.of(context).colorScheme.primary),
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
@@ -286,8 +290,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     child: Text(
                       'Register as Bus Driver',
-                      style: AppTextStyles.body.copyWith(
-                        color: AppColors.white,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.primary,
                       ),
                     ),
                   ),

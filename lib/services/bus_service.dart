@@ -4,6 +4,8 @@ import '../config/api_config.dart';
 import '../core/constants/api_constants.dart';
 import '../core/exceptions/app_exceptions.dart';
 import '../core/network/api_client.dart';
+import '../models/bus_model.dart';
+import '../models/api_response_models.dart';
 
 class BusService {
   final ApiClient _apiClient;
@@ -11,215 +13,213 @@ class BusService {
   BusService({ApiClient? apiClient}) : _apiClient = apiClient ?? ApiClient();
 
   // Get all buses
-  Future<List<Map<String, dynamic>>> getBuses({
-    bool? isActive,
-    bool? isApproved,
-    String? driverId,
+  Future<ApiResponse<PaginatedResponse<Bus>>> getBuses({
+    BusQueryParameters? queryParams,
   }) async {
     try {
-      final Map<String, dynamic> queryParams = {};
-
-      if (isActive != null) queryParams[ApiConstants.isActiveKey] = isActive;
-      if (isApproved != null) queryParams[ApiConstants.isApprovedKey] = isApproved;
-      if (driverId != null) queryParams[ApiConstants.driverIdKey] = driverId;
-
       final response = await _apiClient.get(
-        Endpoints.buses,
-        queryParameters: queryParams,
+        ApiEndpoints.buildUrl(ApiEndpoints.buses),
+        queryParameters: queryParams?.toMap(),
       );
 
-      if (response is Map<String, dynamic> && response.containsKey(ApiConstants.resultsKey)) {
-        return List<Map<String, dynamic>>.from(response[ApiConstants.resultsKey]);
-      }
+      final paginatedResponse = PaginatedResponse<Bus>.fromJson(
+        response,
+        (json) => Bus.fromJson(json as Map<String, dynamic>),
+      );
 
-      if (response is List) {
-        return List<Map<String, dynamic>>.from(response);
-      }
-
-      return [];
+      return ApiResponse.success(data: paginatedResponse);
     } catch (e) {
       if (e is ApiException) {
-        rethrow;
+        return ApiResponse.error(message: e.message);
       }
-      throw ApiException('Failed to get buses: ${e.toString()}');
+      return ApiResponse.error(message: 'Failed to get buses: ${e.toString()}');
     }
   }
 
   // Get bus by ID
-  Future<Map<String, dynamic>> getBusById(String busId) async {
+  Future<ApiResponse<Bus>> getBusById(String busId) async {
     try {
-      final response = await _apiClient.get('${Endpoints.buses}$busId/');
-      return response;
+      final response = await _apiClient.get(ApiEndpoints.buildUrl(ApiEndpoints.busById(busId)));
+      final bus = Bus.fromJson(response);
+      return ApiResponse.success(data: bus);
     } catch (e) {
       if (e is ApiException) {
-        rethrow;
+        return ApiResponse.error(message: e.message);
       }
-      throw ApiException('Failed to get bus details: ${e.toString()}');
+      return ApiResponse.error(message: 'Failed to get bus details: ${e.toString()}');
     }
   }
 
   // Register new bus
-  Future<Map<String, dynamic>> registerBus({
-    required String licensePlate,
-    required String driverId,
-    required String model,
-    required String manufacturer,
-    required int year,
-    required int capacity,
-    required bool isAirConditioned,
-  }) async {
+  Future<ApiResponse<Bus>> registerBus(BusCreateRequest request) async {
     try {
       final response = await _apiClient.post(
-        Endpoints.buses,
-        body: {
-          'license_plate': licensePlate,
-          'driver': driverId,
-          'model': model,
-          'manufacturer': manufacturer,
-          'year': year,
-          'capacity': capacity,
-          'is_air_conditioned': isAirConditioned,
-        },
+        ApiEndpoints.buildUrl(ApiEndpoints.buses),
+        body: request.toJson(),
       );
 
-      return response;
+      final bus = Bus.fromJson(response);
+      return ApiResponse.success(data: bus);
     } catch (e) {
       if (e is ApiException) {
-        rethrow;
+        return ApiResponse.error(message: e.message);
       }
-      throw ApiException('Failed to register bus: ${e.toString()}');
+      return ApiResponse.error(message: 'Failed to register bus: ${e.toString()}');
     }
   }
 
   // Update bus details
-  Future<Map<String, dynamic>> updateBus({
-    required String busId,
-    String? licensePlate,
-    String? model,
-    String? manufacturer,
-    int? year,
-    int? capacity,
-    bool? isAirConditioned,
-    String? status,
-  }) async {
+  Future<ApiResponse<Bus>> updateBus(String busId, BusUpdateRequest request) async {
     try {
-      final Map<String, dynamic> body = {};
-
-      if (licensePlate != null) body['license_plate'] = licensePlate;
-      if (model != null) body['model'] = model;
-      if (manufacturer != null) body['manufacturer'] = manufacturer;
-      if (year != null) body['year'] = year;
-      if (capacity != null) body['capacity'] = capacity;
-      if (isAirConditioned != null) body['is_air_conditioned'] = isAirConditioned;
-      if (status != null) body['status'] = status;
-
+      final body = request.toJson();
+      
       if (body.isEmpty) {
-        throw ApiException('No data provided for update');
+        return ApiResponse.error(message: 'No data provided for update');
       }
 
       final response = await _apiClient.patch(
-        '${Endpoints.buses}$busId/',
+        ApiEndpoints.buildUrl(ApiEndpoints.busById(busId)),
         body: body,
       );
 
-      return response;
+      final bus = Bus.fromJson(response);
+      return ApiResponse.success(data: bus);
     } catch (e) {
       if (e is ApiException) {
-        rethrow;
+        return ApiResponse.error(message: e.message);
       }
-      throw ApiException('Failed to update bus: ${e.toString()}');
+      return ApiResponse.error(message: 'Failed to update bus: ${e.toString()}');
     }
   }
 
   // Update bus location
-  Future<Map<String, dynamic>> updateLocation({
-    required String busId,
-    required double latitude,
-    required double longitude,
-    double? altitude,
-    double? speed,
-    double? heading,
-    double? accuracy,
-    int? passengerCount,
-  }) async {
+  Future<ApiResponse<BusLocation>> updateLocation(String busId, BusLocationUpdateRequest request) async {
     try {
-      final Map<String, dynamic> body = {
-        'latitude': latitude.toString(),
-        'longitude': longitude.toString(),
-      };
-
-      if (altitude != null) body['altitude'] = altitude.toString();
-      if (speed != null) body['speed'] = speed.toString();
-      if (heading != null) body['heading'] = heading.toString();
-      if (accuracy != null) body['accuracy'] = accuracy.toString();
-      if (passengerCount != null) body['passenger_count'] = passengerCount;
-
       final response = await _apiClient.post(
-        '${Endpoints.buses}$busId/update_location/',
-        body: body,
+        ApiEndpoints.buildUrl(ApiEndpoints.updateBusLocation(busId)),
+        body: request.toJson(),
       );
 
-      return response;
+      final location = BusLocation.fromJson(response);
+      return ApiResponse.success(data: location);
     } catch (e) {
       if (e is ApiException) {
-        rethrow;
+        return ApiResponse.error(message: e.message);
       }
-      throw ApiException('Failed to update bus location: ${e.toString()}');
+      return ApiResponse.error(message: 'Failed to update bus location: ${e.toString()}');
     }
   }
 
   // Update passenger count
-  Future<Map<String, dynamic>> updatePassengerCount({
-    required String busId,
-    required int count,
-  }) async {
+  Future<ApiResponse<void>> updatePassengerCount(String busId, PassengerCountUpdateRequest request) async {
     try {
-      final response = await _apiClient.post(
-        '${Endpoints.buses}$busId/update_passenger_count/',
-        body: {
-          'count': count,
-        },
+      await _apiClient.post(
+        ApiEndpoints.buildUrl(ApiEndpoints.updatePassengerCount(busId)),
+        body: request.toJson(),
       );
 
-      return response;
+      return ApiResponse.success();
     } catch (e) {
       if (e is ApiException) {
-        rethrow;
+        return ApiResponse.error(message: e.message);
       }
-      throw ApiException('Failed to update passenger count: ${e.toString()}');
+      return ApiResponse.error(message: 'Failed to update passenger count: ${e.toString()}');
     }
   }
 
   // Get bus locations
-  Future<List<Map<String, dynamic>>> getBusLocations({
-    String? busId,
-    bool? isTrackingActive,
+  Future<ApiResponse<PaginatedResponse<BusLocation>>> getBusLocations({
+    BusLocationQueryParameters? queryParams,
   }) async {
     try {
-      final Map<String, dynamic> queryParams = {};
-
-      if (busId != null) queryParams[ApiConstants.busIdKey] = busId;
-      if (isTrackingActive != null) queryParams[ApiConstants.isTrackingActiveKey] = isTrackingActive;
-
       final response = await _apiClient.get(
-        Endpoints.busLocations,
-        queryParameters: queryParams,
+        ApiEndpoints.buildUrl(ApiEndpoints.busLocations),
+        queryParameters: queryParams?.toMap(),
       );
 
-      if (response is Map<String, dynamic> && response.containsKey(ApiConstants.resultsKey)) {
-        return List<Map<String, dynamic>>.from(response[ApiConstants.resultsKey]);
-      }
+      final paginatedResponse = PaginatedResponse<BusLocation>.fromJson(
+        response,
+        (json) => BusLocation.fromJson(json as Map<String, dynamic>),
+      );
 
-      if (response is List) {
-        return List<Map<String, dynamic>>.from(response);
-      }
-
-      return [];
+      return ApiResponse.success(data: paginatedResponse);
     } catch (e) {
       if (e is ApiException) {
-        rethrow;
+        return ApiResponse.error(message: e.message);
       }
-      throw ApiException('Failed to get bus locations: ${e.toString()}');
+      return ApiResponse.error(message: 'Failed to get bus locations: ${e.toString()}');
+    }
+  }
+
+  // Activate bus
+  Future<ApiResponse<Bus>> activateBus(String busId) async {
+    try {
+      final response = await _apiClient.post(ApiEndpoints.buildUrl(ApiEndpoints.activateBus(busId)));
+      final bus = Bus.fromJson(response);
+      return ApiResponse.success(data: bus);
+    } catch (e) {
+      if (e is ApiException) {
+        return ApiResponse.error(message: e.message);
+      }
+      return ApiResponse.error(message: 'Failed to activate bus: ${e.toString()}');
+    }
+  }
+
+  // Deactivate bus
+  Future<ApiResponse<Bus>> deactivateBus(String busId) async {
+    try {
+      final response = await _apiClient.post(ApiEndpoints.buildUrl(ApiEndpoints.deactivateBus(busId)));
+      final bus = Bus.fromJson(response);
+      return ApiResponse.success(data: bus);
+    } catch (e) {
+      if (e is ApiException) {
+        return ApiResponse.error(message: e.message);
+      }
+      return ApiResponse.error(message: 'Failed to deactivate bus: ${e.toString()}');
+    }
+  }
+
+  // Start bus tracking
+  Future<ApiResponse<void>> startTracking(String busId) async {
+    try {
+      await _apiClient.post(ApiEndpoints.buildUrl(ApiEndpoints.startBusTracking(busId)));
+      return ApiResponse.success();
+    } catch (e) {
+      if (e is ApiException) {
+        return ApiResponse.error(message: e.message);
+      }
+      return ApiResponse.error(message: 'Failed to start bus tracking: ${e.toString()}');
+    }
+  }
+
+  // Stop bus tracking
+  Future<ApiResponse<void>> stopTracking(String busId) async {
+    try {
+      await _apiClient.post(ApiEndpoints.buildUrl(ApiEndpoints.stopBusTracking(busId)));
+      return ApiResponse.success();
+    } catch (e) {
+      if (e is ApiException) {
+        return ApiResponse.error(message: e.message);
+      }
+      return ApiResponse.error(message: 'Failed to stop bus tracking: ${e.toString()}');
+    }
+  }
+
+  // Approve bus
+  Future<ApiResponse<Bus>> approveBus(String busId, BusApprovalRequest request) async {
+    try {
+      final response = await _apiClient.post(
+        ApiEndpoints.buildUrl(ApiEndpoints.approveBus(busId)),
+        body: request.toJson(),
+      );
+      
+      final bus = Bus.fromJson(response);
+      return ApiResponse.success(data: bus);
+    } catch (e) {
+      if (e is ApiException) {
+        return ApiResponse.error(message: e.message);
+      }
+      return ApiResponse.error(message: 'Failed to ${request.approve ? 'approve' : 'reject'} bus: ${e.toString()}');
     }
   }
 }

@@ -160,7 +160,7 @@ class _StopSearchScreenState extends State<StopSearchScreen> {
                   text: 'Find Stops Near Me',
                   onPressed: _findNearbyStops,
                   icon: Icons.near_me,
-                  type: _showNearbyOnly ? ButtonType.filled : ButtonType.outlined,
+                  type: _showNearbyOnly ? ButtonType.primary : ButtonType.outline,
                 ),
 
                 const SizedBox(height: 16),
@@ -173,18 +173,18 @@ class _StopSearchScreenState extends State<StopSearchScreen> {
                     prefixIcon: const Icon(Icons.search),
                     suffixIcon: _searchQuery.isNotEmpty
                         ? IconButton(
-                      icon: const Icon(Icons.clear),
-                      onPressed: () {
-                        _searchController.clear();
-                        _onSearchChanged('');
-                      },
-                    )
+                            icon: const Icon(Icons.clear),
+                            onPressed: () {
+                              _searchController.clear();
+                              _onSearchChanged('');
+                            },
+                          )
                         : null,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                     filled: true,
-                    fillColor: AppColors.white,
+                    fillColor: Theme.of(context).colorScheme.primary,
                   ),
                   onChanged: _onSearchChanged,
                 ),
@@ -201,13 +201,13 @@ class _StopSearchScreenState extends State<StopSearchScreen> {
                   Icon(
                     Icons.location_on,
                     size: 16,
-                    color: AppColors.primary,
+                    color: Theme.of(context).colorScheme.primary,
                   ),
-                  const SizedBox(width: 4),
+                  const SizedBox(width: 4, height: 40),
                   Text(
                     'Showing nearby stops',
-                    style: AppTextStyles.body.copyWith(
-                      color: AppColors.primary,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.primary,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -238,15 +238,15 @@ class _StopSearchScreenState extends State<StopSearchScreen> {
                   Icon(
                     Icons.search_off,
                     size: 48,
-                    color: AppColors.mediumGrey,
+                    color: Theme.of(context).colorScheme.primary,
                   ),
                   const SizedBox(height: 16),
                   Text(
                     _searchQuery.isEmpty
                         ? 'No stops available'
                         : 'No stops matching "$_searchQuery"',
-                    style: AppTextStyles.body.copyWith(
-                      color: AppColors.mediumGrey,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.primary,
                     ),
                   ),
                 ],

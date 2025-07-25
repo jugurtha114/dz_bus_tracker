@@ -6,8 +6,9 @@ import 'package:timeago/timeago.dart' as timeago;
 import 'package:flutter_slidable/flutter_slidable.dart';
 import '../../config/theme_config.dart';
 import '../../providers/notification_provider.dart';
-import '../../widgets/common/app_bar.dart';
+import '../../widgets/common/app_layout.dart';
 import '../../widgets/common/loading_indicator.dart';
+import '../../services/navigation_service.dart';
 import '../../helpers/error_handler.dart';
 
 class NotificationsScreen extends StatefulWidget {
@@ -61,9 +62,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
       if (success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text('Marked all notifications as read'),
-            backgroundColor: AppColors.success,
+            backgroundColor: Theme.of(context).colorScheme.primary,
           ),
         );
       }
@@ -116,19 +117,18 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     final notificationProvider = Provider.of<NotificationProvider>(context);
     final notifications = notificationProvider.notifications;
 
-    return Scaffold(
-      appBar: DzAppBar(
-        title: 'Notifications',
-        actions: [
-          if (notificationProvider.unreadCount > 0)
-            IconButton(
-              icon: const Icon(Icons.done_all),
-              onPressed: _markAllAsRead,
-              tooltip: 'Mark All as Read',
-            ),
-        ],
-      ),
-      body: _isLoading
+    return AppLayout(
+      title: 'Notifications',
+      currentIndex: 2, // Notifications tab
+      actions: [
+        if (notificationProvider.unreadCount > 0)
+          IconButton(
+            icon: const Icon(Icons.mark_email_read),
+            onPressed: _markAllAsRead,
+            tooltip: 'Mark All as Read',
+          ),
+      ],
+      child: _isLoading
           ? const Center(
         child: LoadingIndicator(),
       )
@@ -142,7 +142,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           itemBuilder: (context, index) {
             final notification = notifications[index];
 
-            return _buildNotificationItem(notification);
+            return _buildNotificationItem(notification as Map<String, dynamic>);
           },
         ),
       ),
@@ -157,20 +157,20 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           Icon(
             Icons.notifications_off_outlined,
             size: 64,
-            color: AppColors.mediumGrey,
+            color: Theme.of(context).colorScheme.primary,
           ),
           const SizedBox(height: 16),
           Text(
             'No notifications',
-            style: AppTextStyles.h3.copyWith(
-              color: AppColors.darkGrey,
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+              color: Theme.of(context).colorScheme.primary,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 16),
           Text(
             'You don\'t have any notifications yet',
-            style: AppTextStyles.body.copyWith(
-              color: AppColors.mediumGrey,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.primary,
             ),
           ),
         ],
@@ -199,27 +199,27 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       case 'driver_approved':
       case 'bus_approved':
         icon = Icons.check_circle;
-        iconColor = AppColors.success;
+        iconColor = Theme.of(context).colorScheme.primary;
         break;
       case 'driver_rejected':
         icon = Icons.cancel;
-        iconColor = AppColors.error;
+        iconColor = Theme.of(context).colorScheme.primary;
         break;
       case 'bus_arriving':
         icon = Icons.directions_bus;
-        iconColor = AppColors.primary;
+        iconColor = Theme.of(context).colorScheme.primary;
         break;
       case 'bus_delayed':
         icon = Icons.access_time;
-        iconColor = AppColors.warning;
+        iconColor = Theme.of(context).colorScheme.primary;
         break;
       case 'bus_cancelled':
         icon = Icons.cancel;
-        iconColor = AppColors.error;
+        iconColor = Theme.of(context).colorScheme.primary;
         break;
       default:
         icon = Icons.notifications;
-        iconColor = AppColors.primary;
+        iconColor = Theme.of(context).colorScheme.primary;
     }
 
     return Slidable(
@@ -228,15 +228,15 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         children: [
           SlidableAction(
             onPressed: (context) => _markAsRead(id),
-            backgroundColor: AppColors.info,
-            foregroundColor: AppColors.white,
+            backgroundColor: Theme.of(context).colorScheme.primary,
+            foregroundColor: Theme.of(context).colorScheme.primary,
             icon: Icons.done,
             label: 'Mark Read',
           ),
           SlidableAction(
             onPressed: (context) => _deleteNotification(id),
-            backgroundColor: AppColors.error,
-            foregroundColor: AppColors.white,
+            backgroundColor: Theme.of(context).colorScheme.primary,
+            foregroundColor: Theme.of(context).colorScheme.primary,
             icon: Icons.delete,
             label: 'Delete',
           ),
@@ -249,7 +249,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           borderRadius: BorderRadius.circular(12),
           side: isRead
               ? BorderSide.none
-              : BorderSide(color: AppColors.primary.withOpacity(0.5)),
+              : BorderSide(color: Theme.of(context).colorScheme.primary.withOpacity(0.1)),
         ),
         child: ListTile(
           contentPadding: const EdgeInsets.all(16),
@@ -262,25 +262,25 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           ),
           title: Text(
             title,
-            style: AppTextStyles.body.copyWith(
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               fontWeight: isRead ? FontWeight.normal : FontWeight.bold,
             ),
           ),
           subtitle: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 4),
+              const SizedBox(height: 16),
               Text(
                 message,
-                style: AppTextStyles.bodySmall,
+                style: Theme.of(context).textTheme.bodySmall,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 16),
               Text(
                 timeAgo,
-                style: AppTextStyles.caption.copyWith(
-                  color: AppColors.mediumGrey,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.primary,
                   fontStyle: FontStyle.italic,
                 ),
               ),
@@ -291,9 +291,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               ? null
               : Container(
             width: 12,
-            height: 12,
+        
             decoration: BoxDecoration(
-              color: AppColors.primary,
+              color: Theme.of(context).colorScheme.primary,
               shape: BoxShape.circle,
             ),
           ),
@@ -334,15 +334,15 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             const SizedBox(height: 16),
             Text(
               'Received: $formattedDate',
-              style: AppTextStyles.caption.copyWith(
-                color: AppColors.mediumGrey,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.primary,
                 fontStyle: FontStyle.italic,
               ),
             ),
             Text(
               'Type: $type',
-              style: AppTextStyles.caption.copyWith(
-                color: AppColors.mediumGrey,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.primary,
                 fontStyle: FontStyle.italic,
               ),
             ),
@@ -350,7 +350,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => NavigationService.goBack(),
             child: const Text('Close'),
           ),
         ],

@@ -29,18 +29,18 @@ class TrackingControls extends StatelessWidget {
             // Status indicator
             Container(
               width: 12,
-              height: 12,
+        
               decoration: BoxDecoration(
-                color: isTracking ? AppColors.success : AppColors.error,
+                color: isTracking ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.primary,
                 shape: BoxShape.circle,
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 8, height: 40),
             // Status text
             Text(
               'Tracking Status: ${isTracking ? 'Active' : 'Inactive'}',
-              style: AppTextStyles.body.copyWith(
-                color: AppColors.white,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.primary,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -56,7 +56,7 @@ class TrackingControls extends StatelessWidget {
               ? (isTracking ? onStopTracking : onStartTracking)
               : () {}, // No-op function instead of null
           isDisabled: !isEnabled,
-          color: isTracking ? AppColors.error : AppColors.success,
+          color: isTracking ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.primary,
           icon: isTracking ? Icons.stop_circle_outlined : Icons.play_circle_outline,
         ),
       ],

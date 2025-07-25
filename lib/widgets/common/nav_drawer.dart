@@ -31,7 +31,7 @@ class DzNavDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
-    final user = userData ?? authProvider.user ?? {};
+    final user = userData != null ? null : authProvider.user; // Use proper User object
     final _isDriver = isDriver || authProvider.isDriver;
 
     return Drawer(
@@ -40,43 +40,43 @@ class DzNavDrawer extends StatelessWidget {
           // User account header
           UserAccountsDrawerHeader(
             accountName: Text(
-              user.containsKey('first_name') && user.containsKey('last_name')
-                  ? '${user['first_name']} ${user['last_name']}'
+              user != null && user.firstName != null && user.lastName != null
+                  ? '${user.firstName} ${user.lastName}'
                   : _isDriver ? 'Driver' : 'Passenger',
-              style: AppTextStyles.body.copyWith(
-                color: AppColors.white,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.primary,
                 fontWeight: FontWeight.bold,
               ),
             ),
             accountEmail: Text(
-              user.containsKey('email') ? user['email'] : '',
-              style: AppTextStyles.bodySmall.copyWith(
-                color: AppColors.white,
+              user?.email ?? '',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.primary,
               ),
             ),
             currentAccountPicture: CircleAvatar(
-              backgroundColor: AppColors.white,
+              backgroundColor: Theme.of(context).colorScheme.primary,
               backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl!) : null,
               child: avatarUrl == null
                   ? Icon(
                 Icons.person,
-                color: AppColors.primary,
+                color: Theme.of(context).colorScheme.primary,
                 size: 40,
               )
                   : null,
             ),
             decoration: BoxDecoration(
-              color: AppColors.primary,
+              color: Theme.of(context).colorScheme.primary,
             ),
             otherAccountsPictures: _isDriver && rating != null
                 ? [
               // Display driver rating
               CircleAvatar(
-                backgroundColor: AppColors.white,
+                backgroundColor: Theme.of(context).colorScheme.primary,
                 child: Text(
                   rating!.toStringAsFixed(1),
-                  style: AppTextStyles.body.copyWith(
-                    color: AppColors.primary,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.primary,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -182,13 +182,13 @@ class DzNavDrawer extends StatelessWidget {
 
                 // Logout
                 ListTile(
-                  leading: const Icon(
+                  leading: Icon(
                     Icons.logout,
-                    color: AppColors.error,
+                    color: Theme.of(context).colorScheme.primary,
                   ),
                   title: Text(
                     'Logout',
-                    style: TextStyle(color: AppColors.error),
+                    style: TextStyle(color: Theme.of(context).colorScheme.primary),
                   ),
                   onTap: () {
                     Navigator.pop(context); // Close the drawer
@@ -222,9 +222,9 @@ class DzNavDrawer extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(16),
             child: Text(
-              'Version 1.0.0',
-              style: AppTextStyles.caption.copyWith(
-                color: AppColors.mediumGrey,
+              'Version 1.0',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.primary,
               ),
             ),
           ),
@@ -249,18 +249,18 @@ class DzNavDrawer extends StatelessWidget {
         size: 16,
         child: Icon(
           icon,
-          color: isSelected ? AppColors.primary : null,
+          color: isSelected ? Theme.of(context).colorScheme.primary : null,
         ),
       )
           : Icon(
         icon,
-        color: isSelected ? AppColors.primary : null,
+        color: isSelected ? Theme.of(context).colorScheme.primary : null,
       ),
       title: Text(
         title,
         style: TextStyle(
           fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-          color: isSelected ? AppColors.primary : null,
+          color: isSelected ? Theme.of(context).colorScheme.primary : null,
         ),
       ),
       selected: isSelected,

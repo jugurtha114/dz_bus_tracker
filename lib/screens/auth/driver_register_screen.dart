@@ -12,6 +12,7 @@ import '../../core/utils/validation_utils.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/common/app_bar.dart';
 import '../../widgets/common/custom_button.dart';
+import '../../widgets/common/custom_card.dart';
 import '../../widgets/common/custom_text_field.dart';
 import '../../widgets/common/glassy_container.dart';
 import '../../helpers/error_handler.dart';
@@ -144,9 +145,9 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
       });
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please fill in all required fields correctly.'),
-          backgroundColor: AppColors.warning,
+        SnackBar(
+          content: const Text('Please fill in all required fields correctly.'),
+          backgroundColor: Theme.of(context).colorScheme.primary,
         ),
       );
     }
@@ -169,9 +170,9 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
 
       if (!hasIdCardPhoto || !hasDriverLicensePhoto) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please upload both ID card and driver license photos.'),
-            backgroundColor: AppColors.warning,
+          SnackBar(
+            content: const Text('Please upload both ID card and driver license photos.'),
+            backgroundColor: Theme.of(context).colorScheme.primary,
           ),
         );
         return;
@@ -216,9 +217,9 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
           if (success) {
             // Show success message
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Registration submitted! Your application will be reviewed.'),
-                backgroundColor: AppColors.success,
+              SnackBar(
+                content: const Text('Registration submitted! Your application will be reviewed.'),
+                backgroundColor: Theme.of(context).colorScheme.primary,
               ),
             );
 
@@ -229,7 +230,7 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(authProvider.error ?? 'Registration failed. Please try again.'),
-                backgroundColor: AppColors.error,
+                backgroundColor: Theme.of(context).colorScheme.primary,
               ),
             );
           }
@@ -254,7 +255,7 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).colorScheme.primary,
       body: Stack(
         children: [
           // Background gradient
@@ -264,8 +265,8 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  AppColors.primary,
-                  AppColors.primaryDark,
+                  Theme.of(context).colorScheme.primary,
+                  Theme.of(context).colorScheme.primary,
                 ],
               ),
             ),
@@ -282,9 +283,9 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
                   Align(
                     alignment: Alignment.topLeft,
                     child: IconButton(
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.arrow_back_ios,
-                        color: AppColors.white,
+                        color: Theme.of(context).colorScheme.primary,
                       ),
                       onPressed: () => Navigator.of(context).pop(),
                     ),
@@ -295,46 +296,44 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
                   // Title
                   Text(
                     'Register as Driver',
-                    style: AppTextStyles.h1.copyWith(
-                      color: AppColors.white,
+                    style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                      color: Theme.of(context).colorScheme.primary,
                       fontWeight: FontWeight.bold,
                     ),
                     textAlign: TextAlign.center,
                   ),
 
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 16),
 
                   // Subtitle
                   Text(
                     'Complete your profile to start driving',
-                    style: AppTextStyles.body.copyWith(
-                      color: AppColors.white.withOpacity(0.9),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                     ),
                     textAlign: TextAlign.center,
                   ),
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
 
                   // Progress indicators
                   Row(
                     children: [
                       Expanded(
                         child: Container(
-                          height: 4,
                           decoration: BoxDecoration(
-                            color: AppColors.white,
+                            color: Theme.of(context).colorScheme.primary,
                             borderRadius: BorderRadius.circular(2),
                           ),
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 8, height: 40),
                       Expanded(
                         child: Container(
-                          height: 4,
                           decoration: BoxDecoration(
                             color: _currentStep == 1
-                                ? AppColors.white
-                                : AppColors.white.withOpacity(0.3),
+                                ? Theme.of(context).colorScheme.primary
+                                : Theme.of(context).colorScheme.primary.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(2),
                           ),
                         ),
@@ -342,7 +341,7 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
                     ],
                   ),
 
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 16),
 
                   // Step labels
                   Row(
@@ -350,8 +349,8 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
                       Expanded(
                         child: Text(
                           'Account Info',
-                          style: AppTextStyles.caption.copyWith(
-                            color: AppColors.white,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context).colorScheme.primary,
                             fontWeight: _currentStep == 0
                                 ? FontWeight.bold
                                 : FontWeight.normal,
@@ -359,12 +358,12 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
                           textAlign: TextAlign.center,
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 8, height: 40),
                       Expanded(
                         child: Text(
                           'Driver Details',
-                          style: AppTextStyles.caption.copyWith(
-                            color: AppColors.white,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context).colorScheme.primary,
                             fontWeight: _currentStep == 1
                                 ? FontWeight.bold
                                 : FontWeight.normal,
@@ -375,10 +374,10 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
                     ],
                   ),
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
 
                   // Registration form in a glass container
-                  GlassyContainer(
+                  CustomCard(type: CardType.elevated, 
                     padding: const EdgeInsets.all(24),
                     child: Form(
                       key: _formKey,
@@ -388,7 +387,7 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
                     ),
                   ),
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
 
                   // Login link
                   Row(
@@ -396,16 +395,16 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
                     children: [
                       Text(
                         'Already have an account? ',
-                        style: AppTextStyles.body.copyWith(
-                          color: AppColors.white,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.primary,
                         ),
                       ),
                       TextButton(
                         onPressed: () => AppRouter.navigateToReplacement(context, AppRoutes.login),
                         child: Text(
                           'Login',
-                          style: AppTextStyles.body.copyWith(
-                            color: AppColors.white,
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Theme.of(context).colorScheme.primary,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -438,12 +437,12 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
                   fieldName: 'First name',
                 ),
                 textInputAction: TextInputAction.next,
-                fillColor: AppColors.white.withOpacity(0.8),
-                borderColor: AppColors.white.withOpacity(0.5),
+                fillColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                borderColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
               ),
             ),
 
-            const SizedBox(width: 16),
+            const SizedBox(width: 16, height: 40),
 
             // Last name
             Expanded(
@@ -455,8 +454,8 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
                   fieldName: 'Last name',
                 ),
                 textInputAction: TextInputAction.next,
-                fillColor: AppColors.white.withOpacity(0.8),
-                borderColor: AppColors.white.withOpacity(0.5),
+                fillColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                borderColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
               ),
             ),
           ],
@@ -472,8 +471,8 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
           prefixIcon: const Icon(Icons.email_outlined),
           validator: ValidationUtils.validateEmail,
           textInputAction: TextInputAction.next,
-          fillColor: AppColors.white.withOpacity(0.8),
-          borderColor: AppColors.white.withOpacity(0.5),
+          fillColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+          borderColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
         ),
 
         const SizedBox(height: 16),
@@ -486,8 +485,8 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
           prefixIcon: const Icon(Icons.phone_outlined),
           validator: ValidationUtils.validatePhone,
           textInputAction: TextInputAction.next,
-          fillColor: AppColors.white.withOpacity(0.8),
-          borderColor: AppColors.white.withOpacity(0.5),
+          fillColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+          borderColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
         ),
 
         const SizedBox(height: 16),
@@ -500,8 +499,8 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
           prefixIcon: const Icon(Icons.lock_outline),
           validator: ValidationUtils.validatePassword,
           textInputAction: TextInputAction.next,
-          fillColor: AppColors.white.withOpacity(0.8),
-          borderColor: AppColors.white.withOpacity(0.5),
+          fillColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+          borderColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
         ),
 
         const SizedBox(height: 16),
@@ -517,21 +516,19 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
             value,
           ),
           textInputAction: TextInputAction.done,
-          fillColor: AppColors.white.withOpacity(0.8),
-          borderColor: AppColors.white.withOpacity(0.5),
+          fillColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+          borderColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
         ),
 
-        const SizedBox(height: 24),
+        const SizedBox(height: 16),
 
         // Next button
         CustomButton(
-          text: 'Next',
-          onPressed: _nextStep,
-          icon: Icons.arrow_forward,
-          iconOnRight: true,
-          color: AppColors.primary,
-          textColor: AppColors.white,
-        ),
+        text: 'Next',
+        onPressed: _nextStep,
+        icon: Icons.arrow_forward,
+        color: Theme.of(context).colorScheme.primary,
+      ),
       ],
     );
   }
@@ -549,8 +546,8 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
             fieldName: 'ID card number',
           ),
           textInputAction: TextInputAction.next,
-          fillColor: AppColors.white.withOpacity(0.8),
-          borderColor: AppColors.white.withOpacity(0.5),
+          fillColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+          borderColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
         ),
 
         const SizedBox(height: 16),
@@ -561,21 +558,20 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
           children: [
             Text(
               'ID Card Photo',
-              style: AppTextStyles.body.copyWith(
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 fontWeight: FontWeight.w500,
-                color: AppColors.darkGrey,
+                color: Theme.of(context).colorScheme.primary,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 16),
             InkWell(
               onTap: () => _pickImage(true),
               child: Container(
-                height: 120,
                 decoration: BoxDecoration(
-                  color: AppColors.white.withOpacity(0.8),
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: AppColors.white.withOpacity(0.5),
+                    color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                   ),
                 ),
                 child: _buildPhotoPreview(
@@ -599,8 +595,8 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
             fieldName: 'Driver license number',
           ),
           textInputAction: TextInputAction.next,
-          fillColor: AppColors.white.withOpacity(0.8),
-          borderColor: AppColors.white.withOpacity(0.5),
+          fillColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+          borderColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
         ),
 
         const SizedBox(height: 16),
@@ -611,21 +607,20 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
           children: [
             Text(
               'Driver License Photo',
-              style: AppTextStyles.body.copyWith(
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 fontWeight: FontWeight.w500,
-                color: AppColors.darkGrey,
+                color: Theme.of(context).colorScheme.primary,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 16),
             InkWell(
               onTap: () => _pickImage(false),
               child: Container(
-                height: 120,
                 decoration: BoxDecoration(
-                  color: AppColors.white.withOpacity(0.8),
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: AppColors.white.withOpacity(0.5),
+                    color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                   ),
                 ),
                 child: _buildPhotoPreview(
@@ -652,11 +647,11 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
             max: 50,
           ),
           textInputAction: TextInputAction.done,
-          fillColor: AppColors.white.withOpacity(0.8),
-          borderColor: AppColors.white.withOpacity(0.5),
+          fillColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+          borderColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
         ),
 
-        const SizedBox(height: 24),
+        const SizedBox(height: 16),
 
         // Action buttons
         Row(
@@ -667,21 +662,20 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
               icon: const Icon(Icons.arrow_back),
               label: const Text('Back'),
               style: TextButton.styleFrom(
-                foregroundColor: AppColors.white,
+                foregroundColor: Theme.of(context).colorScheme.primary,
               ),
             ),
 
-            const SizedBox(width: 16),
+            const SizedBox(width: 16, height: 40),
 
             // Register button
             Expanded(
               child: CustomButton(
-                text: 'Register',
-                onPressed: _register,
-                isLoading: _isLoading,
-                color: AppColors.primary,
-                textColor: AppColors.white,
-              ),
+        text: 'Register',
+        onPressed: _register,
+        isLoading: _isLoading,
+        color: Theme.of(context).colorScheme.primary,
+      ),
             ),
           ],
         ),
@@ -726,16 +720,16 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(
+          Icon(
             Icons.add_a_photo,
-            color: AppColors.primary,
+            color: Theme.of(context).colorScheme.primary,
             size: 40,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 16),
           Text(
             'Tap to take a photo',
-            style: AppTextStyles.body.copyWith(
-              color: AppColors.primary,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.primary,
             ),
           ),
         ],

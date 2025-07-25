@@ -29,8 +29,8 @@ class DzBottomNav extends StatelessWidget {
     this.selectedItemColor,
     this.unselectedItemColor,
     this.elevation,
-    this.iconSize = 24.0,
-    this.height = 60.0,
+    this.iconSize = 24,
+    this.height = 60,
     this.showLabels = true,
     this.showIndicator = true,
     this.useGlassEffect = false,
@@ -38,9 +38,9 @@ class DzBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final effectiveBackgroundColor = backgroundColor ?? AppColors.white;
-    final effectiveSelectedItemColor = selectedItemColor ?? AppColors.primary;
-    final effectiveUnselectedItemColor = unselectedItemColor ?? AppColors.mediumGrey;
+    final effectiveBackgroundColor = backgroundColor ?? Theme.of(context).colorScheme.primary;
+    final effectiveSelectedItemColor = selectedItemColor ?? Theme.of(context).colorScheme.primary;
+    final effectiveUnselectedItemColor = unselectedItemColor ?? Theme.of(context).colorScheme.primary;
 
     // For glass effect
     if (useGlassEffect) {
@@ -48,18 +48,18 @@ class DzBottomNav extends StatelessWidget {
         height: height,
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: effectiveBackgroundColor.withOpacity(0.8),
+          color: effectiveBackgroundColor.withOpacity(0.1),
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: AppColors.black.withOpacity(0.05),
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
               blurRadius: 10,
               spreadRadius: 1,
             ),
           ],
           border: Border.all(
-            color: Colors.white.withOpacity(0.2),
-            width: 1.5,
+            color: Colors.white.withOpacity(0.1),
+            width: 1
           ),
         ),
         child: ClipRRect(
@@ -71,6 +71,7 @@ class DzBottomNav extends StatelessWidget {
               children: List.generate(
                 items.length,
                     (index) => _buildGlassNavItem(
+                  context: context,
                   item: items[index],
                   index: index,
                   isSelected: currentIndex == index,
@@ -91,6 +92,7 @@ class DzBottomNav extends StatelessWidget {
       items: items.map((item) {
         return BottomNavigationBarItem(
           icon: _buildNavIcon(
+            context,
             icon: item.icon,
             badgeCount: item.badgeCount,
             isSelected: currentIndex == items.indexOf(item),
@@ -109,7 +111,8 @@ class DzBottomNav extends StatelessWidget {
     );
   }
 
-  Widget _buildNavIcon({
+  Widget _buildNavIcon(
+    BuildContext context, {
     required IconData icon,
     int badgeCount = 0,
     bool isSelected = false,
@@ -118,7 +121,7 @@ class DzBottomNav extends StatelessWidget {
       return NotificationBadge(
         count: badgeCount,
         size: 16,
-        backgroundColor: AppColors.error,
+        backgroundColor: Theme.of(context).colorScheme.primary,
         child: Icon(icon),
       );
     }
@@ -127,6 +130,7 @@ class DzBottomNav extends StatelessWidget {
   }
 
   Widget _buildGlassNavItem({
+    required BuildContext context,
     required DzBottomNavItem item,
     required int index,
     required bool isSelected,
@@ -146,19 +150,20 @@ class DzBottomNav extends StatelessWidget {
             if (showIndicator && isSelected)
               Container(
                 width: 24,
-                height: 3,
+        
                 decoration: BoxDecoration(
                   color: selectedColor,
-                  borderRadius: BorderRadius.circular(1.5),
+                  borderRadius: BorderRadius.circular(1),
                 ),
               )
             else
-              const SizedBox(height: 3),
+              const SizedBox(height: 16),
 
-            const SizedBox(height: 4),
+            const SizedBox(height: 16),
 
             // Icon with badge
             _buildNavIcon(
+              context,
               icon: item.icon,
               badgeCount: item.badgeCount,
               isSelected: isSelected,
@@ -192,6 +197,5 @@ class DzBottomNavItem {
   const DzBottomNavItem({
     required this.label,
     required this.icon,
-    this.badgeCount = 0,
-  });
+    this.badgeCount = 0});
 }

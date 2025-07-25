@@ -6,7 +6,7 @@ import 'package:flutter/foundation.dart';
 class AppConfig {
   // App information
   static const String appName = 'DZ Bus Tracker';
-  static const String appVersion = '1.0.0';
+  static const String appVersion = '1.0';
   static const String appBuildNumber = '1';
   static const String appDescription = 'Smart, real-time bus tracking for Algeria – connecting passengers and drivers like never before.';
   static const String appCopyright = '© 2025 DZ Bus Tracker';
@@ -67,13 +67,13 @@ class AppConfig {
 
   // Map configuration
   static const String mapType = 'google'; // 'google' or 'osm'
-  static const double defaultZoomLevel = 15.0;
-  static const double maxZoomLevel = 19.0;
-  static const double minZoomLevel = 5.0;
+  static const double defaultZoomLevel = 15;
+  static const double maxZoomLevel = 19;
+  static const double minZoomLevel = 5;
   static const double nearbyStopsRadius = 1000; // in meters
   static const double nearbyBusesRadius = 2000; // in meters
-  static const double defaultLatitude = 36.7538; // Algiers latitude
-  static const double defaultLongitude = 3.0588; // Algiers longitude
+  static const double defaultLatitude = 36; // Algiers latitude
+  static const double defaultLongitude = 3; // Algiers longitude
   static const int defaultStopDisplayCount = 10;
   static const int maxStopsToDisplay = 30;
   static const int maxBusesToTrack = 20;
@@ -89,10 +89,10 @@ class AppConfig {
   static const Duration animationDuration = Duration(milliseconds: 300);
   static const Duration snackBarDuration = Duration(seconds: 3);
   static const Duration toastDuration = Duration(seconds: 2);
-  static const double buttonHeight = 50.0;
-  static const double borderRadius = 8.0;
-  static const double glassMorphismOpacity = 0.7;
-  static const double glassMorphismBlur = 10.0;
+  static const double buttonHeight = 50;
+  static const double borderRadius = 8;
+  static const double glassMorphismOpacity = 0;
+  static const double glassMorphismBlur = 10;
 
   // Notification configuration
   static const String notificationChannelId = 'dz_bus_tracker_channel';

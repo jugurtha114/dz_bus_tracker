@@ -1,9 +1,10 @@
 // lib/services/line_service.dart
 
 import '../config/api_config.dart';
-import '../core/constants/api_constants.dart';
 import '../core/exceptions/app_exceptions.dart';
 import '../core/network/api_client.dart';
+import '../models/line_model.dart';
+import '../models/api_response_models.dart';
 
 class LineService {
   final ApiClient _apiClient;
@@ -11,248 +12,352 @@ class LineService {
   LineService({ApiClient? apiClient}) : _apiClient = apiClient ?? ApiClient();
 
   // Get all lines
-  Future<List<Map<String, dynamic>>> getLines({
-    bool? isActive,
-    String? stopId,
+  Future<ApiResponse<PaginatedResponse<Line>>> getLines({
+    LineQueryParameters? queryParams,
   }) async {
     try {
-      final Map<String, dynamic> queryParams = {};
-
-      if (isActive != null) queryParams[ApiConstants.isActiveKey] = isActive;
-      if (stopId != null) queryParams[ApiConstants.stopIdKey] = stopId;
-
       final response = await _apiClient.get(
-        Endpoints.lines,
-        queryParameters: queryParams,
+        ApiEndpoints.buildUrl(ApiEndpoints.lines),
+        queryParameters: queryParams?.toMap(),
       );
 
-      if (response is Map<String, dynamic> && response.containsKey(ApiConstants.resultsKey)) {
-        return List<Map<String, dynamic>>.from(response[ApiConstants.resultsKey]);
-      }
+      final paginatedResponse = PaginatedResponse<Line>.fromJson(
+        response,
+        (json) => Line.fromJson(json as Map<String, dynamic>),
+      );
 
-      if (response is List) {
-        return List<Map<String, dynamic>>.from(response);
-      }
-
-      return [];
+      return ApiResponse.success(data: paginatedResponse);
     } catch (e) {
       if (e is ApiException) {
-        rethrow;
+        return ApiResponse.error(message: e.message);
       }
-      throw ApiException('Failed to get lines: ${e.toString()}');
+      return ApiResponse.error(message: 'Failed to get lines: ${e.toString()}');
     }
   }
 
   // Get line by ID
-  Future<Map<String, dynamic>> getLineById(String lineId) async {
+  Future<ApiResponse<Line>> getLineById(String lineId) async {
     try {
-      final response = await _apiClient.get('${Endpoints.lines}$lineId/');
-      return response;
+      final response = await _apiClient.get(ApiEndpoints.buildUrl(ApiEndpoints.lineById(lineId)));
+      final line = Line.fromJson(response);
+      return ApiResponse.success(data: line);
     } catch (e) {
       if (e is ApiException) {
-        rethrow;
+        return ApiResponse.error(message: e.message);
       }
-      throw ApiException('Failed to get line details: ${e.toString()}');
+      return ApiResponse.error(message: 'Failed to get line details: ${e.toString()}');
     }
   }
 
   // Create new line
-  Future<Map<String, dynamic>> createLine({
-    required String name,
-    required String code,
-    String? description,
-    String? color,
-    int? frequency,
-  }) async {
+  Future<ApiResponse<Line>> createLine(LineCreateRequest request) async {
     try {
-      final Map<String, dynamic> body = {
-        'name': name,
-        'code': code,
-      };
-
-      if (description != null) body['description'] = description;
-      if (color != null) body['color'] = color;
-      if (frequency != null) body['frequency'] = frequency;
-
       final response = await _apiClient.post(
-        Endpoints.lines,
-        body: body,
+        ApiEndpoints.buildUrl(ApiEndpoints.lines),
+        body: request.toJson(),
       );
 
-      return response;
+      final line = Line.fromJson(response);
+      return ApiResponse.success(data: line);
     } catch (e) {
       if (e is ApiException) {
-        rethrow;
+        return ApiResponse.error(message: e.message);
       }
-      throw ApiException('Failed to create line: ${e.toString()}');
+      return ApiResponse.error(message: 'Failed to create line: ${e.toString()}');
     }
   }
 
-  // Update line
-  Future<Map<String, dynamic>> updateLine({
-    required String lineId,
-    String? name,
-    String? code,
-    String? description,
-    String? color,
-    int? frequency,
-    bool? isActive,
-  }) async {
+  // Update line details
+  Future<ApiResponse<Line>> updateLine(String lineId, LineUpdateRequest request) async {
     try {
-      final Map<String, dynamic> body = {};
-
-      if (name != null) body['name'] = name;
-      if (code != null) body['code'] = code;
-      if (description != null) body['description'] = description;
-      if (color != null) body['color'] = color;
-      if (frequency != null) body['frequency'] = frequency;
-      if (isActive != null) body['is_active'] = isActive;
-
+      final body = request.toJson();
+      
       if (body.isEmpty) {
-        throw ApiException('No data provided for update');
+        return ApiResponse.error(message: 'No data provided for update');
       }
 
       final response = await _apiClient.patch(
-        '${Endpoints.lines}$lineId/',
+        ApiEndpoints.buildUrl(ApiEndpoints.lineById(lineId)),
         body: body,
       );
 
-      return response;
+      final line = Line.fromJson(response);
+      return ApiResponse.success(data: line);
     } catch (e) {
       if (e is ApiException) {
-        rethrow;
+        return ApiResponse.error(message: e.message);
       }
-      throw ApiException('Failed to update line: ${e.toString()}');
+      return ApiResponse.error(message: 'Failed to update line: ${e.toString()}');
     }
   }
 
-  // Get stops for a line
-  Future<List<Map<String, dynamic>>> getLineStops(String lineId) async {
+  // Delete line
+  Future<ApiResponse<void>> deleteLine(String lineId) async {
     try {
-      final response = await _apiClient.get('${Endpoints.lines}$lineId/stops/');
-
-      if (response is Map<String, dynamic> && response.containsKey(ApiConstants.resultsKey)) {
-        return List<Map<String, dynamic>>.from(response[ApiConstants.resultsKey]);
-      }
-
-      if (response is List) {
-        return List<Map<String, dynamic>>.from(response);
-      }
-
-      return [];
+      await _apiClient.delete(ApiEndpoints.buildUrl(ApiEndpoints.lineById(lineId)));
+      return ApiResponse.success();
     } catch (e) {
       if (e is ApiException) {
-        rethrow;
+        return ApiResponse.error(message: e.message);
       }
-      throw ApiException('Failed to get line stops: ${e.toString()}');
+      return ApiResponse.error(message: 'Failed to delete line: ${e.toString()}');
+    }
+  }
+
+  // Activate line
+  Future<ApiResponse<Line>> activateLine(String lineId) async {
+    try {
+      final response = await _apiClient.post(
+        ApiEndpoints.buildUrl(ApiEndpoints.activateLine(lineId)),
+        body: {},
+      );
+      final line = Line.fromJson(response);
+      return ApiResponse.success(data: line);
+    } catch (e) {
+      if (e is ApiException) {
+        return ApiResponse.error(message: e.message);
+      }
+      return ApiResponse.error(message: 'Failed to activate line: ${e.toString()}');
+    }
+  }
+
+  // Deactivate line
+  Future<ApiResponse<Line>> deactivateLine(String lineId) async {
+    try {
+      final response = await _apiClient.post(
+        ApiEndpoints.buildUrl(ApiEndpoints.deactivateLine(lineId)),
+        body: {},
+      );
+      final line = Line.fromJson(response);
+      return ApiResponse.success(data: line);
+    } catch (e) {
+      if (e is ApiException) {
+        return ApiResponse.error(message: e.message);
+      }
+      return ApiResponse.error(message: 'Failed to deactivate line: ${e.toString()}');
     }
   }
 
   // Add stop to line
-  Future<Map<String, dynamic>> addStopToLine({
-    required String lineId,
-    required String stopId,
-    required int order,
-    double? distanceFromPrevious,
-    int? averageTimeFromPrevious,
-  }) async {
+  Future<ApiResponse<Line>> addStopToLine(String lineId, AddStopToLineRequest request) async {
     try {
-      final Map<String, dynamic> body = {
-        'stop_id': stopId,
-        'order': order,
-      };
-
-      if (distanceFromPrevious != null) {
-        body['distance_from_previous'] = distanceFromPrevious.toString();
-      }
-
-      if (averageTimeFromPrevious != null) {
-        body['average_time_from_previous'] = averageTimeFromPrevious;
-      }
-
       final response = await _apiClient.post(
-        '${Endpoints.lines}$lineId/add_stop/',
-        body: body,
+        ApiEndpoints.buildUrl(ApiEndpoints.addStopToLine(lineId)),
+        body: request.toJson(),
       );
 
-      return response;
+      final line = Line.fromJson(response);
+      return ApiResponse.success(data: line);
     } catch (e) {
       if (e is ApiException) {
-        rethrow;
+        return ApiResponse.error(message: e.message);
       }
-      throw ApiException('Failed to add stop to line: ${e.toString()}');
+      return ApiResponse.error(message: 'Failed to add stop to line: ${e.toString()}');
     }
   }
 
   // Remove stop from line
-  Future<Map<String, dynamic>> removeStopFromLine({
-    required String lineId,
-    required String stopId,
-  }) async {
+  Future<ApiResponse<Line>> removeStopFromLine(String lineId, RemoveStopFromLineRequest request) async {
     try {
       final response = await _apiClient.post(
-        '${Endpoints.lines}$lineId/remove_stop/',
-        body: {
-          'stop_id': stopId,
-        },
+        ApiEndpoints.buildUrl(ApiEndpoints.removeStopFromLine(lineId)),
+        body: request.toJson(),
       );
 
-      return response;
+      final line = Line.fromJson(response);
+      return ApiResponse.success(data: line);
     } catch (e) {
       if (e is ApiException) {
-        rethrow;
+        return ApiResponse.error(message: e.message);
       }
-      throw ApiException('Failed to remove stop from line: ${e.toString()}');
+      return ApiResponse.error(message: 'Failed to remove stop from line: ${e.toString()}');
+    }
+  }
+
+  // Update stop order in line
+  Future<ApiResponse<Line>> updateStopOrder(String lineId, UpdateStopOrderRequest request) async {
+    try {
+      final response = await _apiClient.post(
+        ApiEndpoints.buildUrl(ApiEndpoints.updateStopOrder(lineId)),
+        body: request.toJson(),
+      );
+
+      final line = Line.fromJson(response);
+      return ApiResponse.success(data: line);
+    } catch (e) {
+      if (e is ApiException) {
+        return ApiResponse.error(message: e.message);
+      }
+      return ApiResponse.error(message: 'Failed to update stop order: ${e.toString()}');
+    }
+  }
+
+  // Get line stops
+  Future<ApiResponse<Line>> getLineStops(String lineId) async {
+    try {
+      final response = await _apiClient.get(ApiEndpoints.buildUrl(ApiEndpoints.lineStops(lineId)));
+      final line = Line.fromJson(response);
+      return ApiResponse.success(data: line);
+    } catch (e) {
+      if (e is ApiException) {
+        return ApiResponse.error(message: e.message);
+      }
+      return ApiResponse.error(message: 'Failed to get line stops: ${e.toString()}');
+    }
+  }
+
+  // Get line schedules
+  Future<ApiResponse<Line>> getLineSchedules(String lineId) async {
+    try {
+      final response = await _apiClient.get(ApiEndpoints.buildUrl(ApiEndpoints.lineSchedules(lineId)));
+      final line = Line.fromJson(response);
+      return ApiResponse.success(data: line);
+    } catch (e) {
+      if (e is ApiException) {
+        return ApiResponse.error(message: e.message);
+      }
+      return ApiResponse.error(message: 'Failed to get line schedules: ${e.toString()}');
     }
   }
 
   // Add schedule to line
-  Future<Map<String, dynamic>> addSchedule({
-    required String lineId,
-    required int dayOfWeek,
-    required String startTime,
-    required String endTime,
-    required int frequencyMinutes,
-  }) async {
+  Future<ApiResponse<Schedule>> addScheduleToLine(String lineId, ScheduleCreateRequest request) async {
     try {
       final response = await _apiClient.post(
-        '${Endpoints.lines}$lineId/add_schedule/',
-        body: {
-          'day_of_week': dayOfWeek,
-          'start_time': startTime,
-          'end_time': endTime,
-          'frequency_minutes': frequencyMinutes,
-        },
+        ApiEndpoints.buildUrl(ApiEndpoints.addScheduleToLine(lineId)),
+        body: request.toJson(),
       );
 
-      return response;
+      final schedule = Schedule.fromJson(response);
+      return ApiResponse.success(data: schedule);
     } catch (e) {
       if (e is ApiException) {
-        rethrow;
+        return ApiResponse.error(message: e.message);
       }
-      throw ApiException('Failed to add schedule to line: ${e.toString()}');
+      return ApiResponse.error(message: 'Failed to add schedule to line: ${e.toString()}');
     }
   }
 
-  // Get line schedule
-  Future<List<Map<String, dynamic>>> getLineSchedule(String lineId) async {
+  // Search lines
+  Future<ApiResponse<List<Line>>> searchLines({String? query}) async {
     try {
-      final response = await _apiClient.get('${Endpoints.lines}$lineId/schedules/');
-
-      if (response is Map<String, dynamic> && response.containsKey(ApiConstants.resultsKey)) {
-        return List<Map<String, dynamic>>.from(response[ApiConstants.resultsKey]);
+      final queryParams = <String, dynamic>{};
+      if (query != null && query.isNotEmpty) {
+        queryParams['q'] = query;
       }
 
+      final response = await _apiClient.get(
+        ApiEndpoints.buildUrl(ApiEndpoints.searchLines),
+        queryParameters: queryParams,
+      );
+
+      List<Line> lines = [];
       if (response is List) {
-        return List<Map<String, dynamic>>.from(response);
+        lines = response
+            .map((item) => Line.fromJson(item as Map<String, dynamic>))
+            .toList();
+      } else if (response is Map<String, dynamic> && response.containsKey('results')) {
+        final results = response['results'] as List<dynamic>;
+        lines = results
+            .map((item) => Line.fromJson(item as Map<String, dynamic>))
+            .toList();
       }
 
-      return [];
+      return ApiResponse.success(data: lines);
     } catch (e) {
       if (e is ApiException) {
-        rethrow;
+        return ApiResponse.error(message: e.message);
       }
-      throw ApiException('Failed to get line schedule: ${e.toString()}');
+      return ApiResponse.error(message: 'Failed to search lines: ${e.toString()}');
+    }
+  }
+
+  // Schedule management methods
+
+  // Get all schedules
+  Future<ApiResponse<PaginatedResponse<Schedule>>> getSchedules({
+    ScheduleQueryParameters? queryParams,
+  }) async {
+    try {
+      final response = await _apiClient.get(
+        ApiEndpoints.buildUrl(ApiEndpoints.schedules),
+        queryParameters: queryParams?.toMap(),
+      );
+
+      final paginatedResponse = PaginatedResponse<Schedule>.fromJson(
+        response,
+        (json) => Schedule.fromJson(json as Map<String, dynamic>),
+      );
+
+      return ApiResponse.success(data: paginatedResponse);
+    } catch (e) {
+      if (e is ApiException) {
+        return ApiResponse.error(message: e.message);
+      }
+      return ApiResponse.error(message: 'Failed to get schedules: ${e.toString()}');
+    }
+  }
+
+  // Get schedule by ID
+  Future<ApiResponse<Schedule>> getScheduleById(String scheduleId) async {
+    try {
+      final response = await _apiClient.get(ApiEndpoints.buildUrl(ApiEndpoints.scheduleById(scheduleId)));
+      final schedule = Schedule.fromJson(response);
+      return ApiResponse.success(data: schedule);
+    } catch (e) {
+      if (e is ApiException) {
+        return ApiResponse.error(message: e.message);
+      }
+      return ApiResponse.error(message: 'Failed to get schedule details: ${e.toString()}');
+    }
+  }
+
+  // Create schedule
+  Future<ApiResponse<Schedule>> createSchedule(ScheduleCreateRequest request) async {
+    try {
+      final response = await _apiClient.post(
+        ApiEndpoints.buildUrl(ApiEndpoints.schedules),
+        body: request.toJson(),
+      );
+
+      final schedule = Schedule.fromJson(response);
+      return ApiResponse.success(data: schedule);
+    } catch (e) {
+      if (e is ApiException) {
+        return ApiResponse.error(message: e.message);
+      }
+      return ApiResponse.error(message: 'Failed to create schedule: ${e.toString()}');
+    }
+  }
+
+  // Update schedule
+  Future<ApiResponse<Schedule>> updateSchedule(String scheduleId, ScheduleCreateRequest request) async {
+    try {
+      final response = await _apiClient.patch(
+        ApiEndpoints.buildUrl(ApiEndpoints.scheduleById(scheduleId)),
+        body: request.toJson(),
+      );
+
+      final schedule = Schedule.fromJson(response);
+      return ApiResponse.success(data: schedule);
+    } catch (e) {
+      if (e is ApiException) {
+        return ApiResponse.error(message: e.message);
+      }
+      return ApiResponse.error(message: 'Failed to update schedule: ${e.toString()}');
+    }
+  }
+
+  // Delete schedule
+  Future<ApiResponse<void>> deleteSchedule(String scheduleId) async {
+    try {
+      await _apiClient.delete(ApiEndpoints.buildUrl(ApiEndpoints.scheduleById(scheduleId)));
+      return ApiResponse.success();
+    } catch (e) {
+      if (e is ApiException) {
+        return ApiResponse.error(message: e.message);
+      }
+      return ApiResponse.error(message: 'Failed to delete schedule: ${e.toString()}');
     }
   }
 }

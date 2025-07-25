@@ -6,6 +6,8 @@ import '../core/exceptions/app_exceptions.dart';
 import '../core/utils/storage_utils.dart';
 import '../services/auth_service.dart';
 import '../services/user_service.dart';
+import '../models/user_model.dart';
+import '../models/profile_model.dart';
 
 class AuthProvider with ChangeNotifier {
   final AuthService _authService;
@@ -22,28 +24,33 @@ class AuthProvider with ChangeNotifier {
   bool _isAuthenticated = false;
   bool _isLoading = false;
   String? _error;
-  Map<String, dynamic>? _userData;
-  Map<String, dynamic>? _userProfile;
+  User? _user;
+  Profile? _profile;
   String? _token;
-  String? _userType;
+  UserType? _userType;
 
   // Getters
   bool get isAuthenticated => _isAuthenticated;
   bool get isLoading => _isLoading;
   String? get error => _error;
-  Map<String, dynamic>? get user => _userData;
-  Map<String, dynamic>? get profile => _userProfile;
+  User? get user => _user;
+  Profile? get profile => _profile;
   String? get token => _token;
-  String? get userType => _userType;
+  UserType? get userType => _userType;
+  
+  // Convenience getters for user data
+  String get userDisplayName => _user?.fullName ?? 'Unknown User';
+  String get userEmail => _user?.email ?? '';
+  Language get userLanguage => _profile?.language ?? Language.french;
 
   // Check if user is a driver
-  bool get isDriver => _userType == AppConstants.userTypeDriver;
+  bool get isDriver => _userType == UserType.driver;
 
   // Check if user is a passenger
-  bool get isPassenger => _userType == AppConstants.userTypePassenger;
+  bool get isPassenger => _userType == UserType.passenger;
 
   // Check if user is an admin
-  bool get isAdmin => _userType == AppConstants.userTypeAdmin;
+  bool get isAdmin => _userType == UserType.admin;
 
   // Initialize authentication state
   Future<void> checkAuth() async {
@@ -65,7 +72,7 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  // Login
+  /// Login with improved error handling and type safety
   Future<bool> login({
     required String email,
     required String password,
@@ -74,16 +81,20 @@ class AuthProvider with ChangeNotifier {
     _clearError();
 
     try {
-      await _authService.login(
+      final response = await _authService.login(
         email: email,
         password: password,
       );
 
-      _isAuthenticated = true;
-      await _fetchUserData();
-      _token = await _authService.getAuthToken();
-
-      return true;
+      if (response.success && response.data != null) {
+        _isAuthenticated = true;
+        _token = response.data!.accessToken;
+        await _fetchUserData();
+        return true;
+      } else {
+        _setError(response.message ?? 'Login failed');
+        return false;
+      }
     } catch (e) {
       _isAuthenticated = false;
       _setError(e);
@@ -93,7 +104,7 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  // Register
+  /// Register with improved error handling and type safety
   Future<bool> register({
     required String email,
     required String password,
@@ -106,7 +117,7 @@ class AuthProvider with ChangeNotifier {
     _clearError();
 
     try {
-      await _authService.register(
+      final response = await _authService.register(
         email: email,
         password: password,
         confirmPassword: confirmPassword,
@@ -116,7 +127,12 @@ class AuthProvider with ChangeNotifier {
         userType: AppConstants.userTypePassenger,
       );
 
-      return true;
+      if (response.success) {
+        return true;
+      } else {
+        _setError(response.message ?? 'Registration failed');
+        return false;
+      }
     } catch (e) {
       _setError(e);
       return false;
@@ -126,8 +142,7 @@ class AuthProvider with ChangeNotifier {
   }
 
   // Register driver
-// lib/providers/auth_provider.dart (updated registerDriver method)
-
+  /// Register driver with improved error handling and type safety
   Future<bool> registerDriver({
     required String email,
     required String password,
@@ -145,7 +160,7 @@ class AuthProvider with ChangeNotifier {
     _clearError();
 
     try {
-      await _authService.registerDriver(
+      final response = await _authService.registerDriver(
         email: email,
         password: password,
         confirmPassword: confirmPassword,
@@ -159,7 +174,12 @@ class AuthProvider with ChangeNotifier {
         yearsOfExperience: yearsOfExperience,
       );
 
-      return true;
+      if (response.success) {
+        return true;
+      } else {
+        _setError(response.message ?? 'Driver registration failed');
+        return false;
+      }
     } catch (e) {
       _setError(e);
       return false;
@@ -168,25 +188,38 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  // Logout
+  /// Logout with improved error handling
   Future<void> logout() async {
     _setLoading(true);
 
     try {
-      await _authService.logout();
+      final response = await _authService.logout();
+      
+      // Always clear local state regardless of API response
       _isAuthenticated = false;
-      _userData = null;
-      _userProfile = null;
+      _user = null;
+      _profile = null;
       _token = null;
       _userType = null;
+      _clearError();
+      
+      if (!response.success && response.message?.contains('warning') != true) {
+        debugPrint('Logout warning: ${response.message}');
+      }
     } catch (e) {
+      // Clear local state even if logout API fails
+      _isAuthenticated = false;
+      _user = null;
+      _profile = null;
+      _token = null;
+      _userType = null;
       _setError(e);
     } finally {
       _setLoading(false);
     }
   }
 
-  // Reset password
+  /// Reset password with improved error handling
   Future<bool> resetPassword({
     required String email,
   }) async {
@@ -194,11 +227,16 @@ class AuthProvider with ChangeNotifier {
     _clearError();
 
     try {
-      await _authService.resetPassword(
+      final response = await _authService.resetPassword(
         email: email,
       );
 
-      return true;
+      if (response.success) {
+        return true;
+      } else {
+        _setError(response.message ?? 'Password reset failed');
+        return false;
+      }
     } catch (e) {
       _setError(e);
       return false;
@@ -207,7 +245,7 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  // Update profile
+  /// Update profile with improved type safety
   Future<bool> updateProfile({
     String? firstName,
     String? lastName,
@@ -223,8 +261,11 @@ class AuthProvider with ChangeNotifier {
         phoneNumber: phoneNumber,
       );
 
-      _userData = response;
-      notifyListeners();
+      if (response != null) {
+        _user = User.fromJson(response);
+        await StorageUtils.saveToStorage(AppConstants.userKey, _user!.toJson());
+        notifyListeners();
+      }
 
       return true;
     } catch (e) {
@@ -235,7 +276,7 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  // Update password
+  /// Update password with improved error handling
   Future<bool> updatePassword({
     required String currentPassword,
     required String newPassword,
@@ -260,22 +301,26 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  // Fetch user data
+  /// Fetch user data with improved type safety
   Future<void> _fetchUserData() async {
     try {
       // Get user data
-      _userData = await _userService.getUserProfile();
-
-      // Extract user type
-      if (_userData != null && _userData!.containsKey('user_type')) {
-        _userType = _userData!['user_type'];
+      final userData = await _userService.getUserProfile();
+      if (userData != null) {
+        _user = User.fromJson(userData);
+        _userType = _user?.userType;
       }
 
       // Get profile
-      _userProfile = await _userService.getProfileDetails();
+      final profileData = await _userService.getProfileDetails();
+      if (profileData != null) {
+        _profile = Profile.fromJson(profileData);
+      }
 
       // Save user data for persistence
-      await StorageUtils.saveToStorage(AppConstants.userKey, _userData);
+      if (_user != null) {
+        await StorageUtils.saveToStorage(AppConstants.userKey, _user!.toJson());
+      }
 
       notifyListeners();
     } catch (e) {

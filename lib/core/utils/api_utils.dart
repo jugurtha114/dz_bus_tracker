@@ -49,7 +49,7 @@ class ApiUtils {
         return ValidationException(
           defaultMessage ?? 'Validation error',
           fieldErrors: fieldErrors,
-          data: error,
+          details: error,
         );
       }
 

@@ -1,58 +1,58 @@
 // lib/services/auth_service.dart
 
-import 'dart:io';
 import 'package:flutter/foundation.dart';
-import 'package:image_picker/image_picker.dart';
 import '../config/api_config.dart';
 import '../core/constants/api_constants.dart';
 import '../core/constants/app_constants.dart';
 import '../core/exceptions/app_exceptions.dart';
 import '../core/network/api_client.dart';
 import '../core/utils/storage_utils.dart';
+import '../models/auth_models.dart';
+import '../models/user_model.dart';
 
 class AuthService {
   final ApiClient _apiClient;
 
   AuthService({ApiClient? apiClient}) : _apiClient = apiClient ?? ApiClient();
 
-  // Login user
-  Future<Map<String, dynamic>> login({
+  /// Login user with improved error handling and type safety
+  Future<AuthResponse<AuthTokenResponse>> login({
     required String email,
     required String password,
   }) async {
     try {
+      final request = LoginRequest(email: email, password: password);
       final response = await _apiClient.post(
-        Endpoints.login,
-        body: {
-          'email': email,
-          'password': password,
-        },
+        ApiEndpoints.buildUrl(ApiEndpoints.obtainToken),
+        body: request.toJson(),
       );
 
       if (response is Map<String, dynamic> &&
           response.containsKey(ApiConstants.accessKey) &&
           response.containsKey(ApiConstants.refreshKey)) {
 
+        final authTokens = AuthTokenResponse.fromJson(response);
+        
         // Save auth tokens
         await _saveAuthData(
-          token: response[ApiConstants.accessKey],
-          refreshToken: response[ApiConstants.refreshKey],
+          token: authTokens.accessToken,
+          refreshToken: authTokens.refreshToken,
         );
 
-        return response;
+        return AuthResponse.success(authTokens, message: 'Login successful');
       }
 
-      throw ApiException('Invalid response from server');
+      return AuthResponse.failure('Invalid response from server');
     } catch (e) {
       if (e is ApiException) {
-        rethrow;
+        return AuthResponse.failure(e.message);
       }
-      throw ApiException('Login failed: ${e.toString()}');
+      return AuthResponse.failure('Login failed: ${e.toString()}');
     }
   }
 
-  // Register user
-  Future<Map<String, dynamic>> register({
+  /// Register user with improved type safety
+  Future<AuthResponse<Map<String, dynamic>>> register({
     required String email,
     required String password,
     required String confirmPassword,
@@ -62,30 +62,32 @@ class AuthService {
     String userType = AppConstants.userTypePassenger,
   }) async {
     try {
-      final response = await _apiClient.post(
-        Endpoints.users,
-        body: {
-          'email': email,
-          'password': password,
-          'confirm_password': confirmPassword,
-          'first_name': firstName,
-          'last_name': lastName,
-          'phone_number': phoneNumber,
-          'user_type': userType,
-        },
+      final request = UserCreateRequest(
+        email: email,
+        password: password,
+        confirmPassword: confirmPassword,
+        firstName: firstName,
+        lastName: lastName,
+        phoneNumber: phoneNumber,
+        userType: UserType.fromString(userType),
       );
 
-      return response;
+      final response = await _apiClient.post(
+        ApiEndpoints.buildUrl('/api/v1/accounts/register/'),
+        body: request.toJson(),
+      );
+
+      return AuthResponse.success(response, message: 'Registration successful');
     } catch (e) {
       if (e is ApiException) {
-        rethrow;
+        return AuthResponse.failure(e.message);
       }
-      throw ApiException('Registration failed: ${e.toString()}');
+      return AuthResponse.failure('Registration failed: ${e.toString()}');
     }
   }
 
-  // Register driver
-  Future<Map<String, dynamic>> registerDriver({
+  /// Register driver with improved type safety
+  Future<AuthResponse<Map<String, dynamic>>> registerDriver({
     required String email,
     required String password,
     required String confirmPassword,
@@ -99,139 +101,145 @@ class AuthService {
     required int yearsOfExperience,
   }) async {
     try {
-      // Create multipart form data
-      final Map<String, String> fields = {
-        'email': email,
-        'password': password,
-        'confirm_password': confirmPassword,
-        'first_name': firstName,
-        'last_name': lastName,
-        'phone_number': phoneNumber,
-        'id_card_number': idCardNumber,
-        'driver_license_number': driverLicenseNumber,
-        'years_of_experience': yearsOfExperience.toString(),
-      };
-
-      // Prepare files map - don't cast the file objects to String
-      final Map<String, dynamic> files = {
-        'id_card_photo': idCardPhoto,
-        'driver_license_photo': driverLicensePhoto,
-      };
-
-      final response = await _apiClient.multipartRequest(
-        Endpoints.driverRegistration,
-        method: 'POST',
-        fields: fields,
-        files: files,
+      final request = DriverRegistrationRequest(
+        email: email,
+        password: password,
+        confirmPassword: confirmPassword,
+        firstName: firstName,
+        lastName: lastName,
+        phoneNumber: phoneNumber,
+        idCardNumber: idCardNumber,
+        idCardPhoto: idCardPhoto,
+        driverLicenseNumber: driverLicenseNumber,
+        driverLicensePhoto: driverLicensePhoto,
+        yearsOfExperience: yearsOfExperience,
       );
 
-      return response;
+      final response = await _apiClient.multipartRequest(
+        ApiEndpoints.buildUrl('/api/v1/accounts/register-driver/'),
+        method: 'POST',
+        fields: request.toFormFields(),
+        files: request.getFiles(),
+      );
+
+      return AuthResponse.success(response, message: 'Driver registration successful');
     } catch (e) {
       if (e is ApiException) {
-        rethrow;
+        return AuthResponse.failure(e.message);
       }
-      throw ApiException('Driver registration failed: ${e.toString()}');
+      return AuthResponse.failure('Driver registration failed: ${e.toString()}');
     }
   }
 
-  // Reset password
-  Future<Map<String, dynamic>> resetPassword({
+  /// Reset password with improved error handling
+  Future<AuthResponse<Map<String, dynamic>>> resetPassword({
     required String email,
   }) async {
     try {
+      final request = PasswordResetRequest(email: email);
       final response = await _apiClient.post(
-        Endpoints.resetPasswordRequest,
-        body: {
-          'email': email,
-        },
+        ApiEndpoints.buildUrl(ApiEndpoints.resetPasswordRequest),
+        body: request.toJson(),
       );
 
-      return response;
+      return AuthResponse.success(response, message: 'Password reset email sent');
     } catch (e) {
       if (e is ApiException) {
-        rethrow;
+        return AuthResponse.failure(e.message);
       }
-      throw ApiException('Password reset failed: ${e.toString()}');
+      return AuthResponse.failure('Password reset failed: ${e.toString()}');
     }
   }
 
-  // Confirm password reset
-  Future<Map<String, dynamic>> confirmPasswordReset({
+  /// Confirm password reset with improved type safety
+  Future<AuthResponse<Map<String, dynamic>>> confirmPasswordReset({
     required String uid,
     required String token,
     required String newPassword,
     required String confirmPassword,
   }) async {
     try {
-      final response = await _apiClient.post(
-        Endpoints.resetPasswordConfirm,
-        body: {
-          'uid': uid,
-          'token': token,
-          'new_password': newPassword,
-          'confirm_password': confirmPassword,
-        },
+      final request = PasswordResetConfirmRequest(
+        uid: uid,
+        token: token,
+        newPassword: newPassword,
+        confirmPassword: confirmPassword,
       );
 
-      return response;
+      final response = await _apiClient.post(
+        ApiEndpoints.buildUrl(ApiEndpoints.resetPasswordConfirm),
+        body: request.toJson(),
+      );
+
+      return AuthResponse.success(response, message: 'Password reset successful');
     } catch (e) {
       if (e is ApiException) {
-        rethrow;
+        return AuthResponse.failure(e.message);
       }
-      throw ApiException('Password reset confirmation failed: ${e.toString()}');
+      return AuthResponse.failure('Password reset confirmation failed: ${e.toString()}');
     }
   }
 
-  // Logout user
-  Future<void> logout() async {
-    await _clearAuthData();
+  /// Logout user with proper error handling
+  Future<AuthResponse<void>> logout() async {
+    try {
+      // Call the logout endpoint to invalidate the refresh token
+      await _apiClient.post(ApiEndpoints.buildUrl(ApiEndpoints.logout));
+      await _clearAuthData();
+      return AuthResponse.success(null, message: 'Logout successful');
+    } catch (e) {
+      // Even if the API call fails, we should still clear local auth data
+      debugPrint('Logout API call failed: ${e.toString()}');
+      await _clearAuthData();
+      return AuthResponse.success(null, message: 'Logout completed (with API warning)');
+    }
   }
 
-  // Refresh token
-  Future<Map<String, dynamic>> refreshToken(String refreshToken) async {
+  /// Refresh token with improved error handling
+  Future<AuthResponse<String>> refreshToken(String refreshToken) async {
     try {
+      final request = TokenRefreshRequest(refreshToken: refreshToken);
       final response = await _apiClient.post(
-        Endpoints.refreshToken,
-        body: {
-          'refresh': refreshToken,
-        },
+        ApiEndpoints.buildUrl(ApiEndpoints.refreshToken),
+        body: request.toJson(),
       );
 
       if (response is Map<String, dynamic> &&
           response.containsKey(ApiConstants.accessKey)) {
 
+        final newAccessToken = response[ApiConstants.accessKey] as String;
+        
         // Save new access token
-        await StorageUtils.saveToStorage(AppConstants.tokenKey, response[ApiConstants.accessKey]);
+        await StorageUtils.saveToStorage(AppConstants.tokenKey, newAccessToken);
 
-        return response;
+        return AuthResponse.success(newAccessToken, message: 'Token refreshed');
       }
 
-      throw ApiException('Invalid response from server');
+      return AuthResponse.failure('Invalid response from server');
     } catch (e) {
       if (e is ApiException) {
-        rethrow;
+        return AuthResponse.failure(e.message);
       }
-      throw ApiException('Token refresh failed: ${e.toString()}');
+      return AuthResponse.failure('Token refresh failed: ${e.toString()}');
     }
   }
 
-  // Verify token
-  Future<bool> verifyToken(String token) async {
+  /// Verify token with improved error handling
+  Future<AuthResponse<bool>> verifyToken(String token) async {
     try {
+      final request = TokenVerifyRequest(token: token);
       await _apiClient.post(
-        Endpoints.verifyToken,
-        body: {
-          'token': token,
-        },
+        ApiEndpoints.buildUrl(ApiEndpoints.verifyToken),
+        body: request.toJson(),
       );
 
-      return true;
+      return AuthResponse.success(true, message: 'Token is valid');
     } catch (e) {
-      return false;
+      return AuthResponse.success(false, message: 'Token is invalid');
     }
   }
 
-  // Check if user is authenticated
+  /// Check if user is authenticated
   Future<bool> isAuthenticated() async {
     final token = await StorageUtils.getFromStorage<String>(AppConstants.tokenKey);
 
@@ -240,7 +248,8 @@ class AuthService {
     }
 
     // Verify token validity
-    return await verifyToken(token);
+    final verifyResponse = await verifyToken(token);
+    return verifyResponse.data ?? false;
   }
 
   // Get current authentication token

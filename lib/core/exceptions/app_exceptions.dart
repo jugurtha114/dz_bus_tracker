@@ -25,8 +25,7 @@ class ApiException extends AppException {
     super.code,
     super.details,
     this.statusCode,
-    this.endpoint,
-  });
+    this.endpoint});
   
   /// HTTP status code
   final int? statusCode;
@@ -73,6 +72,32 @@ class ApiException extends AppException {
     details: {'validation_errors': errors},
   );
   
+  /// Factory method to create exception from HTTP status code
+  factory ApiException.fromStatusCode(int statusCode, {String? message, String? endpoint}) {
+    switch (statusCode) {
+      case 400:
+        return ApiException.badRequest(message ?? 'Bad request');
+      case 401:
+        return ApiException.unauthorized(message);
+      case 403:
+        return ApiException.forbidden(message);
+      case 404:
+        return ApiException.notFound(message);
+      case 500:
+      case 502:
+      case 503:
+      case 504:
+        return ApiException.serverError(message);
+      default:
+        return ApiException(
+          message ?? 'HTTP error occurred',
+          code: 'HTTP_ERROR_$statusCode',
+          statusCode: statusCode,
+          endpoint: endpoint,
+        );
+    }
+  }
+  
   @override
   String toString() => 'ApiException($statusCode): $message';
 }
@@ -84,8 +109,7 @@ class NetworkException extends AppException {
     super.code,
     super.details,
     this.isTimeout = false,
-    this.isNoConnection = false,
-  });
+    this.isNoConnection = false});
   
   /// Whether the error was due to timeout
   final bool isTimeout;
@@ -122,8 +146,7 @@ class AuthException extends AppException {
     super.code,
     super.details,
     this.isTokenExpired = false,
-    this.isInvalidCredentials = false,
-  });
+    this.isInvalidCredentials = false});
   
   /// Whether the auth token has expired
   final bool isTokenExpired;
@@ -176,13 +199,16 @@ class ValidationException extends AppException {
     super.details,
     this.field,
     this.validationErrors = const {},
-  });
+    this.fieldErrors = const {}});
   
   /// The field that failed validation (if applicable)
   final String? field;
   
   /// Map of field names to error messages
   final Map<String, String> validationErrors;
+  
+  /// Map of field names to list of error messages (for compatibility with error handlers)
+  final Map<String, List<String>> fieldErrors;
   
   /// Factory constructors for common validation errors
   factory ValidationException.required(String field) => ValidationException(
@@ -213,6 +239,7 @@ class ValidationException extends AppException {
     'Multiple validation errors occurred.',
     code: 'MULTIPLE_ERRORS',
     validationErrors: errors,
+    fieldErrors: errors.map((key, value) => MapEntry(key, [value])),
     details: {'field_errors': errors},
   );
   
@@ -227,8 +254,7 @@ class LocationException extends AppException {
     super.code,
     super.details,
     this.isPermissionDenied = false,
-    this.isServiceDisabled = false,
-  });
+    this.isServiceDisabled = false});
   
   /// Whether location permission was denied
   final bool isPermissionDenied;
@@ -269,8 +295,7 @@ class CacheException extends AppException {
     super.message, {
     super.code,
     super.details,
-    this.key,
-  });
+    this.key});
   
   /// The cache key that failed
   final String? key;
@@ -310,8 +335,7 @@ class BusinessException extends AppException {
     super.message, {
     super.code,
     super.details,
-    this.rule,
-  });
+    this.rule});
   
   /// The business rule that was violated
   final String? rule;

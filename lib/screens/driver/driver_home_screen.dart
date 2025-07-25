@@ -3,23 +3,24 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import '../../config/api_config.dart';
 import '../../config/app_config.dart';
 import '../../config/route_config.dart';
 import '../../config/theme_config.dart';
-import '../../providers/auth_provider.dart';
+import '../../models/api_response_models.dart';
 import '../../providers/driver_provider.dart';
 import '../../providers/bus_provider.dart';
 import '../../providers/tracking_provider.dart';
 import '../../providers/location_provider.dart';
 import '../../providers/notification_provider.dart';
-import '../../widgets/common/app_bar.dart';
+import '../../widgets/common/app_layout.dart';
 import '../../widgets/common/glassy_container.dart';
+import '../../widgets/common/custom_card.dart';
 import '../../widgets/common/custom_button.dart';
 import '../../widgets/common/loading_indicator.dart';
 import '../../widgets/driver/passenger_counter.dart';
 import '../../widgets/driver/tracking_controls.dart';
 import '../../widgets/map/map_widget.dart';
+import '../../services/navigation_service.dart';
 import '../../helpers/dialog_helper.dart';
 import '../../helpers/error_handler.dart';
 import '../../helpers/permission_helper.dart';
@@ -74,7 +75,8 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
 
       // Get driver's buses
       final busProvider = Provider.of<BusProvider>(context, listen: false);
-      await busProvider.fetchBuses(driverId: driverProvider.driverId);
+      final queryParams = BusQueryParameters(driverId: driverProvider.driverId);
+      await busProvider.fetchBuses(queryParams: queryParams);
 
       setState(() {
         _isInitialized = true;
@@ -124,11 +126,11 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
   }
 
   void _goToBusManagement() {
-    AppRouter.navigateTo(context, AppRoutes.busManagement);
+    NavigationService.navigateTo(AppRoutes.busManagement);
   }
 
   void _goToLineSelection() {
-    AppRouter.navigateTo(context, AppRoutes.lineSelection);
+    NavigationService.navigateTo(AppRoutes.lineSelection);
   }
 
   void _startTracking() async {
@@ -155,18 +157,16 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
 
       // Start tracking on server
       final success = await trackingProvider.startTracking(
-        busId: busProvider.selectedBus!['id'],
-        driverId: driverProvider.driverId,
-        lineId: busProvider.selectedBus!['line_id'],
+        busProvider.selectedBus!.id,
       );
 
       if (success) {
         // Show success message
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Tracking started successfully'),
-              backgroundColor: AppColors.success,
+            SnackBar(
+              content: const Text('Tracking started successfully'),
+              backgroundColor: Theme.of(context).colorScheme.primary,
             ),
           );
         }
@@ -209,7 +209,13 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
 
     try {
       // Stop tracking on server
-      final success = await trackingProvider.stopTracking();
+      final trackingProvider = Provider.of<TrackingProvider>(context, listen: false);
+      final busProvider = Provider.of<BusProvider>(context, listen: false);
+      
+      bool success = false;
+      if (busProvider.selectedBus != null) {
+        success = await trackingProvider.stopBusTracking(busProvider.selectedBus!.id);
+      }
 
       if (success) {
         // Stop location tracking
@@ -218,9 +224,9 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
         // Show success message
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Tracking stopped successfully'),
-              backgroundColor: AppColors.info,
+            SnackBar(
+              content: const Text('Tracking stopped successfully'),
+              backgroundColor: Theme.of(context).colorScheme.primary,
             ),
           );
         }
@@ -259,19 +265,30 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
 
     try {
       // Update passenger count
-      await trackingProvider.updatePassengers(
-        busId: busProvider.selectedBus!['id'],
+      final success = await trackingProvider.updatePassengers(
+        busId: busProvider.selectedBus!.id,
         count: count,
       );
 
-      // Show success message
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Passenger count updated successfully'),
-            backgroundColor: AppColors.success,
-          ),
-        );
+      if (success) {
+        // Show success message
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Passenger count updated successfully'),
+              backgroundColor: Theme.of(context).colorScheme.primary,
+            ),
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Failed to update passenger count'),
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+          );
+        }
       }
     } catch (e) {
       // Show error
@@ -311,8 +328,8 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
         children: [
           Text(
             'Select Bus',
-            style: AppTextStyles.h2.copyWith(
-              color: AppColors.white,
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+              color: Theme.of(context).colorScheme.primary,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -320,15 +337,15 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
           ...busProvider.buses.map((bus) {
             return ListTile(
               title: Text(
-                'Bus ${bus['license_plate']}',
-                style: AppTextStyles.body.copyWith(
-                  color: AppColors.white,
+                'Bus ${bus.licensePlate}',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.primary,
                 ),
               ),
               subtitle: Text(
-                '${bus['model']} - ${bus['manufacturer']}',
-                style: AppTextStyles.bodySmall.copyWith(
-                  color: AppColors.white.withOpacity(0.7),
+                '${bus.model} - ${bus.manufacturer}',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.7),
                 ),
               ),
               onTap: () {
@@ -346,8 +363,8 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
             },
             child: Text(
               'Manage Buses',
-              style: AppTextStyles.body.copyWith(
-                color: AppColors.white,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.primary,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -365,224 +382,218 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
     final locationProvider = Provider.of<LocationProvider>(context);
     final notificationProvider = Provider.of<NotificationProvider>(context);
 
-    return Scaffold(
-      appBar: DzAppBar(
-        title: 'Driver Dashboard',
-        actions: [
-          // Notification icon with badge
-          Stack(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.notifications),
-                onPressed: () {
-                  AppRouter.navigateTo(context, AppRoutes.notifications);
-                },
+    return AppLayout(
+      title: 'Driver Dashboard',
+      currentIndex: 0, // Driver home index
+      actions: [
+        // Notification icon with badge
+        Stack(
+          children: [
+            IconButton(
+              icon: const Icon(Icons.notifications),
+              onPressed: () {
+                NavigationService.navigateTo(AppRoutes.notifications);
+              },
+            ),
+            if (notificationProvider.unreadCount > 0)
+              Positioned(
+                right: 10,
+                top: 10,
+                child: Container(
+                  padding: const EdgeInsets.all(2),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primary,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  constraints: const BoxConstraints(
+                    minWidth: 14,
+                    minHeight: 14,
+                  ),
+                  child: Text(
+                    '${notificationProvider.unreadCount}',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.primary,
+                      fontSize: 8,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
               ),
-              if (notificationProvider.unreadCount > 0)
+          ],
+        ),
+      ],
+      child: _isLoading && !_isInitialized
+          ? const Center(
+              child: LoadingIndicator(),
+            )
+          : Stack(
+              children: [
+                // Map
+                MapWidget(
+                  initialPosition: locationProvider.currentLocation != null
+                      ? LatLng(
+                          locationProvider.latitude,
+                          locationProvider.longitude,
+                        )
+                      : null,
+                  onMapCreated: _onMapCreated,
+                  markers: _buildMarkers(locationProvider),
+                  polylines: _buildPolylines(),
+                ),
+
+                // Current Location Button
                 Positioned(
-                  right: 10,
-                  top: 10,
-                  child: Container(
-                    padding: const EdgeInsets.all(2),
-                    decoration: BoxDecoration(
-                      color: AppColors.error,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    constraints: const BoxConstraints(
-                      minWidth: 14,
-                      minHeight: 14,
-                    ),
-                    child: Text(
-                      '${notificationProvider.unreadCount}',
-                      style: AppTextStyles.caption.copyWith(
-                        color: AppColors.white,
-                        fontSize: 8,
-                      ),
-                      textAlign: TextAlign.center,
+                  bottom: 250,
+                  right: 16,
+                  child: FloatingActionButton(
+                    mini: true,
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    foregroundColor: Theme.of(context).colorScheme.primary,
+                    onPressed: _goToCurrentLocation,
+                    child: const Icon(Icons.my_location),
+                  ),
+                ),
+
+                // Driver Status and Controls
+                Positioned(
+                  top: 16,
+                  left: 16,
+                  right: 16,
+                  child: CustomCard(type: CardType.elevated, 
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Driver Status
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Driver Status',
+                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: Theme.of(context).colorScheme.primary,
+                                  ),
+                                ),
+                                Text(
+                                  driverProvider.isAvailable ? 'Available' : 'Unavailable',
+                                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                    color: driverProvider.isAvailable
+                                        ? Theme.of(context).colorScheme.primary
+                                        : Theme.of(context).colorScheme.primary,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Switch(
+                              value: driverProvider.isAvailable,
+                              onChanged: (_) => _toggleAvailability(),
+                              activeThumbColor: Theme.of(context).colorScheme.primary,
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        // Bus Info
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Selected Bus',
+                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: Theme.of(context).colorScheme.primary,
+                                  ),
+                                ),
+                                Text(
+                                  busProvider.selectedBus != null
+                                      ? 'Bus ${busProvider.selectedBus!.licensePlate}'
+                                      : 'No Bus Selected',
+                                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                    color: busProvider.selectedBus != null
+                                        ? Theme.of(context).colorScheme.primary
+                                        : Theme.of(context).colorScheme.primary,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            TextButton(
+                              onPressed: busProvider.selectedBus != null
+                                  ? _selectBusDialog
+                                  : _goToBusManagement,
+                              child: Text(
+                                busProvider.selectedBus != null
+                                    ? 'Change'
+                                    : 'Select',
+                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  color: Theme.of(context).colorScheme.primary,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
                 ),
-            ],
-          ),
-        ],
-      ),
-      drawer: _buildDrawer(),
-      body: _isLoading && !_isInitialized
-          ? const Center(
-        child: LoadingIndicator(),
-      )
-          : Stack(
-        children: [
-          // Map
-          MapWidget(
-            initialPosition: locationProvider.currentLocation != null
-                ? LatLng(
-              locationProvider.latitude,
-              locationProvider.longitude,
-            )
-                : null,
-            onMapCreated: _onMapCreated,
-            markers: _buildMarkers(locationProvider),
-            polylines: _buildPolylines(),
-          ),
 
-          // Current Location Button
-          Positioned(
-            bottom: 250,
-            right: 16,
-            child: FloatingActionButton(
-              mini: true,
-              backgroundColor: AppColors.white,
-              foregroundColor: AppColors.primary,
-              child: const Icon(Icons.my_location),
-              onPressed: _goToCurrentLocation,
-            ),
-          ),
-
-          // Driver Status and Controls
-          Positioned(
-            top: 16,
-            left: 16,
-            right: 16,
-            child: GlassyContainer(
-              color: AppColors.glassDark,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Driver Status
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Driver Status',
-                            style: AppTextStyles.body.copyWith(
-                              color: AppColors.white,
-                            ),
-                          ),
-                          Text(
-                            driverProvider.isAvailable ? 'Available' : 'Unavailable',
-                            style: AppTextStyles.h3.copyWith(
-                              color: driverProvider.isAvailable
-                                  ? AppColors.success
-                                  : AppColors.error,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                      Switch(
-                        value: driverProvider.isAvailable,
-                        onChanged: (_) => _toggleAvailability(),
-                        activeColor: AppColors.success,
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Bus Info
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Selected Bus',
-                            style: AppTextStyles.body.copyWith(
-                              color: AppColors.white,
-                            ),
-                          ),
-                          Text(
-                            busProvider.selectedBus != null
-                                ? 'Bus ${busProvider.selectedBus!['license_plate']}'
-                                : 'No Bus Selected',
-                            style: AppTextStyles.h3.copyWith(
-                              color: busProvider.selectedBus != null
-                                  ? AppColors.white
-                                  : AppColors.warning,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                      TextButton(
-                        onPressed: busProvider.selectedBus != null
-                            ? _selectBusDialog
-                            : _goToBusManagement,
-                        child: Text(
-                          busProvider.selectedBus != null
-                              ? 'Change'
-                              : 'Select',
-                          style: AppTextStyles.body.copyWith(
-                            color: AppColors.white,
-                            fontWeight: FontWeight.w500,
-                          ),
+                // Bottom Controls Panel
+                Positioned(
+                  bottom: 80, // Adjusted to account for bottom navigation
+                  left: 0,
+                  right: 0,
+                  child: CustomCard(type: CardType.elevated, 
+                    borderRadius: BorderRadius.circular(24),
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    margin: const EdgeInsets.only(bottom: 16, left: 16, right: 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Tracking controls
+                        TrackingControls(
+                          isTracking: trackingProvider.isTracking,
+                          onStartTracking: _startTracking,
+                          onStopTracking: _stopTracking,
                         ),
-                      ),
-                    ],
+
+                        const SizedBox(height: 16),
+
+                        // Passenger counter
+                        PassengerCounter(
+                          onCountChanged: _updatePassengerCount,
+                          isEnabled: trackingProvider.isTracking,
+                          initialCount: trackingProvider.currentTrip?.maxPassengers ?? 0,
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        // Line selection button
+                        CustomButton(
+        text: 'Select Line',
+        onPressed: _goToLineSelection,
+        type: ButtonType.outline,
+        color: Theme.of(context).colorScheme.primary,
+        ),
+                      ],
+                    ),
                   ),
-                ],
-              ),
+                ),
+
+                // Loading overlay
+                if (_isLoading && _isInitialized)
+                  const FullScreenLoading(),
+              ],
             ),
-          ),
-
-          // Bottom Controls Panel
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: GlassyContainer(
-              borderRadius: 24,
-              color: AppColors.glassDark,
-              border: Border.all(color: Colors.white.withOpacity(0.1)),
-              margin: const EdgeInsets.only(bottom: 16, left: 16, right: 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Tracking controls
-                  TrackingControls(
-                    isTracking: trackingProvider.isTracking,
-                    onStartTracking: _startTracking,
-                    onStopTracking: _stopTracking,
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Passenger counter
-                  PassengerCounter(
-                    onCountChanged: _updatePassengerCount,
-                    isEnabled: trackingProvider.isTracking,
-                    initialCount: trackingProvider.currentTrip != null
-                        ? int.tryParse(trackingProvider.currentTrip!['passenger_count']?.toString() ?? '0') ?? 0
-                        : 0,
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Line selection button
-                  CustomButton(
-                    text: 'Select Line',
-                    onPressed: _goToLineSelection,
-                    type: ButtonType.outlined,
-                    color: AppColors.white,
-                    icon: Icons.route,
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // Loading overlay
-          if (_isLoading && _isInitialized)
-            const FullScreenLoading(),
-        ],
-      ),
     );
   }
 
@@ -598,7 +609,6 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
             locationProvider.latitude,
             locationProvider.longitude,
           ),
-          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
           infoWindow: const InfoWindow(title: 'Your Location'),
         ),
       );
@@ -612,173 +622,4 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
     return {};
   }
 
-  Widget _buildDrawer() {
-    final authProvider = Provider.of<AuthProvider>(context);
-    final driverProvider = Provider.of<DriverProvider>(context);
-
-    return Drawer(
-      child: ListView(
-        padding: EdgeInsets.zero,
-        children: [
-          // Drawer Header with driver info
-          UserAccountsDrawerHeader(
-            accountName: Text(
-              authProvider.user != null
-                  ? '${authProvider.user!['first_name']} ${authProvider.user!['last_name']}'
-                  : 'Driver',
-              style: AppTextStyles.body.copyWith(
-                color: AppColors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            accountEmail: Text(
-              authProvider.user != null
-                  ? authProvider.user!['email']
-                  : '',
-              style: AppTextStyles.bodySmall.copyWith(
-                color: AppColors.white,
-              ),
-            ),
-            currentAccountPicture: CircleAvatar(
-              backgroundColor: AppColors.white,
-              child: Icon(
-                Icons.person,
-                color: AppColors.primary,
-                size: 40,
-              ),
-            ),
-            decoration: BoxDecoration(
-              color: AppColors.primary,
-            ),
-            otherAccountsPictures: [
-              // Display driver rating
-              CircleAvatar(
-                backgroundColor: AppColors.white,
-                child: Text(
-                  driverProvider.rating.toStringAsFixed(1),
-                  style: AppTextStyles.body.copyWith(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
-          ),
-
-          // Menu Items
-          ListTile(
-            leading: const Icon(Icons.home),
-            title: const Text('Home'),
-            onTap: () {
-              Navigator.pop(context); // Close the drawer
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.directions_bus),
-            title: const Text('Bus Management'),
-            onTap: () {
-              Navigator.pop(context); // Close the drawer
-              _goToBusManagement();
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.route),
-            title: const Text('Line Selection'),
-            onTap: () {
-              Navigator.pop(context); // Close the drawer
-              _goToLineSelection();
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.location_on),
-            title: const Text('Tracking'),
-            onTap: () {
-              Navigator.pop(context); // Close the drawer
-              AppRouter.navigateTo(context, AppRoutes.tracking);
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.people),
-            title: const Text('Passenger Counter'),
-            onTap: () {
-              Navigator.pop(context); // Close the drawer
-              AppRouter.navigateTo(context, AppRoutes.passengerCounter);
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.star),
-            title: const Text('Ratings'),
-            onTap: () {
-              Navigator.pop(context); // Close the drawer
-              AppRouter.navigateTo(context, AppRoutes.ratings);
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.notifications),
-            title: const Text('Notifications'),
-            onTap: () {
-              Navigator.pop(context); // Close the drawer
-              AppRouter.navigateTo(context, AppRoutes.notifications);
-            },
-          ),
-
-          const Divider(),
-
-          ListTile(
-            leading: const Icon(Icons.person),
-            title: const Text('Profile'),
-            onTap: () {
-              Navigator.pop(context); // Close the drawer
-              AppRouter.navigateTo(context, AppRoutes.driverProfile);
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.settings),
-            title: const Text('Settings'),
-            onTap: () {
-              Navigator.pop(context); // Close the drawer
-              AppRouter.navigateTo(context, AppRoutes.settings);
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.info),
-            title: const Text('About'),
-            onTap: () {
-              Navigator.pop(context); // Close the drawer
-              AppRouter.navigateTo(context, AppRoutes.about);
-            },
-          ),
-
-          const Divider(),
-
-          ListTile(
-            leading: const Icon(Icons.logout, color: AppColors.error),
-            title: Text(
-              'Logout',
-              style: TextStyle(color: AppColors.error),
-            ),
-            onTap: () {
-              // Show confirmation dialog
-              DialogHelper.showConfirmDialog(
-                context,
-                title: 'Logout',
-                message: 'Are you sure you want to logout?',
-                confirmText: 'Logout',
-                cancelText: 'Cancel',
-              ).then((confirm) {
-                if (confirm) {
-                  // Logout and navigate to login screen
-                  authProvider.logout().then((_) {
-                    AppRouter.navigateToAndClearStack(context, AppRoutes.login);
-                  });
-                } else {
-                  Navigator.pop(context); // Close the drawer
-                }
-              });
-            },
-          ),
-        ],
-      ),
-    );
-  }
 }

@@ -10,7 +10,7 @@ class StopMarker {
     required BuildContext context,
     required Color color,
     String? label,
-    double size = 40.0,
+    double size = 40,
   }) async {
     final pictureRecorder = PictureRecorder();
     final canvas = Canvas(pictureRecorder);
@@ -64,7 +64,7 @@ class StopMarker {
         text: label,
         style: TextStyle(
           color: Colors.white,
-          fontSize: size * 0.3,
+          fontSize: size * 0,
           fontWeight: FontWeight.bold,
         ),
       );
@@ -73,7 +73,7 @@ class StopMarker {
         canvas,
         Offset(
           (size - textPainter.width) / 2,
-          size * 0.7,
+          size * 0,
         ),
       );
     }

@@ -2,10 +2,12 @@
 
 import 'package:flutter/material.dart';
 import '../../config/theme_config.dart';
+import '../../models/bus_model.dart';
 import '../common/glassy_container.dart';
+import '../common/custom_card.dart';
 
 class BusCard extends StatelessWidget {
-  final Map<String, dynamic> bus;
+  final Bus bus;
   final bool isSelected;
   final VoidCallback? onTap;
   final VoidCallback? onEdit;
@@ -23,24 +25,22 @@ class BusCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Extract bus details
-    final licensePlate = bus['license_plate'] ?? 'Unknown';
-    final model = bus['model'] ?? '';
-    final manufacturer = bus['manufacturer'] ?? '';
-    final year = bus['year']?.toString() ?? '';
-    final capacity = bus['capacity']?.toString() ?? '';
-    final isAirConditioned = bus['is_air_conditioned'] == true;
-    final isApproved = bus['is_approved'] == true;
-    final status = bus['status'] ?? 'active';
+    final licensePlate = bus.licensePlate ?? 'Unknown';
+    final model = bus.model ?? '';
+    final manufacturer = bus.manufacturer ?? '';
+    final year = bus.year?.toString() ?? '';
+    final capacity = bus.capacity?.toString() ?? '';
+    final isAirConditioned = bus.isAirConditioned == true;
+    final isApproved = bus.isApproved == true;
+    final status = bus.status ?? 'active';
 
-    return GlassyContainer(
+    return CustomCard(type: CardType.elevated, 
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
-      borderRadius: 12,
-      color: isSelected ? AppColors.primary.withOpacity(0.3) : AppColors.glassWhite,
-      border: Border.all(
-        color: isSelected ? AppColors.primary : Colors.white.withOpacity(0.2),
-        width: isSelected ? 2 : 1,
-      ),
+      borderRadius: BorderRadius.circular(12),
+      backgroundColor: isSelected ? Theme.of(context).colorScheme.primaryContainer : Theme.of(context).colorScheme.surface,
+      borderColor: isSelected ? Theme.of(context).colorScheme.primary : Colors.white.withOpacity(0.1),
+      borderWidth: isSelected ? 2 : 1,
       onTap: onTap,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -52,17 +52,17 @@ class BusCard extends StatelessWidget {
               // License plate with icon
               Row(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.directions_bus,
                     size: 24,
-                    color: AppColors.primary,
+                    color: Theme.of(context).colorScheme.primary,
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 8, height: 40),
                   Text(
                     licensePlate,
-                    style: AppTextStyles.h3.copyWith(
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: AppColors.darkGrey,
+                      color: Theme.of(context).colorScheme.primary,
                     ),
                   ),
                 ],
@@ -80,7 +80,7 @@ class BusCard extends StatelessWidget {
                         child: Icon(
                           Icons.ac_unit,
                           size: 18,
-                          color: AppColors.info,
+                          color: Theme.of(context).colorScheme.primary,
                         ),
                       ),
                     ),
@@ -89,13 +89,13 @@ class BusCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: isApproved ? AppColors.success : AppColors.warning,
+                      color: isApproved ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.primary,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
                       isApproved ? 'Approved' : 'Pending',
-                      style: AppTextStyles.caption.copyWith(
-                        color: AppColors.white,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.primary,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -105,7 +105,7 @@ class BusCard extends StatelessWidget {
             ],
           ),
 
-          const SizedBox(height: 8),
+          const SizedBox(height: 16),
 
           // Bus details
           Row(
@@ -115,8 +115,8 @@ class BusCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   '$manufacturer $model ${year.isNotEmpty ? '($year)' : ''}',
-                  style: AppTextStyles.body.copyWith(
-                    color: AppColors.darkGrey,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.primary,
                   ),
                 ),
               ),
@@ -126,21 +126,21 @@ class BusCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: AppColors.lightGrey,
+                    color: Theme.of(context).colorScheme.primary,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.person,
                         size: 16,
-                        color: AppColors.darkGrey,
+                        color: Theme.of(context).colorScheme.primary,
                       ),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: 4, height: 40),
                       Text(
                         capacity,
-                        style: AppTextStyles.caption.copyWith(
-                          color: AppColors.darkGrey,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.primary,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -167,7 +167,7 @@ class BusCard extends StatelessWidget {
                       ),
                       label: const Text('Edit'),
                       style: TextButton.styleFrom(
-                        foregroundColor: AppColors.primary,
+                        foregroundColor: Theme.of(context).colorScheme.primary,
                         padding: const EdgeInsets.symmetric(horizontal: 8),
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
@@ -183,7 +183,7 @@ class BusCard extends StatelessWidget {
                       ),
                       label: const Text('Delete'),
                       style: TextButton.styleFrom(
-                        foregroundColor: AppColors.error,
+                        foregroundColor: Theme.of(context).colorScheme.primary,
                         padding: const EdgeInsets.symmetric(horizontal: 8),
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
@@ -200,8 +200,8 @@ class BusCard extends StatelessWidget {
                 padding: const EdgeInsets.only(top: 8),
                 child: Text(
                   'Selected',
-                  style: AppTextStyles.caption.copyWith(
-                    color: AppColors.primary,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.primary,
                     fontWeight: FontWeight.bold,
                   ),
                 ),

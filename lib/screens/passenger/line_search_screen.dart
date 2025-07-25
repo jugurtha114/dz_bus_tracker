@@ -9,14 +9,18 @@ import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import '../../config/route_config.dart';
 import '../../config/theme_config.dart';
 import '../../core/utils/storage_utils.dart';
+import '../../models/api_response_models.dart';
+import '../../models/line_model.dart';
 import '../../providers/line_provider.dart';
 import '../../providers/passenger_provider.dart';
 import '../../providers/location_provider.dart';
-import '../../widgets/common/app_bar.dart';
+import '../../widgets/common/app_layout.dart';
 import '../../widgets/common/custom_text_field.dart';
 import '../../widgets/common/glassy_container.dart';
+import '../../widgets/common/custom_card.dart';
 import '../../widgets/common/loading_indicator.dart';
 import '../../widgets/passenger/line_list_item.dart';
+import '../../services/navigation_service.dart';
 import '../../helpers/error_handler.dart';
 
 class LineSearchScreen extends StatefulWidget {
@@ -67,10 +71,20 @@ class _LineSearchScreenState extends State<LineSearchScreen>
 
       // Fetch popular/all lines
       final lineProvider = Provider.of<LineProvider>(context, listen: false);
-      await lineProvider.fetchLines(isActive: true);
+      await lineProvider.fetchLines(
+        queryParams: LineQueryParameters(isActive: true),
+      );
 
       // Set popular lines (you can implement popularity logic later)
-      _popularLines = lineProvider.lines.take(10).toList();
+      _popularLines = lineProvider.lines.take(10).map((line) => {
+        'id': line.id,
+        'name': line.name,
+        'code': line.code,
+        'color': line.color,
+        'frequency': line.frequency,
+        'description': line.description,
+        'is_active': line.isActive,
+      }).toList();
 
       // Auto-focus search if no popular lines
       if (_popularLines.isEmpty) {
@@ -111,7 +125,15 @@ class _LineSearchScreenState extends State<LineSearchScreen>
       await passengerProvider.searchLines(query: query.trim());
 
       setState(() {
-        _searchResults = passengerProvider.searchResults;
+        _searchResults = passengerProvider.searchResults.map((line) => {
+          'id': line.id,
+          'name': line.name,
+          'code': line.code,
+          'color': line.color,
+          'frequency': line.frequency,
+          'description': line.description,
+          'is_active': line.isActive,
+        }).toList();
       });
 
       // Add to recent searches
@@ -166,7 +188,7 @@ class _LineSearchScreenState extends State<LineSearchScreen>
               ? 'Added to favorites'
               : 'Removed from favorites',
         ),
-        backgroundColor: AppColors.success,
+        backgroundColor: Theme.of(context).colorScheme.primary,
         duration: const Duration(seconds: 2),
       ),
     );
@@ -187,15 +209,15 @@ class _LineSearchScreenState extends State<LineSearchScreen>
     StorageUtils.saveToStorage('recent_searches', <String>[]);
   }
 
-  void _onLineSelected(Map<String, dynamic> line) {
+  void _onLineSelected(Line line) {
     // Add to recent searches
-    _addToRecentSearches(line['name'] ?? '');
+    _addToRecentSearches(line.name);
 
     // Navigate to line details
-    AppRouter.navigateTo(context, AppRoutes.lineDetails, arguments: line);
+    NavigationService.navigateTo(AppRoutes.lineDetails, arguments: line);
   }
 
-  List<Map<String, dynamic>> _getFilteredLines() {
+  List<Line> _getFilteredLines() {
     final lineProvider = Provider.of<LineProvider>(context);
 
     switch (_selectedFilter) {
@@ -209,7 +231,7 @@ class _LineSearchScreenState extends State<LineSearchScreen>
         return lineProvider.lines;
       case 'favorites':
         return lineProvider.lines
-            .where((line) => _favoriteLines.contains(line['id']))
+            .where((line) => _favoriteLines.contains(line.id))
             .toList();
       default:
         return lineProvider.lines;
@@ -220,21 +242,20 @@ class _LineSearchScreenState extends State<LineSearchScreen>
   Widget build(BuildContext context) {
     final lineProvider = Provider.of<LineProvider>(context);
 
-    return Scaffold(
-      appBar: DzAppBar(
-        title: 'Search Lines',
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.map),
-            onPressed: () {
-              // Navigate to map view
-              Navigator.pop(context);
-            },
-            tooltip: 'Map View',
-          ),
-        ],
-      ),
-      body: Column(
+    return AppLayout(
+      title: 'Search Lines',
+      currentIndex: 1, // Search tab
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.map),
+          onPressed: () {
+            // Navigate to map view
+            NavigationService.goBack();
+          },
+          tooltip: 'Map View',
+        ),
+      ],
+      child: Column(
         children: [
           // Search Section
           Container(
@@ -244,7 +265,7 @@ class _LineSearchScreenState extends State<LineSearchScreen>
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  AppColors.primary.withValues(alpha: 0.1),
+                  Theme.of(context).colorScheme.primary.withValues(alpha: 0),
                   Colors.transparent,
                 ],
               ),
@@ -267,16 +288,16 @@ class _LineSearchScreenState extends State<LineSearchScreen>
                   prefixIcon: const Icon(Icons.search),
                   suffixIcon: _searchController.text.isNotEmpty
                       ? IconButton(
-                    icon: const Icon(Icons.clear),
-                    onPressed: _clearSearch,
-                  )
+                          icon: const Icon(Icons.clear),
+                          onPressed: _clearSearch,
+                        )
                       : null,
                   textInputAction: TextInputAction.search,
                   showBorder: true,
-                  borderColor: AppColors.primary.withValues(alpha: 0.3),
+                  borderColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0),
                 ),
 
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
 
                 // Filter Chips
                 SingleChildScrollView(
@@ -284,9 +305,9 @@ class _LineSearchScreenState extends State<LineSearchScreen>
                   child: Row(
                     children: [
                       _buildFilterChip('All Lines', 'all'),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 8, height: 40),
                       _buildFilterChip('Nearby', 'nearby'),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 8, height: 40),
                       _buildFilterChip('Favorites', 'favorites'),
                     ],
                   ),
@@ -315,7 +336,7 @@ class _LineSearchScreenState extends State<LineSearchScreen>
       label: Text(
         label,
         style: TextStyle(
-          color: isSelected ? AppColors.white : AppColors.primary,
+          color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.primary,
           fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
         ),
       ),
@@ -325,11 +346,11 @@ class _LineSearchScreenState extends State<LineSearchScreen>
           _selectedFilter = value;
         });
       },
-      backgroundColor: AppColors.white,
-      selectedColor: AppColors.primary,
-      checkmarkColor: AppColors.white,
+      backgroundColor: Theme.of(context).colorScheme.primary,
+      selectedColor: Theme.of(context).colorScheme.primary,
+      checkmarkColor: Theme.of(context).colorScheme.primary,
       side: BorderSide(
-        color: isSelected ? AppColors.primary : AppColors.lightGrey,
+        color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.primary,
       ),
     );
   }
@@ -353,13 +374,13 @@ class _LineSearchScreenState extends State<LineSearchScreen>
           position: index,
           duration: const Duration(milliseconds: 375),
           child: SlideAnimation(
-            verticalOffset: 50.0,
+            verticalOffset: 50,
             child: FadeInAnimation(
               child: Padding(
                 padding: const EdgeInsets.only(bottom: 8),
                 child: LineListItem(
                   line: line,
-                  onTap: () => _onLineSelected(line),
+                  onTap: () => _onLineSelected(Line.fromJson(line)),
                   isFavorite: _favoriteLines.contains(line['id']),
                   onFavoriteToggle: () => _toggleFavorite(line['id']),
                   showDistance: true, showStops: true,
@@ -379,17 +400,17 @@ class _LineSearchScreenState extends State<LineSearchScreen>
         Container(
           margin: const EdgeInsets.symmetric(horizontal: 16),
           decoration: BoxDecoration(
-            color: AppColors.lightGrey.withValues(alpha: 0.3),
+            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0),
             borderRadius: BorderRadius.circular(12),
           ),
           child: TabBar(
             controller: _tabController,
             indicator: BoxDecoration(
-              color: AppColors.primary,
+              color: Theme.of(context).colorScheme.primary,
               borderRadius: BorderRadius.circular(12),
             ),
-            labelColor: AppColors.white,
-            unselectedLabelColor: AppColors.darkGrey,
+            labelColor: Theme.of(context).colorScheme.primary,
+            unselectedLabelColor: Theme.of(context).colorScheme.primary,
             tabs: const [
               Tab(text: 'Popular'),
               Tab(text: 'Recent'),
@@ -434,20 +455,20 @@ class _LineSearchScreenState extends State<LineSearchScreen>
           position: index,
           duration: const Duration(milliseconds: 375),
           child: SlideAnimation(
-            verticalOffset: 50.0,
+            verticalOffset: 50,
             child: FadeInAnimation(
               child: Padding(
                 padding: const EdgeInsets.only(bottom: 8),
-                child: GlassyContainer(
-                  color: AppColors.glassWhite,
+                child: CustomCard(type: CardType.elevated, 
+                  backgroundColor: Theme.of(context).colorScheme.surface,
                   child: LineListItem(
                     line: line,
-                    onTap: () => _onLineSelected(line),
+                    onTap: () => _onLineSelected(Line.fromJson(line)),
                     isFavorite: _favoriteLines.contains(line['id']),
                     onFavoriteToggle: () => _toggleFavorite(line['id']),
                     showBadge: true,
                     badgeText: 'Popular',
-                    badgeColor: AppColors.warning, showStops: true,
+                    badgeColor: Theme.of(context).colorScheme.primary, showStops: true,
                   ),
                 ),
               ),
@@ -477,7 +498,7 @@ class _LineSearchScreenState extends State<LineSearchScreen>
             children: [
               Text(
                 'Recent Searches',
-                style: AppTextStyles.h3.copyWith(
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -485,7 +506,7 @@ class _LineSearchScreenState extends State<LineSearchScreen>
                 onPressed: _clearRecentSearches,
                 child: Text(
                   'Clear All',
-                  style: TextStyle(color: AppColors.error),
+                  style: TextStyle(color: Theme.of(context).colorScheme.primary),
                 ),
               ),
             ],
@@ -504,7 +525,7 @@ class _LineSearchScreenState extends State<LineSearchScreen>
                 position: index,
                 duration: const Duration(milliseconds: 375),
                 child: SlideAnimation(
-                  verticalOffset: 50.0,
+                  verticalOffset: 50,
                   child: FadeInAnimation(
                     child: Card(
                       margin: const EdgeInsets.only(bottom: 8),
@@ -512,15 +533,15 @@ class _LineSearchScreenState extends State<LineSearchScreen>
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: ListTile(
-                        leading: const Icon(
+                        leading: Icon(
                           Icons.history,
-                          color: AppColors.mediumGrey,
+                          color: Theme.of(context).colorScheme.primary,
                         ),
                         title: Text(search),
                         trailing: IconButton(
-                          icon: const Icon(
+                          icon: Icon(
                             Icons.north_west,
-                            color: AppColors.mediumGrey,
+                            color: Theme.of(context).colorScheme.primary,
                           ),
                           onPressed: () {
                             _searchController.text = search;
@@ -559,8 +580,8 @@ class _LineSearchScreenState extends State<LineSearchScreen>
         // Quick stats
         Container(
           margin: const EdgeInsets.all(16),
-          child: GlassyContainer(
-            color: AppColors.primary.withValues(alpha: 0.1),
+          child: CustomCard(type: CardType.elevated, 
+            backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
             child: Row(
               children: [
                 Expanded(
@@ -572,8 +593,8 @@ class _LineSearchScreenState extends State<LineSearchScreen>
                 ),
                 Container(
                   width: 1,
-                  height: 40,
-                  color: AppColors.lightGrey,
+        
+                  color: Theme.of(context).colorScheme.primary,
                 ),
                 Expanded(
                   child: _buildStatItem(
@@ -584,13 +605,13 @@ class _LineSearchScreenState extends State<LineSearchScreen>
                 ),
                 Container(
                   width: 1,
-                  height: 40,
-                  color: AppColors.lightGrey,
+        
+                  color: Theme.of(context).colorScheme.primary,
                 ),
                 Expanded(
                   child: _buildStatItem(
                     'Active',
-                    '${filteredLines.where((line) => line['is_active'] == true).length}',
+                    '${filteredLines.where((line) => line.isActive).length}',
                     Icons.check_circle,
                   ),
                 ),
@@ -611,15 +632,15 @@ class _LineSearchScreenState extends State<LineSearchScreen>
                 position: index,
                 duration: const Duration(milliseconds: 375),
                 child: SlideAnimation(
-                  verticalOffset: 50.0,
+                  verticalOffset: 50,
                   child: FadeInAnimation(
                     child: Padding(
                       padding: const EdgeInsets.only(bottom: 8),
                       child: LineListItem(
-                        line: line,
+                        line: line.toJson(),
                         onTap: () => _onLineSelected(line),
-                        isFavorite: _favoriteLines.contains(line['id']),
-                        onFavoriteToggle: () => _toggleFavorite(line['id']),
+                        isFavorite: _favoriteLines.contains(line.id),
+                        onFavoriteToggle: () => _toggleFavorite(line.id),
                         showStatus: true, showStops: true,
                       ),
                     ),
@@ -638,21 +659,21 @@ class _LineSearchScreenState extends State<LineSearchScreen>
       children: [
         Icon(
           icon,
-          color: AppColors.primary,
+          color: Theme.of(context).colorScheme.primary,
           size: 24,
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 16),
         Text(
           value,
-          style: AppTextStyles.h3.copyWith(
+          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
             fontWeight: FontWeight.bold,
-            color: AppColors.primary,
+            color: Theme.of(context).colorScheme.primary,
           ),
         ),
         Text(
           label,
-          style: AppTextStyles.caption.copyWith(
-            color: AppColors.mediumGrey,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: Theme.of(context).colorScheme.primary,
           ),
         ),
       ],
@@ -671,20 +692,20 @@ class _LineSearchScreenState extends State<LineSearchScreen>
           Icon(
             icon,
             size: 64,
-            color: AppColors.mediumGrey,
+            color: Theme.of(context).colorScheme.primary,
           ),
           const SizedBox(height: 16),
           Text(
             title,
-            style: AppTextStyles.h3.copyWith(
-              color: AppColors.darkGrey,
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+              color: Theme.of(context).colorScheme.primary,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 16),
           Text(
             subtitle,
-            style: AppTextStyles.body.copyWith(
-              color: AppColors.mediumGrey,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.primary,
             ),
             textAlign: TextAlign.center,
           ),

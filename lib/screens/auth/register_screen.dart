@@ -7,6 +7,7 @@ import '../../config/theme_config.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/auth/register_form.dart';
 import '../../widgets/common/app_bar.dart';
+import '../../widgets/common/custom_card.dart';
 import '../../widgets/common/glassy_container.dart';
 import '../../helpers/error_handler.dart';
 
@@ -41,9 +42,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (success && mounted) {
         // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Registration successful! Please login.'),
-            backgroundColor: AppColors.success,
+          SnackBar(
+            content: const Text('Registration successful! Please login.'),
+            backgroundColor: Theme.of(context).colorScheme.primary,
           ),
         );
 
@@ -54,7 +55,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(authProvider.error ?? 'Registration failed. Please try again.'),
-            backgroundColor: AppColors.error,
+            backgroundColor: Theme.of(context).colorScheme.primary,
           ),
         );
       }
@@ -77,7 +78,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).colorScheme.primary,
       body: Stack(
         children: [
           // Background gradient
@@ -87,8 +88,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  AppColors.primary,
-                  AppColors.primaryDark,
+                  Theme.of(context).colorScheme.primary,
+                  Theme.of(context).colorScheme.primary,
                 ],
               ),
             ),
@@ -105,9 +106,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   Align(
                     alignment: Alignment.topLeft,
                     child: IconButton(
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.arrow_back_ios,
-                        color: AppColors.white,
+                        color: Theme.of(context).colorScheme.primary,
                       ),
                       onPressed: () => Navigator.of(context).pop(),
                     ),
@@ -118,28 +119,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   // Title
                   Text(
                     'Create Account',
-                    style: AppTextStyles.h1.copyWith(
-                      color: AppColors.white,
+                    style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                      color: Theme.of(context).colorScheme.primary,
                       fontWeight: FontWeight.bold,
                     ),
                     textAlign: TextAlign.center,
                   ),
 
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 16),
 
                   // Subtitle
                   Text(
                     'Sign up to get started',
-                    style: AppTextStyles.body.copyWith(
-                      color: AppColors.white.withOpacity(0.9),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                     ),
                     textAlign: TextAlign.center,
                   ),
 
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 16),
 
                   // Registration form in a glass container
-                  GlassyContainer(
+                  CustomCard(type: CardType.elevated, 
                     padding: const EdgeInsets.all(24),
                     child: RegisterForm(
                       onSubmit: _register,
@@ -147,7 +148,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                   ),
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
 
                   // Login link
                   Row(
@@ -155,16 +156,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     children: [
                       Text(
                         'Already have an account? ',
-                        style: AppTextStyles.body.copyWith(
-                          color: AppColors.white,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.primary,
                         ),
                       ),
                       TextButton(
                         onPressed: () => Navigator.of(context).pop(),
                         child: Text(
                           'Login',
-                          style: AppTextStyles.body.copyWith(
-                            color: AppColors.white,
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Theme.of(context).colorScheme.primary,
                             fontWeight: FontWeight.bold,
                           ),
                         ),

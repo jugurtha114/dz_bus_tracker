@@ -91,18 +91,17 @@ class _LineDetailsScreenState extends State<LineDetailsScreen> with SingleTicker
     for (int i = 0; i < stops.length; i++) {
       final stop = stops[i];
 
-      if (stop['latitude'] != null && stop['longitude'] != null) {
-        final latitude = double.tryParse(stop['latitude'].toString()) ?? 0;
-        final longitude = double.tryParse(stop['longitude'].toString()) ?? 0;
+      if (stop.latitude != null && stop.longitude != null) {
+        final latitude = stop.latitude!;
+        final longitude = stop.longitude!;
 
         markers.add(
           Marker(
-            markerId: MarkerId('stop_${stop['id']}'),
+            markerId: MarkerId('stop_${stop.id}'),
             position: LatLng(latitude, longitude),
-            icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
             infoWindow: InfoWindow(
-              title: stop['name'] ?? 'Stop ${i + 1}',
-              snippet: stop['address'] ?? '',
+              title: stop.displayName,
+              snippet: 'Stop ${i + 1}',
             ),
           ),
         );
@@ -112,16 +111,16 @@ class _LineDetailsScreenState extends State<LineDetailsScreen> with SingleTicker
     }
 
     // Create polyline for the route
-    final color = line['color'] != null
-        ? Color(int.parse('0xFF${line['color'].toString().replaceAll('#', '')}'))
-        : AppColors.primary;
+    final color = line.color != null
+        ? Color(int.parse('0xFF${line.color!.toString().replaceAll('#', '')}'))
+        : Theme.of(context).colorScheme.primary;
 
     final polylines = <Polyline>{
       Polyline(
-        polylineId: PolylineId('line_${line['id']}'),
+        polylineId: PolylineId('line_${line.id}'),
         points: points,
         color: color,
-        width: 5,
+        width: 5
       ),
     };
 
@@ -162,7 +161,7 @@ class _LineDetailsScreenState extends State<LineDetailsScreen> with SingleTicker
     }
 
     // Add padding to bounds
-    final padding = 0.01;
+    final padding = 0;
     minLat -= padding;
     maxLat += padding;
     minLng -= padding;
@@ -204,13 +203,13 @@ class _LineDetailsScreenState extends State<LineDetailsScreen> with SingleTicker
     }
 
     // Extract line details
-    final name = line['name'] ?? 'Unknown Line';
-    final code = line['code'] ?? '';
-    final description = line['description'] ?? '';
-    final color = line['color'] != null
-        ? Color(int.parse('0xFF${line['color'].toString().replaceAll('#', '')}'))
-        : AppColors.primary;
-    final frequency = line['frequency'];
+    final name = line.name ?? 'Unknown Line';
+    final code = line.code ?? '';
+    final description = line.description ?? '';
+    final color = line.color != null
+        ? Color(int.parse('0xFF${line.color!.toString().replaceAll('#', '')}'))
+        : Theme.of(context).colorScheme.primary;
+    final frequency = line.frequency;
     final stops = lineProvider.lineStops;
     final schedule = lineProvider.lineSchedule;
 
@@ -244,20 +243,20 @@ class _LineDetailsScreenState extends State<LineDetailsScreen> with SingleTicker
                       ),
                       child: Text(
                         code,
-                        style: AppTextStyles.body.copyWith(
-                          color: AppColors.white,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.primary,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
 
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 8, height: 40),
 
                     Expanded(
                       child: Text(
                         name,
-                        style: AppTextStyles.h3.copyWith(
-                          color: AppColors.darkGrey,
+                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          color: Theme.of(context).colorScheme.primary,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -271,8 +270,8 @@ class _LineDetailsScreenState extends State<LineDetailsScreen> with SingleTicker
                     padding: const EdgeInsets.only(top: 8),
                     child: Text(
                       description,
-                      style: AppTextStyles.body.copyWith(
-                        color: AppColors.darkGrey,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.primary,
                         fontStyle: FontStyle.italic,
                       ),
                     ),
@@ -289,11 +288,11 @@ class _LineDetailsScreenState extends State<LineDetailsScreen> with SingleTicker
                           size: 16,
                           color: color,
                         ),
-                        const SizedBox(width: 4),
+                        const SizedBox(width: 4, height: 40),
                         Text(
                           'Every $frequency minutes',
-                          style: AppTextStyles.bodySmall.copyWith(
-                            color: AppColors.darkGrey,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context).colorScheme.primary,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -346,13 +345,13 @@ class _LineDetailsScreenState extends State<LineDetailsScreen> with SingleTicker
     );
   }
 
-  Widget _buildStopsTab(List<Map<String, dynamic>> stops) {
+  Widget _buildStopsTab(List<dynamic> stops) {
     if (stops.isEmpty) {
       return Center(
         child: Text(
           'No stops available for this line',
-          style: AppTextStyles.body.copyWith(
-            color: AppColors.mediumGrey,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: Theme.of(context).colorScheme.primary,
             fontStyle: FontStyle.italic,
           ),
         ),
@@ -373,55 +372,54 @@ class _LineDetailsScreenState extends State<LineDetailsScreen> with SingleTicker
               // Stop number indicator
               Container(
                 width: 32,
-                height: 32,
+        
                 decoration: BoxDecoration(
-                  color: AppColors.primary,
+                  color: Theme.of(context).colorScheme.primary,
                   shape: BoxShape.circle,
                 ),
                 child: Center(
                   child: Text(
                     '${index + 1}',
-                    style: AppTextStyles.body.copyWith(
-                      color: AppColors.white,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.primary,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
               ),
 
-              const SizedBox(width: 16),
+              const SizedBox(width: 16, height: 40),
 
               // Stop details
               Expanded(
                 child: GestureDetector(
-                  onTap: () => _viewStop(stop),
+                  onTap: () => _viewStop(stop.toJson()),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        stop['name'] ?? 'Unknown Stop',
-                        style: AppTextStyles.body.copyWith(
+                        stop.displayName,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           fontWeight: FontWeight.bold,
-                          color: AppColors.darkGrey,
+                          color: Theme.of(context).colorScheme.primary,
                         ),
                       ),
-                      if (stop['address'] != null && stop['address'].toString().isNotEmpty)
-                        Text(
-                          stop['address'],
-                          style: AppTextStyles.bodySmall.copyWith(
-                            color: AppColors.mediumGrey,
-                          ),
+                      Text(
+                        'Order: ${stop.order}',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.primary,
                         ),
+                      ),
                     ],
                   ),
                 ),
               ),
 
               // Arrow icon
-              const Icon(
+              Icon(
                 Icons.arrow_forward_ios,
                 size: 16,
-                color: AppColors.mediumGrey,
+                color: Theme.of(context).colorScheme.primary,
               ),
             ],
           ),
@@ -430,13 +428,13 @@ class _LineDetailsScreenState extends State<LineDetailsScreen> with SingleTicker
     );
   }
 
-  Widget _buildScheduleTab(List<Map<String, dynamic>> schedule) {
+  Widget _buildScheduleTab(List<dynamic> schedule) {
     if (schedule.isEmpty) {
       return Center(
         child: Text(
           'No schedule available for this line',
-          style: AppTextStyles.body.copyWith(
-            color: AppColors.mediumGrey,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: Theme.of(context).colorScheme.primary,
             fontStyle: FontStyle.italic,
           ),
         ),
@@ -447,13 +445,14 @@ class _LineDetailsScreenState extends State<LineDetailsScreen> with SingleTicker
     final Map<int, List<Map<String, dynamic>>> scheduleByDay = {};
 
     for (final item in schedule) {
-      final dayOfWeek = item['day_of_week'] as int? ?? 0;
+      final scheduleItem = item as Map<String, dynamic>;
+      final dayOfWeek = scheduleItem['day_of_week'] as int? ?? 0;
 
       if (!scheduleByDay.containsKey(dayOfWeek)) {
         scheduleByDay[dayOfWeek] = [];
       }
 
-      scheduleByDay[dayOfWeek]!.add(item);
+      scheduleByDay[dayOfWeek]!.add(scheduleItem);
     }
 
     return ListView.builder(
@@ -472,27 +471,27 @@ class _LineDetailsScreenState extends State<LineDetailsScreen> with SingleTicker
               decoration: BoxDecoration(
                 border: Border(
                   bottom: BorderSide(
-                    color: AppColors.lightGrey,
-                    width: 1,
+                    color: Theme.of(context).colorScheme.primary,
+                    width: 1
                   ),
                 ),
               ),
               child: Text(
                 _getDayOfWeekName(dayOfWeek),
-                style: AppTextStyles.h3.copyWith(
-                  color: AppColors.darkGrey,
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  color: Theme.of(context).colorScheme.primary,
                   fontWeight: FontWeight.bold,
                 ),
               ),
             ),
 
-            const SizedBox(height: 8),
+            const SizedBox(height: 16),
 
             // Schedules for this day
-            ...daySchedules.map((schedule) {
-              final startTime = schedule['start_time'] ?? '';
-              final endTime = schedule['end_time'] ?? '';
-              final frequencyMinutes = schedule['frequency_minutes'] ?? '';
+            ...daySchedules.map((scheduleItem) {
+              final startTime = scheduleItem['start_time'] ?? '';
+              final endTime = scheduleItem['end_time'] ?? '';
+              final frequencyMinutes = scheduleItem['frequency_minutes'] ?? '';
 
               return Padding(
                 padding: const EdgeInsets.only(bottom: 16),
@@ -501,24 +500,24 @@ class _LineDetailsScreenState extends State<LineDetailsScreen> with SingleTicker
                     Icon(
                       Icons.schedule,
                       size: 20,
-                      color: AppColors.primary,
+                      color: Theme.of(context).colorScheme.primary,
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 8, height: 40),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             '$startTime - $endTime',
-                            style: AppTextStyles.body.copyWith(
-                              color: AppColors.darkGrey,
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: Theme.of(context).colorScheme.primary,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
                           Text(
                             'Every $frequencyMinutes minutes',
-                            style: AppTextStyles.bodySmall.copyWith(
-                              color: AppColors.mediumGrey,
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Theme.of(context).colorScheme.primary,
                             ),
                           ),
                         ],

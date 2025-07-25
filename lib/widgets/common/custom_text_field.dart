@@ -81,12 +81,12 @@ class _CustomTextFieldState extends State<CustomTextField> {
       children: [
         Text(
           widget.label,
-          style: AppTextStyles.body.copyWith(
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             fontWeight: FontWeight.w500,
-            color: widget.enabled ? AppColors.darkGrey : AppColors.mediumGrey,
+            color: widget.enabled ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.primary,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 16),
         TextFormField(
           controller: widget.controller,
           initialValue: widget.initialValue,
@@ -103,18 +103,18 @@ class _CustomTextFieldState extends State<CustomTextField> {
           inputFormatters: widget.inputFormatters,
           focusNode: widget.focusNode,
           textInputAction: widget.textInputAction,
-          style: AppTextStyles.body.copyWith(
-            color: widget.enabled ? AppColors.darkGrey : AppColors.mediumGrey,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: widget.enabled ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.primary,
           ),
           decoration: InputDecoration(
             hintText: widget.hintText,
-            hintStyle: AppTextStyles.body.copyWith(color: AppColors.mediumGrey),
+            hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.primary),
             prefixIcon: widget.prefixIcon,
             suffixIcon: widget.obscureText
                 ? IconButton(
               icon: Icon(
                 _obscureText ? Icons.visibility_off : Icons.visibility,
-                color: AppColors.mediumGrey,
+                color: Theme.of(context).colorScheme.primary,
               ),
               onPressed: () {
                 setState(() {
@@ -124,34 +124,34 @@ class _CustomTextFieldState extends State<CustomTextField> {
             )
                 : widget.suffixIcon,
             errorText: widget.errorText,
-            errorStyle: AppTextStyles.caption.copyWith(color: AppColors.error),
+            errorStyle: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.primary),
             border: widget.showBorder
                 ? OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: widget.borderColor ?? AppColors.lightGrey),
+              borderSide: BorderSide(color: widget.borderColor ?? Theme.of(context).colorScheme.primary),
             )
                 : InputBorder.none,
             enabledBorder: widget.showBorder
                 ? OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: widget.borderColor ?? AppColors.lightGrey),
+              borderSide: BorderSide(color: widget.borderColor ?? Theme.of(context).colorScheme.primary),
             )
                 : InputBorder.none,
             focusedBorder: widget.showBorder
                 ? OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: widget.borderColor ?? AppColors.primary),
+              borderSide: BorderSide(color: widget.borderColor ?? Theme.of(context).colorScheme.primary),
             )
                 : InputBorder.none,
             errorBorder: widget.showBorder
                 ? OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: AppColors.error),
+              borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
             )
                 : InputBorder.none,
             contentPadding: widget.contentPadding ?? const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             filled: true,
-            fillColor: widget.fillColor ?? (widget.enabled ? AppColors.white : AppColors.lightGrey.withOpacity(0.5)),
+            fillColor: widget.fillColor ?? (widget.enabled ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.primary.withOpacity(0.1)),
             counterText: widget.showCounter ? null : '',
           ),
         ),

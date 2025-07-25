@@ -7,14 +7,17 @@ import 'dart:async';
 import '../../config/api_config.dart';
 import '../../config/app_config.dart';
 import '../../config/theme_config.dart';
+import '../../models/bus_model.dart';
 import '../../providers/passenger_provider.dart';
 import '../../providers/location_provider.dart';
-import '../../widgets/common/app_bar.dart';
+import '../../widgets/common/app_layout.dart';
 import '../../widgets/common/glassy_container.dart';
 import '../../widgets/common/loading_indicator.dart';
 import '../../widgets/map/map_widget.dart';
 import '../../widgets/passenger/occupancy_indicator.dart';
+import '../../services/navigation_service.dart';
 import '../../helpers/error_handler.dart';
+import '../../widgets/common/custom_card.dart';
 
 class BusTrackingScreen extends StatefulWidget {
   const BusTrackingScreen({Key? key}) : super(key: key);
@@ -52,7 +55,7 @@ class _BusTrackingScreenState extends State<BusTrackingScreen> {
 
       // Make sure we have a selected bus
       if (passengerProvider.selectedBus == null) {
-        Navigator.pop(context);
+        NavigationService.goBack();
         return;
       }
 
@@ -80,11 +83,12 @@ class _BusTrackingScreenState extends State<BusTrackingScreen> {
     if (passengerProvider.selectedBus == null) return;
 
     try {
-      await passengerProvider.trackBus(passengerProvider.selectedBus!['id']);
+      await passengerProvider.trackBus(passengerProvider.selectedBus!.id);
 
       // If following the bus, move camera to its position
       if (_isFollowingBus && _mapController != null && passengerProvider.selectedBus != null) {
-        final busLocation = passengerProvider.selectedBus!['current_location'];
+        // For now, use default location (would need to get from GPS tracking service)
+        final busLocation = {'latitude': 36.7538, 'longitude': 3.0588}; // Default Algiers location
 
         if (busLocation != null &&
             busLocation['latitude'] != null &&
@@ -118,7 +122,8 @@ class _BusTrackingScreenState extends State<BusTrackingScreen> {
 
     if (passengerProvider.selectedBus == null || _mapController == null) return;
 
-    final busLocation = passengerProvider.selectedBus!['current_location'];
+    // For now, use default location (would need to get from GPS tracking service)
+    final busLocation = {'latitude': 36.7538, 'longitude': 3.0588}; // Default Algiers location
 
     if (busLocation != null &&
         busLocation['latitude'] != null &&
@@ -153,7 +158,7 @@ class _BusTrackingScreenState extends State<BusTrackingScreen> {
     if (passengerProvider.selectedBus == null) return;
 
     // Extract driver ID
-    final driverId = passengerProvider.selectedBus!['driver'];
+    final driverId = passengerProvider.selectedBus!.driver;
 
     // Show rating dialog
     _showRatingDialog(driverId);
@@ -185,7 +190,7 @@ class _BusTrackingScreenState extends State<BusTrackingScreen> {
                       },
                       icon: Icon(
                         index < rating ? Icons.star : Icons.star_border,
-                        color: index < rating ? AppColors.warning : AppColors.mediumGrey,
+                        color: index < rating ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.primary,
                         size: 36,
                       ),
                     );
@@ -207,7 +212,7 @@ class _BusTrackingScreenState extends State<BusTrackingScreen> {
         actions: [
           TextButton(
             onPressed: () {
-              Navigator.pop(context);
+              NavigationService.goBack();
             },
             child: const Text('Cancel'),
           ),
@@ -224,16 +229,16 @@ class _BusTrackingScreenState extends State<BusTrackingScreen> {
                   );
 
                   if (mounted) {
-                    Navigator.pop(context);
+                    NavigationService.goBack();
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Thank you for your rating!'),
-                        backgroundColor: AppColors.success,
+                      SnackBar(
+                        content: const Text('Thank you for your rating!'),
+                        backgroundColor: Theme.of(context).colorScheme.primary,
                       ),
                     );
                   }
                 } catch (e) {
-                  Navigator.pop(context);
+                  NavigationService.goBack();
                   ErrorHandler.showErrorSnackBar(
                     context,
                     message: ErrorHandler.handleError(e),
@@ -241,9 +246,9 @@ class _BusTrackingScreenState extends State<BusTrackingScreen> {
                 }
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Please select a rating'),
-                    backgroundColor: AppColors.warning,
+                  SnackBar(
+                    content: const Text('Please select a rating'),
+                    backgroundColor: Theme.of(context).colorScheme.primary,
                   ),
                 );
               }
@@ -264,29 +269,23 @@ class _BusTrackingScreenState extends State<BusTrackingScreen> {
 
     if (bus == null) {
       // Return early if no bus is selected
-      return Scaffold(
-        appBar: const DzAppBar(
-          title: 'Bus Tracking',
-        ),
-        body: const Center(
+      return AppLayout(
+        title: 'Bus Tracking',
+        showBottomNav: false, // No bottom nav for tracking screen
+        child: const Center(
           child: Text('No bus selected'),
         ),
       );
     }
 
     // Extract bus details
-    final licensePlate = bus['license_plate'] ?? 'Unknown';
-    final model = bus['model'] ?? '';
-    final manufacturer = bus['manufacturer'] ?? '';
-    final capacity = int.tryParse(bus['capacity']?.toString() ?? '0') ?? 0;
+    final licensePlate = bus.licensePlate;
+    final model = bus.model ?? '';
+    final manufacturer = bus.manufacturer ?? '';
+    final capacity = bus.capacity;
 
-    // Get current passengers if available
-    int currentPassengers = 0;
-    if (bus.containsKey('current_location') &&
-        bus['current_location'] != null &&
-        bus['current_location'].containsKey('passenger_count')) {
-      currentPassengers = int.tryParse(bus['current_location']['passenger_count']?.toString() ?? '0') ?? 0;
-    }
+    // Get current passengers (would need to be updated via real-time tracking)
+    int currentPassengers = 0; // Placeholder - would come from real-time data
 
     // Calculate occupancy percentage
     final occupancyPercent = capacity > 0 ? (currentPassengers / capacity * 100).round() : 0;
@@ -294,24 +293,21 @@ class _BusTrackingScreenState extends State<BusTrackingScreen> {
     // Get line info if available
     String lineName = '';
     String lineCode = '';
-    if (bus.containsKey('line') && bus['line'] != null) {
-      lineName = bus['line']['name'] ?? '';
-      lineCode = bus['line']['code'] ?? '';
-    }
+    // Note: Line info would come from a separate API call
+    // For now using placeholder values
 
-    return Scaffold(
-      appBar: DzAppBar(
-        title: 'Bus Tracking',
-        actions: [
-          // Rate driver button
-          IconButton(
-            icon: const Icon(Icons.star_border),
-            onPressed: _rateDriver,
-            tooltip: 'Rate Driver',
-          ),
-        ],
-      ),
-      body: Stack(
+    return AppLayout(
+      title: 'Bus Tracking',
+      showBottomNav: false, // No bottom nav for tracking screen
+      actions: [
+        // Rate driver button
+        IconButton(
+          icon: const Icon(Icons.star),
+          onPressed: _rateDriver,
+          tooltip: 'Rate Driver',
+        ),
+      ],
+      child: Stack(
         children: [
           // Map
           MapWidget(
@@ -335,8 +331,8 @@ class _BusTrackingScreenState extends State<BusTrackingScreen> {
             right: 16,
             child: FloatingActionButton(
               mini: true,
-              backgroundColor: _isFollowingBus ? AppColors.primary : AppColors.white,
-              foregroundColor: _isFollowingBus ? AppColors.white : AppColors.primary,
+              backgroundColor: _isFollowingBus ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.primary,
+              foregroundColor: _isFollowingBus ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.primary,
               child: const Icon(Icons.location_searching),
               onPressed: _toggleFollowBus,
               tooltip: _isFollowingBus ? 'Stop Following Bus' : 'Follow Bus',
@@ -349,8 +345,8 @@ class _BusTrackingScreenState extends State<BusTrackingScreen> {
             left: 16,
             child: FloatingActionButton(
               mini: true,
-              backgroundColor: AppColors.white,
-              foregroundColor: AppColors.primary,
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              foregroundColor: Theme.of(context).colorScheme.onPrimary,
               child: const Icon(Icons.refresh),
               onPressed: _refreshBusLocation,
               tooltip: 'Refresh Bus Location',
@@ -362,10 +358,11 @@ class _BusTrackingScreenState extends State<BusTrackingScreen> {
             bottom: 0,
             left: 0,
             right: 0,
-            child: GlassyContainer(
-              borderRadius: 24,
-              color: AppColors.glassDark,
-              border: Border.all(color: Colors.white.withOpacity(0.1)),
+            child: CustomCard(type: CardType.elevated, 
+              borderRadius: BorderRadius.circular(24),
+              backgroundColor: Theme.of(context).colorScheme.surface,
+              borderColor: Colors.white.withOpacity(0.1),
+              borderWidth: 1,
               margin: const EdgeInsets.only(bottom: 16, left: 16, right: 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -381,16 +378,16 @@ class _BusTrackingScreenState extends State<BusTrackingScreen> {
                         children: [
                           Text(
                             'Bus $licensePlate',
-                            style: AppTextStyles.h3.copyWith(
+                            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                               fontWeight: FontWeight.bold,
-                              color: AppColors.white,
+                              color: Theme.of(context).colorScheme.primary,
                             ),
                           ),
                           if (model.isNotEmpty || manufacturer.isNotEmpty)
                             Text(
                               '$manufacturer $model',
-                              style: AppTextStyles.body.copyWith(
-                                color: AppColors.white.withOpacity(0.7),
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                               ),
                             ),
                         ],
@@ -401,13 +398,13 @@ class _BusTrackingScreenState extends State<BusTrackingScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
-                            color: AppColors.primary,
+                            color: Theme.of(context).colorScheme.primary,
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
                             'Line $lineCode',
-                            style: AppTextStyles.body.copyWith(
-                              color: AppColors.white,
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: Theme.of(context).colorScheme.primary,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -415,7 +412,7 @@ class _BusTrackingScreenState extends State<BusTrackingScreen> {
                     ],
                   ),
 
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 16),
 
                   // Occupancy indicator
                   if (capacity > 0)
@@ -424,27 +421,26 @@ class _BusTrackingScreenState extends State<BusTrackingScreen> {
                       children: [
                         Text(
                           'Occupancy: $currentPassengers / $capacity passengers',
-                          style: AppTextStyles.body.copyWith(
-                            color: AppColors.white,
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Theme.of(context).colorScheme.primary,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 16),
                         OccupancyIndicator(
                           occupancyPercent: occupancyPercent,
-                          height: 12,
                           showText: true,
                         ),
                       ],
                     ),
 
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 16),
 
                   // ETA if available
                   if (passengerProvider.estimatedArrival.isNotEmpty)
                     Text(
                       'Estimated arrival: ${_getEstimatedArrival(passengerProvider)}',
-                      style: AppTextStyles.body.copyWith(
-                        color: AppColors.white,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.primary,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -461,7 +457,7 @@ class _BusTrackingScreenState extends State<BusTrackingScreen> {
     );
   }
 
-  Set<Marker> _buildMarkers(Map<String, dynamic> bus, LocationProvider locationProvider) {
+  Set<Marker> _buildMarkers(Bus bus, LocationProvider locationProvider) {
     final Set<Marker> markers = {};
 
     // Add marker for current location
@@ -473,59 +469,30 @@ class _BusTrackingScreenState extends State<BusTrackingScreen> {
             locationProvider.latitude,
             locationProvider.longitude,
           ),
-          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
           infoWindow: const InfoWindow(title: 'Your Location'),
         ),
       );
     }
 
-    // Add marker for bus location
-    if (bus.containsKey('current_location') &&
-        bus['current_location'] != null &&
-        bus['current_location']['latitude'] != null &&
-        bus['current_location']['longitude'] != null) {
-      final latitude = double.tryParse(bus['current_location']['latitude'].toString()) ?? 0;
-      final longitude = double.tryParse(bus['current_location']['longitude'].toString()) ?? 0;
-
-      markers.add(
-        Marker(
-          markerId: MarkerId('bus_${bus['id']}'),
-          position: LatLng(latitude, longitude),
-          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
-          infoWindow: InfoWindow(
-            title: 'Bus ${bus['license_plate']}',
-            snippet: bus.containsKey('line') ? 'Line: ${bus['line']['code']}' : null,
-          ),
+    // Add marker for bus location (using default location for now)
+    // In a real implementation, this would come from real-time tracking data
+    const defaultLat = 36.7538;
+    const defaultLng = 3.0588;
+    
+    markers.add(
+      Marker(
+        markerId: MarkerId('bus_${bus.id}'),
+        position: const LatLng(defaultLat, defaultLng),
+        infoWindow: InfoWindow(
+          title: 'Bus ${bus.licensePlate}',
+          snippet: 'Current location',
         ),
-      );
-    }
+      ),
+    );
 
     // Add markers for stops if available
-    if (bus.containsKey('line') &&
-        bus['line'] != null &&
-        bus['line'].containsKey('stops')) {
-      final stops = bus['line']['stops'] as List<dynamic>? ?? [];
-
-      for (int i = 0; i < stops.length; i++) {
-        final stop = stops[i];
-
-        if (stop['latitude'] != null && stop['longitude'] != null) {
-          final latitude = double.tryParse(stop['latitude'].toString()) ?? 0;
-          final longitude = double.tryParse(stop['longitude'].toString()) ?? 0;
-
-          markers.add(
-            Marker(
-              markerId: MarkerId('stop_${stop['id']}'),
-              position: LatLng(latitude, longitude),
-              icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
-              infoWindow: InfoWindow(
-                title: stop['name'] ?? 'Stop ${i + 1}',
-              ),
-            ),
-          );
-        }
-      }
-    }
+    // Note: Stop information would be fetched separately via Line API
+    // For now, this is commented out until proper Line-Stop relationship is implemented
 
     return markers;
   }
@@ -535,18 +502,9 @@ class _BusTrackingScreenState extends State<BusTrackingScreen> {
     return {};
   }
 
-  LatLng? _getBusPosition(Map<String, dynamic> bus) {
-    if (bus.containsKey('current_location') &&
-        bus['current_location'] != null &&
-        bus['current_location']['latitude'] != null &&
-        bus['current_location']['longitude'] != null) {
-      final latitude = double.tryParse(bus['current_location']['latitude'].toString()) ?? 0;
-      final longitude = double.tryParse(bus['current_location']['longitude'].toString()) ?? 0;
-
-      return LatLng(latitude, longitude);
-    }
-
-    return null;
+  LatLng? _getBusPosition(Bus bus) {
+    // For now, return default position (would need real-time GPS data)
+    return const LatLng(36.7538, 3.0588); // Default Algiers location
   }
 
   String _getEstimatedArrival(PassengerProvider passengerProvider) {

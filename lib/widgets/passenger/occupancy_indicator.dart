@@ -11,7 +11,7 @@ class OccupancyIndicator extends StatelessWidget {
   const OccupancyIndicator({
     Key? key,
     required this.occupancyPercent,
-    this.height = 8.0,
+    this.height = 8,
     this.showText = false,
   }) : super(key: key);
 
@@ -22,13 +22,13 @@ class OccupancyIndicator extends StatelessWidget {
     String statusText;
 
     if (occupancyPercent < 50) {
-      color = AppColors.lowOccupancy;
+      color = Theme.of(context).colorScheme.primary;
       statusText = 'Low Occupancy';
     } else if (occupancyPercent < 85) {
-      color = AppColors.mediumOccupancy;
+      color = Theme.of(context).colorScheme.primary;
       statusText = 'Medium Occupancy';
     } else {
-      color = AppColors.highOccupancy;
+      color = Theme.of(context).colorScheme.primary;
       statusText = 'High Occupancy';
     }
 
@@ -41,7 +41,7 @@ class OccupancyIndicator extends StatelessWidget {
           height: height,
           width: double.infinity,
           decoration: BoxDecoration(
-            color: AppColors.lightGrey,
+            color: Theme.of(context).colorScheme.primary,
             borderRadius: BorderRadius.circular(height / 2),
           ),
           child: FractionallySizedBox(
@@ -61,7 +61,7 @@ class OccupancyIndicator extends StatelessWidget {
             padding: const EdgeInsets.only(top: 4),
             child: Text(
               statusText,
-              style: AppTextStyles.caption.copyWith(
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: color,
                 fontWeight: FontWeight.w500,
               ),

@@ -26,16 +26,16 @@ class ETADisplay extends StatelessWidget {
     String etaText;
 
     if (isPassed) {
-      etaColor = AppColors.mediumGrey;
+      etaColor = Theme.of(context).colorScheme.primary;
       etaText = 'Passed';
     } else if (minutes <= 0) {
-      etaColor = AppColors.primary;
+      etaColor = Theme.of(context).colorScheme.primary;
       etaText = 'Now';
     } else if (minutes <= 5) {
-      etaColor = AppColors.warning;
+      etaColor = Theme.of(context).colorScheme.primary;
       etaText = '$minutes min';
     } else {
-      etaColor = AppColors.success;
+      etaColor = Theme.of(context).colorScheme.primary;
       etaText = '$minutes min';
     }
 
@@ -44,14 +44,14 @@ class ETADisplay extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isCurrentStop ? AppColors.primary.withOpacity(0.1) : AppColors.white,
+          color: isCurrentStop ? Theme.of(context).colorScheme.primary.withOpacity(0.1) : Theme.of(context).colorScheme.primary,
           borderRadius: BorderRadius.circular(12),
           border: isCurrentStop
-              ? Border.all(color: AppColors.primary)
+              ? Border.all(color: Theme.of(context).colorScheme.primary)
               : Border.all(color: Colors.transparent),
           boxShadow: [
             BoxShadow(
-              color: AppColors.black.withOpacity(0.05),
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
               blurRadius: 6,
               offset: const Offset(0, 3),
             ),
@@ -62,18 +62,18 @@ class ETADisplay extends StatelessWidget {
             // Stop indicator
             Container(
               width: 12,
-              height: 12,
+        
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: isCurrentStop ? AppColors.primary : AppColors.lightGrey,
+                color: isCurrentStop ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.primary,
                 border: Border.all(
-                  color: isPassed ? AppColors.lightGrey : AppColors.primary,
+                  color: isPassed ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.primary,
                   width: 2,
                 ),
               ),
             ),
 
-            const SizedBox(width: 16),
+            const SizedBox(width: 16, height: 40),
 
             // Stop name
             Expanded(
@@ -82,17 +82,17 @@ class ETADisplay extends StatelessWidget {
                 children: [
                   Text(
                     stopName,
-                    style: AppTextStyles.body.copyWith(
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       fontWeight: isCurrentStop ? FontWeight.bold : FontWeight.normal,
-                      color: isPassed ? AppColors.mediumGrey : AppColors.darkGrey,
+                      color: isPassed ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.primary,
                       decoration: isPassed ? TextDecoration.lineThrough : null,
                     ),
                   ),
                   if (isCurrentStop)
                     Text(
                       'Current stop',
-                      style: AppTextStyles.caption.copyWith(
-                        color: AppColors.primary,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.primary,
                         fontStyle: FontStyle.italic,
                       ),
                     ),
@@ -110,7 +110,7 @@ class ETADisplay extends StatelessWidget {
               ),
               child: Text(
                 etaText,
-                style: AppTextStyles.caption.copyWith(
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: etaColor,
                   fontWeight: FontWeight.bold,
                 ),

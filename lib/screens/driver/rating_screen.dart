@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../config/theme_config.dart';
 import '../../providers/driver_provider.dart';
+import '../../models/driver_model.dart';
 import '../../widgets/common/app_bar.dart';
 import '../../widgets/common/loading_indicator.dart';
 import '../../helpers/error_handler.dart';
@@ -70,10 +71,10 @@ class _RatingScreenState extends State<RatingScreen> {
             width: double.infinity,
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: AppColors.primary,
+              color: Theme.of(context).colorScheme.primary,
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.darkGrey.withOpacity(0.1),
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                   blurRadius: 8,
                   offset: const Offset(0, 4),
                 ),
@@ -88,30 +89,30 @@ class _RatingScreenState extends State<RatingScreen> {
                     5,
                         (index) => Icon(
                       index < driverRating ? Icons.star : Icons.star_border,
-                      color: AppColors.white,
+                      color: Theme.of(context).colorScheme.primary,
                       size: 32,
                     ),
                   ),
                 ),
 
-                const SizedBox(height: 8),
+                const SizedBox(height: 16),
 
                 // Rating value
                 Text(
-                  '${driverRating.toStringAsFixed(1)} / 5.0',
-                  style: AppTextStyles.h2.copyWith(
-                    color: AppColors.white,
+                  '${driverRating.toStringAsFixed(1)} / 5',
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.primary,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
 
-                const SizedBox(height: 4),
+                const SizedBox(height: 16),
 
                 // Ratings count
                 Text(
                   'Based on ${ratings.length} ${ratings.length == 1 ? 'rating' : 'ratings'}',
-                  style: AppTextStyles.body.copyWith(
-                    color: AppColors.white.withOpacity(0.7),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                   ),
                 ),
               ],
@@ -130,8 +131,8 @@ class _RatingScreenState extends State<RatingScreen> {
                 ? Center(
               child: Text(
                 'No ratings yet',
-                style: AppTextStyles.body.copyWith(
-                  color: AppColors.mediumGrey,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.primary,
                   fontStyle: FontStyle.italic,
                 ),
               ),
@@ -150,12 +151,12 @@ class _RatingScreenState extends State<RatingScreen> {
     );
   }
 
-  Widget _buildRatingBreakdown(List<Map<String, dynamic>> ratings) {
+  Widget _buildRatingBreakdown(List<DriverRating> ratings) {
     // Count ratings by stars
     final Map<int, int> ratingCounts = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0};
 
     for (final rating in ratings) {
-      final stars = rating['rating'] as int? ?? 0;
+      final stars = rating.rating.value;
       ratingCounts[stars] = (ratingCounts[stars] ?? 0) + 1;
     }
 
@@ -164,8 +165,8 @@ class _RatingScreenState extends State<RatingScreen> {
       children: [
         Text(
           'Rating Breakdown',
-          style: AppTextStyles.h3.copyWith(
-            color: AppColors.darkGrey,
+          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+            color: Theme.of(context).colorScheme.primary,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -180,7 +181,7 @@ class _RatingScreenState extends State<RatingScreen> {
   }
 
   Widget _buildRatingBar(int stars, int count, int total) {
-    final percentage = total > 0 ? count / total : 0.0;
+    final percentage = total > 0 ? (count / total).toDouble() : 0.0;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
@@ -191,21 +192,21 @@ class _RatingScreenState extends State<RatingScreen> {
             children: [
               Text(
                 '$stars',
-                style: AppTextStyles.body.copyWith(
-                  color: AppColors.darkGrey,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.primary,
                   fontWeight: FontWeight.w500,
                 ),
               ),
-              const SizedBox(width: 4),
+              const SizedBox(width: 4, height: 40),
               Icon(
                 Icons.star,
-                color: AppColors.warning,
+                color: Theme.of(context).colorScheme.primary,
                 size: 16,
               ),
             ],
           ),
 
-          const SizedBox(width: 16),
+          const SizedBox(width: 16, height: 40),
 
           // Progress bar
           Expanded(
@@ -213,9 +214,8 @@ class _RatingScreenState extends State<RatingScreen> {
               children: [
                 // Background
                 Container(
-                  height: 8,
                   decoration: BoxDecoration(
-                    color: AppColors.lightGrey,
+                    color: Theme.of(context).colorScheme.primary,
                     borderRadius: BorderRadius.circular(4),
                   ),
                 ),
@@ -224,7 +224,6 @@ class _RatingScreenState extends State<RatingScreen> {
                 FractionallySizedBox(
                   widthFactor: percentage,
                   child: Container(
-                    height: 8,
                     decoration: BoxDecoration(
                       color: _getRatingColor(stars),
                       borderRadius: BorderRadius.circular(4),
@@ -235,13 +234,13 @@ class _RatingScreenState extends State<RatingScreen> {
             ),
           ),
 
-          const SizedBox(width: 16),
+          const SizedBox(width: 16, height: 40),
 
           // Count
           Text(
             count.toString(),
-            style: AppTextStyles.body.copyWith(
-              color: AppColors.mediumGrey,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.primary,
             ),
           ),
         ],
@@ -249,15 +248,12 @@ class _RatingScreenState extends State<RatingScreen> {
     );
   }
 
-  Widget _buildRatingItem(Map<String, dynamic> rating) {
-    final stars = rating['rating'] as int? ?? 0;
-    final comment = rating['comment'] as String? ?? '';
+  Widget _buildRatingItem(DriverRating rating) {
+    final stars = rating.rating.value;
+    final comment = rating.comment ?? '';
 
     // Format date
-    final createdAt = rating['created_at'] != null
-        ? DateTime.parse(rating['created_at'].toString())
-        : DateTime.now();
-    final formattedDate = DateFormat('MMM d, yyyy').format(createdAt);
+    final formattedDate = DateFormat('MMM d, yyyy').format(rating.createdAt);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -289,8 +285,8 @@ class _RatingScreenState extends State<RatingScreen> {
                 // Date
                 Text(
                   formattedDate,
-                  style: AppTextStyles.caption.copyWith(
-                    color: AppColors.mediumGrey,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.primary,
                   ),
                 ),
               ],
@@ -298,11 +294,11 @@ class _RatingScreenState extends State<RatingScreen> {
 
             // Comment
             if (comment.isNotEmpty) ...[
-              const SizedBox(height: 8),
+              const SizedBox(height: 16),
               Text(
                 comment,
-                style: AppTextStyles.body.copyWith(
-                  color: AppColors.darkGrey,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.primary,
                   fontStyle: FontStyle.italic,
                 ),
               ),
@@ -315,11 +311,11 @@ class _RatingScreenState extends State<RatingScreen> {
 
   Color _getRatingColor(int stars) {
     if (stars >= 4) {
-      return AppColors.success;
+      return Theme.of(context).colorScheme.primary;
     } else if (stars >= 3) {
-      return AppColors.warning;
+      return Theme.of(context).colorScheme.primary;
     } else {
-      return AppColors.error;
+      return Theme.of(context).colorScheme.primary;
     }
   }
 }

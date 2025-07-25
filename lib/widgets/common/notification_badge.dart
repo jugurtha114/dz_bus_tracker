@@ -17,7 +17,7 @@ class NotificationBadge extends StatelessWidget {
     required this.count,
     this.backgroundColor,
     this.textColor,
-    this.size = 20.0,
+    this.size = 20,
     this.child,
     this.onTap,
     this.padding,
@@ -49,12 +49,12 @@ class NotificationBadge extends StatelessWidget {
               child: Container(
                 padding: padding ?? EdgeInsets.all(size < 20 ? 2 : 4),
                 decoration: BoxDecoration(
-                  color: backgroundColor ?? AppColors.error,
+                  color: backgroundColor ?? Theme.of(context).colorScheme.primary,
                   shape: count > 99 ? BoxShape.rectangle : BoxShape.circle,
                   borderRadius: count > 99 ? BorderRadius.circular(size / 2) : null,
                   border: Border.all(
-                    color: AppColors.white,
-                    width: 1.5,
+                    color: Theme.of(context).colorScheme.primary,
+                    width: 1
                   ),
                 ),
                 constraints: BoxConstraints(
@@ -65,8 +65,8 @@ class NotificationBadge extends StatelessWidget {
                   child: Text(
                     count > 99 ? '99+' : count.toString(),
                     style: TextStyle(
-                      color: textColor ?? AppColors.white,
-                      fontSize: size * 0.6,
+                      color: textColor ?? Theme.of(context).colorScheme.primary,
+                      fontSize: size * 0,
                       fontWeight: FontWeight.bold,
                     ),
                     textAlign: TextAlign.center,
@@ -83,11 +83,11 @@ class NotificationBadge extends StatelessWidget {
   static Widget withIcon({
     required int count,
     required IconData icon,
-    double iconSize = 24.0,
+    double iconSize = 24,
     Color? iconColor,
     Color? badgeBackgroundColor,
     Color? badgeTextColor,
-    double badgeSize = 20.0,
+    double badgeSize = 20,
     VoidCallback? onTap,
   }) {
     return NotificationBadge(

@@ -81,6 +81,37 @@ class DialogHelper {
     );
   }
 
+  // Show success dialog
+  static Future<void> showSuccessDialog(
+      BuildContext context, {
+        required String title,
+        required String message,
+        String buttonText = 'OK',
+      }) async {
+    return showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.check_circle, color: Theme.of(context).colorScheme.primary, size: 24),
+            const SizedBox(width: 8, height: 40),
+            Text(title),
+          ],
+        ),
+        content: Text(message),
+        actions: [
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.primary,
+            ),
+            child: Text(buttonText),
+          ),
+        ],
+      ),
+    );
+  }
+
   // Show custom dialog with glassy effect
   static Future<T?> showGlassyDialog<T>(
       BuildContext context, {
@@ -98,7 +129,7 @@ class DialogHelper {
         child: AppTheme.glassContainer(
           child: child,
           borderRadius: 16,
-          color: AppColors.glassWhite,
+          color: Theme.of(context).colorScheme.primary,
         ),
       ),
     );
@@ -121,7 +152,7 @@ class DialogHelper {
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         decoration: BoxDecoration(
-          color: backgroundColor ?? AppColors.background,
+          color: backgroundColor ?? Theme.of(context).colorScheme.primary,
           borderRadius: const BorderRadius.only(
             topLeft: Radius.circular(16),
             topRight: Radius.circular(16),
@@ -136,10 +167,10 @@ class DialogHelper {
             children: [
               Container(
                 width: 40,
-                height: 4,
+        
                 margin: const EdgeInsets.only(top: 8, bottom: 16),
                 decoration: BoxDecoration(
-                  color: AppColors.mediumGrey,
+                  color: Theme.of(context).colorScheme.primary,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -181,10 +212,10 @@ class DialogHelper {
             children: [
               Container(
                 width: 40,
-                height: 4,
+        
                 margin: const EdgeInsets.only(top: 8, bottom: 16),
                 decoration: BoxDecoration(
-                  color: AppColors.white,
+                  color: Theme.of(context).colorScheme.primary,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -197,7 +228,7 @@ class DialogHelper {
                   child: AppTheme.glassContainer(
                     child: child,
                     borderRadius: 16,
-                    color: AppColors.glassWhite,
+                    color: Theme.of(context).colorScheme.primary,
                   ),
                 ),
               ),

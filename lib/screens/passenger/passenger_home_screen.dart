@@ -16,6 +16,7 @@ import '../../providers/location_provider.dart';
 import '../../providers/passenger_provider.dart';
 import '../../providers/notification_provider.dart';
 import '../../providers/line_provider.dart';
+import '../../models/api_response_models.dart';
 import '../../widgets/common/app_bar.dart';
 import '../../widgets/common/glassy_container.dart';
 import '../../widgets/common/loading_indicator.dart';
@@ -88,7 +89,7 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
 
         // Fetch lines for quick access
         final lineProvider = Provider.of<LineProvider>(context, listen: false);
-        await lineProvider.fetchLines(isActive: true);
+        await lineProvider.fetchLines(queryParams: LineQueryParameters(isActive: true));
 
         // Load dashboard stats
         await _loadDashboardStats();
@@ -121,7 +122,7 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
       _dashboardStats = {
         'nearby_buses': passengerProvider.nearbyBuses.length,
         'total_lines': lineProvider.lines.length,
-        'active_lines': lineProvider.lines.where((line) => line['is_active'] == true).length,
+        'active_lines': lineProvider.lines.where((line) => line.isActive == true).length,
         'location_status': locationProvider.currentLocation != null ? 'Available' : 'Unavailable',
         'last_updated': DateTime.now(),
       };
@@ -252,7 +253,7 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
         selectedRoute: AppRoutes.passengerHome,
         notificationCount: notificationProvider.unreadCount,
         isDriver: false,
-        userData: authProvider.user,
+        userData: authProvider.user?.toJson(),
       ),
       body: _isLoading
           ? const Center(child: LoadingIndicator())
@@ -297,8 +298,8 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
   }
 
   Widget _buildWelcomeSection(AuthProvider authProvider) {
-    final user = authProvider.user ?? {};
-    final firstName = user['first_name'] ?? 'Passenger';
+    final user = authProvider.user;
+    final firstName = user?.firstName ?? 'Passenger';
     final currentTime = DateTime.now();
     String greeting = 'Good Morning';
 
@@ -771,16 +772,14 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
                                 color: AppColors.primary,
                               ),
                             ),
-                            title: Text('Bus ${bus['license_plate'] ?? 'Unknown'}'),
+                            title: Text('Bus ${bus.licensePlate}'),
                             subtitle: Text(
-                              bus.containsKey('line') && bus['line'] != null
-                                  ? 'Line: ${bus['line']['name'] ?? bus['line']['code'] ?? 'Unknown'}'
-                                  : 'Line information not available',
+                              'Status: ${bus.status.value}',
                             ),
                             trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                             onTap: () {
                               // Track this bus
-                              passengerProvider.trackBus(bus['id']);
+                              passengerProvider.trackBus(bus.id);
                               AppRouter.navigateTo(context, AppRoutes.busTracking);
                             },
                           ),
@@ -873,7 +872,7 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
                     )
                   else
                     NearbyBusesList(
-                      buses: passengerProvider.nearbyBuses,
+                      buses: passengerProvider.nearbyBuses.map((bus) => bus.toJson()).toList(),
                       maxHeight: 250,
                     ),
                 ],
@@ -969,8 +968,8 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
                                             width: 4,
                                             height: 30,
                                             decoration: BoxDecoration(
-                                              color: line['color'] != null
-                                                  ? Color(int.parse(line['color'].toString().replaceFirst('#', '0xFF')))
+                                              color: line.color != null
+                                                  ? Color(int.parse(line.color!.toString().replaceFirst('#', '0xFF')))
                                                   : AppColors.primary,
                                               borderRadius: BorderRadius.circular(2),
                                             ),
@@ -981,13 +980,13 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
                                               crossAxisAlignment: CrossAxisAlignment.start,
                                               children: [
                                                 Text(
-                                                  line['code'] ?? 'Line',
+                                                  line.code ?? 'Line',
                                                   style: AppTextStyles.body.copyWith(
                                                     fontWeight: FontWeight.bold,
                                                   ),
                                                 ),
                                                 Text(
-                                                  line['name'] ?? 'Unknown',
+                                                  line.name ?? 'Unknown',
                                                   style: AppTextStyles.bodySmall.copyWith(
                                                     color: AppColors.mediumGrey,
                                                   ),
@@ -1009,8 +1008,8 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
                                           ),
                                           const SizedBox(width: 4),
                                           Text(
-                                            line['frequency'] != null
-                                                ? 'Every ${line['frequency']}min'
+                                            line.frequency != null
+                                                ? 'Every ${line.frequency}min'
                                                 : 'Schedule varies',
                                             style: AppTextStyles.caption.copyWith(
                                               color: AppColors.mediumGrey,
@@ -1153,30 +1152,27 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
 
     // Add markers for nearby buses
     for (final bus in passengerProvider.nearbyBuses) {
-      if (bus.containsKey('current_location')) {
-        final location = bus['current_location'];
-        if (location != null &&
-            location['latitude'] != null &&
-            location['longitude'] != null) {
-          final latitude = double.tryParse(location['latitude'].toString()) ?? 0;
-          final longitude = double.tryParse(location['longitude'].toString()) ?? 0;
+      if (bus.currentLocation != null &&
+          bus.currentLocation!['latitude'] != null &&
+          bus.currentLocation!['longitude'] != null) {
+        final latitude = double.tryParse(bus.currentLocation!['latitude'].toString()) ?? 0;
+        final longitude = double.tryParse(bus.currentLocation!['longitude'].toString()) ?? 0;
 
-          markers.add(
-            Marker(
-              markerId: MarkerId('bus_${bus['id']}'),
-              position: LatLng(latitude, longitude),
-              icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
-              infoWindow: InfoWindow(
-                title: 'Bus ${bus['license_plate']}',
-                snippet: bus.containsKey('line') ? 'Line: ${bus['line']['code']}' : null,
-              ),
-              onTap: () {
-                passengerProvider.trackBus(bus['id']);
-                AppRouter.navigateTo(context, AppRoutes.busTracking);
-              },
+        markers.add(
+          Marker(
+            markerId: MarkerId('bus_${bus.id}'),
+            position: LatLng(latitude, longitude),
+            icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
+            infoWindow: InfoWindow(
+              title: 'Bus ${bus.licensePlate}',
+              snippet: 'Status: ${bus.status.value}',
             ),
-          );
-        }
+            onTap: () {
+              passengerProvider.trackBus(bus.id);
+              AppRouter.navigateTo(context, AppRoutes.busTracking);
+            },
+          ),
+        );
       }
     }
 

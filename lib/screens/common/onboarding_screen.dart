@@ -17,30 +17,30 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
 
-  final List<OnboardingPage> _pages = [
-    const OnboardingPage(
+  List<OnboardingPage> _getPages(BuildContext context) => [
+    OnboardingPage(
       title: 'Welcome to DZ Bus Tracker',
       description: 'Smart, real-time bus tracking for Algeria – connecting passengers and drivers like never before.',
       image: Icons.directions_bus_rounded,
-      backgroundColor: AppColors.primary,
+      backgroundColor: Theme.of(context).colorScheme.primary,
     ),
-    const OnboardingPage(
+    OnboardingPage(
       title: 'For Bus Drivers',
       description: 'Register your bus, get approved, and start tracking your route. Help passengers know exactly when you\'ll arrive.',
       image: Icons.person,
-      backgroundColor: AppColors.accent,
+      backgroundColor: Theme.of(context).colorScheme.primary,
     ),
-    const OnboardingPage(
+    OnboardingPage(
       title: 'For Passengers',
       description: 'Search routes, view live bus locations, and see estimated arrival times. No more waiting in the dark!',
       image: Icons.people_alt_rounded,
-      backgroundColor: AppColors.success,
+      backgroundColor: Theme.of(context).colorScheme.primary,
     ),
-    const OnboardingPage(
+    OnboardingPage(
       title: 'Smart Features',
       description: 'Get info about waiting passengers, bus occupancy, and smart predictions for a smoother journey.',
       image: Icons.lightbulb_outline,
-      backgroundColor: AppColors.info,
+      backgroundColor: Theme.of(context).colorScheme.primary,
     ),
   ];
 
@@ -57,7 +57,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   void _nextPage() {
-    if (_currentPage < _pages.length - 1) {
+    final pages = _getPages(context);
+    if (_currentPage < pages.length - 1) {
       _pageController.nextPage(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
@@ -73,6 +74,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final pages = _getPages(context);
     return Scaffold(
       body: Stack(
         children: [
@@ -80,9 +82,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           PageView.builder(
             controller: _pageController,
             onPageChanged: _onPageChanged,
-            itemCount: _pages.length,
+            itemCount: pages.length,
             itemBuilder: (context, index) {
-              return _pages[index];
+              return pages[index];
             },
           ),
 
@@ -94,7 +96,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               onPressed: _finish,
               child: Text(
                 'Skip',
-                style: AppTextStyles.body.copyWith(
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: Colors.white,
                   fontWeight: FontWeight.w500,
                 ),
@@ -112,28 +114,26 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 // Page indicator
                 SmoothPageIndicator(
                   controller: _pageController,
-                  count: _pages.length,
+                  count: pages.length,
                   effect: ExpandingDotsEffect(
                     dotHeight: 8,
                     dotWidth: 8,
                     activeDotColor: Colors.white,
-                    dotColor: Colors.white.withOpacity(0.5),
+                    dotColor: Colors.white.withOpacity(0.1),
                   ),
                 ),
 
-                const SizedBox(height: 40),
+                const SizedBox(height: 16),
 
                 // Next/Get Started button
                 CustomButton(
-                  text: _currentPage == _pages.length - 1 ? 'Get Started' : 'Next',
-                  onPressed: _nextPage,
-                  color: Colors.white,
-                  textColor: _pages[_currentPage].backgroundColor,
-                  icon: _currentPage == _pages.length - 1
-                      ? Icons.check_circle_outline
-                      : Icons.arrow_forward,
-                  iconOnRight: true,
-                ),
+        text: _currentPage == pages.length - 1 ? 'Get Started' : 'Next',
+        onPressed: _nextPage,
+        color: Colors.white,
+        icon: _currentPage == pages.length - 1
+        ? Icons.check_circle_outline
+        : Icons.arrow_forward
+      ),
               ],
             ),
           ),
@@ -172,26 +172,25 @@ class OnboardingPage extends StatelessWidget {
             color: Colors.white,
           ),
 
-          const SizedBox(height: 50),
+          const SizedBox(height: 16),
 
           // Title
           Text(
             title,
-            style: AppTextStyles.h1.copyWith(
+            style: Theme.of(context).textTheme.headlineLarge?.copyWith(
               color: Colors.white,
               fontWeight: FontWeight.bold,
             ),
             textAlign: TextAlign.center,
           ),
 
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
 
           // Description
           Text(
             description,
-            style: AppTextStyles.body.copyWith(
-              color: Colors.white.withOpacity(0.9),
-              height: 1.5,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Colors.white.withOpacity(0.85),
             ),
             textAlign: TextAlign.center,
           ),

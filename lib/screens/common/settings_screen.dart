@@ -18,12 +18,12 @@ class SettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final localizationProvider = Provider.of<LocalizationProvider>(context);
     final authProvider = Provider.of<AuthProvider>(context);
-    final profile = authProvider.profile ?? {};
+    final profile = authProvider.profile;
 
     // Get notification settings from profile
-    final pushNotificationsEnabled = profile['push_notifications_enabled'] ?? true;
-    final emailNotificationsEnabled = profile['email_notifications_enabled'] ?? true;
-    final smsNotificationsEnabled = profile['sms_notifications_enabled'] ?? false;
+    final pushNotificationsEnabled = profile?.pushNotificationsEnabled ?? true;
+    final emailNotificationsEnabled = profile?.emailNotificationsEnabled ?? true;
+    final smsNotificationsEnabled = profile?.smsNotificationsEnabled ?? false;
 
     return Scaffold(
       appBar: const DzAppBar(
@@ -107,8 +107,8 @@ class SettingsScreen extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
       child: Text(
         title,
-        style: AppTextStyles.body.copyWith(
-          color: AppColors.primary,
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+          color: Theme.of(context).colorScheme.primary,
           fontWeight: FontWeight.bold,
         ),
       ),
@@ -125,8 +125,8 @@ class SettingsScreen extends StatelessWidget {
         children: [
           Text(
             'Select Language',
-            style: AppTextStyles.h2.copyWith(
-              color: AppColors.white,
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+              color: Theme.of(context).colorScheme.primary,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -139,14 +139,14 @@ class SettingsScreen extends StatelessWidget {
               title: Text(
                 languageName,
                 style: TextStyle(
-                  color: AppColors.white,
+                  color: Theme.of(context).colorScheme.primary,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                 ),
               ),
               trailing: isSelected
-                  ? const Icon(
+                  ? Icon(
                 Icons.check_circle,
-                color: AppColors.white,
+                color: Theme.of(context).colorScheme.primary,
               )
                   : null,
               onTap: () {

@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import '../../config/route_config.dart';
 import '../../config/theme_config.dart';
+import '../../models/bus_model.dart';
 import '../../providers/bus_provider.dart';
 import '../../providers/passenger_provider.dart';
 import '../../widgets/common/app_bar.dart';
@@ -12,6 +13,7 @@ import '../../widgets/common/custom_button.dart';
 import '../../widgets/common/glassy_container.dart';
 import '../../widgets/common/loading_indicator.dart';
 import '../../helpers/error_handler.dart';
+import '../../widgets/common/custom_card.dart';
 
 class BusDetailsScreen extends StatefulWidget {
   final String busId;
@@ -27,7 +29,7 @@ class BusDetailsScreen extends StatefulWidget {
 
 class _BusDetailsScreenState extends State<BusDetailsScreen> {
   bool _isLoading = true;
-  Map<String, dynamic>? _busData;
+  Bus? _busData;
   String? _error;
 
   @override
@@ -61,19 +63,19 @@ class _BusDetailsScreenState extends State<BusDetailsScreen> {
   void _trackBus() {
     if (_busData != null) {
       final passengerProvider = Provider.of<PassengerProvider>(context, listen: false);
-      passengerProvider.trackBus(_busData!['id']);
+      passengerProvider.trackBus(_busData!.id);
       AppRouter.navigateTo(context, AppRoutes.busTracking);
     }
   }
 
   void _rateDriver() {
-    if (_busData != null && _busData!.containsKey('driver')) {
+    if (_busData != null && _busData!.driver != null) {
       AppRouter.navigateTo(
         context,
         AppRoutes.rateDriver,
         arguments: {
-          'driverId': _busData!['driver'],
-          'busId': _busData!['id'],
+          'driverId': _busData!.driver,
+          'busId': _busData!.id,
         },
       );
     }
@@ -95,27 +97,26 @@ class _BusDetailsScreenState extends State<BusDetailsScreen> {
             Icon(
               Icons.error_outline,
               size: 64,
-              color: AppColors.error,
+              color: Theme.of(context).colorScheme.primary,
             ),
             const SizedBox(height: 16),
             Text(
               'Error loading bus details',
-              style: AppTextStyles.h3,
+              style: Theme.of(context).textTheme.headlineSmall,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 16),
             Text(
               _error!,
-              style: AppTextStyles.body.copyWith(
-                color: AppColors.mediumGrey,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.primary,
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
             CustomButton(
-              text: 'Try Again',
-              onPressed: _loadBusDetails,
-              icon: Icons.refresh,
-            ),
+        text: 'Try Again',
+        onPressed: _loadBusDetails,
+        ),
           ],
         ),
       )
@@ -131,22 +132,20 @@ class _BusDetailsScreenState extends State<BusDetailsScreen> {
     }
 
     // Extract bus data
-    final licensePlate = _busData!['license_plate'] ?? 'N/A';
-    final model = _busData!['model'] ?? 'N/A';
-    final manufacturer = _busData!['manufacturer'] ?? 'N/A';
-    final year = _busData!['year']?.toString() ?? 'N/A';
-    final capacity = _busData!['capacity']?.toString() ?? 'N/A';
-    final isAirConditioned = _busData!['is_air_conditioned'] == true;
-    final status = _busData!['status'] ?? 'N/A';
-    final isActive = _busData!['is_active'] == true;
+    final licensePlate = _busData!.licensePlate ?? 'N/A';
+    final model = _busData!.model ?? 'N/A';
+    final manufacturer = _busData!.manufacturer ?? 'N/A';
+    final year = _busData!.year?.toString() ?? 'N/A';
+    final capacity = _busData!.capacity?.toString() ?? 'N/A';
+    final isAirConditioned = _busData!.isAirConditioned == true;
+    final status = _busData!.status.toString();
+    final isActive = _busData!.isActive == true;
 
     // Extract occupancy data
     int? occupancy;
-    if (_busData!.containsKey('current_location') &&
-        _busData!['current_location'] != null &&
-        _busData!['current_location'].containsKey('passenger_count')) {
-      occupancy = _busData!['current_location']['passenger_count'];
-    }
+    // Note: Real-time occupancy would come from tracking service
+    // For now using placeholder data
+    occupancy = null;
 
     // Calculate occupancy percentage
     final occupancyPercentage = occupancy != null && int.tryParse(capacity) != null
@@ -154,14 +153,15 @@ class _BusDetailsScreenState extends State<BusDetailsScreen> {
         : null;
 
     // Check if the bus is being tracked
-    final isTracking = _busData!.containsKey('current_location') &&
-        _busData!['current_location'] != null;
+    final isTracking = _busData!.isActive;
+    // Note: Real tracking status would come from tracking service
 
     // Get last update time
     String lastUpdateText = 'Not tracking';
     if (isTracking &&
-        _busData!['current_location'].containsKey('timestamp')) {
-      final timestamp = DateTime.tryParse(_busData!['current_location']['timestamp']);
+        _busData!.currentLocation != null &&
+        _busData!.currentLocation!.containsKey('timestamp')) {
+      final timestamp = DateTime.tryParse(_busData!.currentLocation!['timestamp']);
       if (timestamp != null) {
         lastUpdateText = 'Updated ${timeago.format(timestamp)}';
       }
@@ -176,22 +176,21 @@ class _BusDetailsScreenState extends State<BusDetailsScreen> {
           ClipRRect(
             borderRadius: BorderRadius.circular(16),
             child: Container(
-              height: 180,
-              color: AppColors.lightGrey,
+              color: Theme.of(context).colorScheme.primary,
               child: Center(
                 child: Icon(
                   Icons.directions_bus,
                   size: 80,
-                  color: AppColors.primary,
+                  color: Theme.of(context).colorScheme.primary,
                 ),
               ),
             ),
           ),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
 
           // Bus basic info
-          GlassyContainer(
+          CustomCard(type: CardType.elevated, 
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -204,13 +203,13 @@ class _BusDetailsScreenState extends State<BusDetailsScreen> {
                       children: [
                         Text(
                           'License Plate',
-                          style: AppTextStyles.bodySmall.copyWith(
-                            color: AppColors.mediumGrey,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context).colorScheme.primary,
                           ),
                         ),
                         Text(
                           licensePlate,
-                          style: AppTextStyles.h2.copyWith(
+                          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -219,13 +218,13 @@ class _BusDetailsScreenState extends State<BusDetailsScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: isActive ? AppColors.success : AppColors.error,
+                        color: isActive ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.primary,
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Text(
                         isActive ? 'Active' : 'Inactive',
-                        style: AppTextStyles.bodySmall.copyWith(
-                          color: AppColors.white,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.primary,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -271,7 +270,7 @@ class _BusDetailsScreenState extends State<BusDetailsScreen> {
                         'Air Conditioning',
                         isAirConditioned ? 'Available' : 'Not available',
                         icon: isAirConditioned ? Icons.ac_unit : Icons.highlight_off,
-                        iconColor: isAirConditioned ? AppColors.info : AppColors.mediumGrey,
+                        iconColor: isAirConditioned ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.primary,
                       ),
                     ),
                     Expanded(
@@ -286,30 +285,30 @@ class _BusDetailsScreenState extends State<BusDetailsScreen> {
             ),
           ),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
 
           // Current tracking info
-          GlassyContainer(
-            color: isTracking ? AppColors.glassWhite : AppColors.glassDark,
+          CustomCard(type: CardType.elevated, 
+            backgroundColor: isTracking ? Theme.of(context).colorScheme.primaryContainer : Theme.of(context).colorScheme.surface,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   'Live Tracking',
-                  style: AppTextStyles.h3.copyWith(
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: isTracking ? AppColors.darkGrey : AppColors.white,
+                    color: isTracking ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.primary,
                   ),
                 ),
 
-                const SizedBox(height: 8),
+                const SizedBox(height: 16),
 
                 Text(
                   isTracking
                       ? 'This bus is currently being tracked.'
                       : 'This bus is not currently being tracked.',
-                  style: AppTextStyles.body.copyWith(
-                    color: isTracking ? AppColors.darkGrey : AppColors.white,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: isTracking ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.primary,
                   ),
                 ),
 
@@ -320,7 +319,7 @@ class _BusDetailsScreenState extends State<BusDetailsScreen> {
                   _buildInfoItem(
                     'Last Update',
                     lastUpdateText,
-                    textColor: AppColors.darkGrey,
+                    textColor: Theme.of(context).colorScheme.primary,
                   ),
 
                   const SizedBox(height: 16),
@@ -328,24 +327,23 @@ class _BusDetailsScreenState extends State<BusDetailsScreen> {
                   // Current location - in a real app, you'd show a small map here
                   Text(
                     'Current Location',
-                    style: AppTextStyles.bodySmall.copyWith(
-                      color: AppColors.mediumGrey,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.primary,
                     ),
                   ),
 
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 16),
 
                   Container(
-                    height: 120,
                     decoration: BoxDecoration(
-                      color: AppColors.lightGrey,
+                      color: Theme.of(context).colorScheme.primary,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Center(
                       child: Icon(
                         Icons.map,
                         size: 40,
-                        color: AppColors.mediumGrey,
+                        color: Theme.of(context).colorScheme.primary,
                       ),
                     ),
                   ),
@@ -357,25 +355,25 @@ class _BusDetailsScreenState extends State<BusDetailsScreen> {
                 if (occupancy != null && occupancyPercentage != null) ...[
                   Text(
                     'Current Occupancy',
-                    style: AppTextStyles.bodySmall.copyWith(
-                      color: isTracking ? AppColors.mediumGrey : AppColors.white,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: isTracking ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.primary,
                     ),
                   ),
 
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 16),
 
                   Row(
                     children: [
                       // Occupancy number
                       Text(
                         '$occupancy / $capacity',
-                        style: AppTextStyles.body.copyWith(
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           fontWeight: FontWeight.bold,
-                          color: isTracking ? AppColors.darkGrey : AppColors.white,
+                          color: isTracking ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.primary,
                         ),
                       ),
 
-                      const SizedBox(width: 16),
+                      const SizedBox(width: 16, height: 40),
 
                       // Progress bar
                       Expanded(
@@ -384,24 +382,24 @@ class _BusDetailsScreenState extends State<BusDetailsScreen> {
                           child: LinearProgressIndicator(
                             value: occupancyPercentage / 100,
                             backgroundColor: isTracking
-                                ? AppColors.lightGrey
-                                : AppColors.white.withOpacity(0.3),
+                                ? Theme.of(context).colorScheme.primary
+                                : Theme.of(context).colorScheme.primary.withOpacity(0.1),
                             color: _getOccupancyColor(occupancyPercentage),
                             minHeight: 8,
                           ),
                         ),
                       ),
 
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 8, height: 40),
 
                       // Percentage
                       Text(
                         '$occupancyPercentage%',
-                        style: AppTextStyles.bodySmall.copyWith(
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: isTracking
                               ? _getOccupancyColor(occupancyPercentage)
-                              : AppColors.white,
+                              : Theme.of(context).colorScheme.primary,
                         ),
                       ),
                     ],
@@ -413,35 +411,34 @@ class _BusDetailsScreenState extends State<BusDetailsScreen> {
                 // Track button
                 Center(
                   child: CustomButton(
-                    text: isTracking ? 'View Live Tracking' : 'Track This Bus',
-                    onPressed: _trackBus,
-                    color: isTracking ? AppColors.success : AppColors.primary,
-                    icon: Icons.location_on,
-                  ),
+        text: isTracking ? 'View Live Tracking' : 'Track This Bus',
+        onPressed: _trackBus,
+        color: isTracking ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.primary,
+        ),
                 ),
               ],
             ),
           ),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
 
           // Rate driver
-          GlassyContainer(
+          CustomCard(type: CardType.elevated, 
             child: Column(
               children: [
                 Row(
                   children: [
-                    const CircleAvatar(
+                    CircleAvatar(
                       radius: 24,
-                      backgroundColor: AppColors.primary,
+                      backgroundColor: Theme.of(context).colorScheme.primary,
                       child: Icon(
                         Icons.person,
-                        color: AppColors.white,
+                        color: Theme.of(context).colorScheme.onPrimary,
                         size: 32,
                       ),
                     ),
 
-                    const SizedBox(width: 16),
+                    const SizedBox(width: 16, height: 40),
 
                     Expanded(
                       child: Column(
@@ -449,15 +446,15 @@ class _BusDetailsScreenState extends State<BusDetailsScreen> {
                         children: [
                           Text(
                             'Rate the Driver',
-                            style: AppTextStyles.h3.copyWith(
+                            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
                           ),
 
                           Text(
                             'Share your experience with this bus driver',
-                            style: AppTextStyles.bodySmall.copyWith(
-                              color: AppColors.mediumGrey,
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Theme.of(context).colorScheme.primary,
                             ),
                           ),
                         ],
@@ -469,11 +466,10 @@ class _BusDetailsScreenState extends State<BusDetailsScreen> {
                 const SizedBox(height: 16),
 
                 CustomButton(
-                  text: 'Rate Driver',
-                  onPressed: _rateDriver,
-                  type: ButtonType.outlined,
-                  icon: Icons.star,
-                ),
+        text: 'Rate Driver',
+        onPressed: _rateDriver,
+        type: ButtonType.outline,
+        ),
               ],
             ),
           ),
@@ -494,27 +490,27 @@ class _BusDetailsScreenState extends State<BusDetailsScreen> {
       children: [
         Text(
           label,
-          style: AppTextStyles.bodySmall.copyWith(
-            color: textColor != null ? textColor.withOpacity(0.6) : AppColors.mediumGrey,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: textColor != null ? textColor.withOpacity(0.1) : Theme.of(context).colorScheme.primary,
           ),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 16),
         Row(
           children: [
             if (icon != null) ...[
               Icon(
                 icon,
                 size: 16,
-                color: iconColor ?? AppColors.primary,
+                color: iconColor ?? Theme.of(context).colorScheme.primary,
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 8, height: 40),
             ],
             Expanded(
               child: Text(
                 value,
-                style: AppTextStyles.body.copyWith(
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.w500,
-                  color: textColor ?? AppColors.darkGrey,
+                  color: textColor ?? Theme.of(context).colorScheme.primary,
                 ),
                 overflow: TextOverflow.ellipsis,
               ),
@@ -527,11 +523,11 @@ class _BusDetailsScreenState extends State<BusDetailsScreen> {
 
   Color _getOccupancyColor(int percentage) {
     if (percentage < 50) {
-      return AppColors.success;
+      return Theme.of(context).colorScheme.primary;
     } else if (percentage < 80) {
-      return AppColors.warning;
+      return Theme.of(context).colorScheme.primary;
     } else {
-      return AppColors.error;
+      return Theme.of(context).colorScheme.primary;
     }
   }
 }

@@ -1,4 +1,15 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Internet permission for Firebase -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    
+    <!-- Notification permissions -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    
+    <!-- Firebase Cloud Messaging permissions -->
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    
     <application
         android:label="dz_bus_tracker_app"
         android:name="${applicationName}"
@@ -35,6 +46,24 @@
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyDoboAXIgmShgfxNfu-JnFxiPmbRy8dpsw" />
 
+        <!-- Firebase Cloud Messaging -->
+        <service
+            android:name="io.flutter.plugins.firebase.messaging.FlutterFirebaseMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
+        <!-- Firebase notification icon -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@mipmap/ic_launcher" />
+            
+        <!-- Firebase notification channel -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="high_priority" />
 
     </application>
     <!-- Required to query activities that can process text, see:

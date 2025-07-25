@@ -81,7 +81,7 @@ class _RegisterFormState extends State<RegisterForm> {
                 ),
               ),
 
-              const SizedBox(width: 16),
+              const SizedBox(width: 16, height: 40),
 
               // Last name
               Expanded(
@@ -149,15 +149,14 @@ class _RegisterFormState extends State<RegisterForm> {
             textInputAction: TextInputAction.done,
           ),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
 
           // Register button
           CustomButton(
-            text: 'Register',
-            onPressed: _submitForm,
-            isLoading: widget.isLoading,
-            height: 50,
-          ),
+        text: 'Register',
+        onPressed: _submitForm,
+        isLoading: widget.isLoading
+      ),
         ],
       ),
     );

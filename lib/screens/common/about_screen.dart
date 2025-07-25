@@ -61,13 +61,13 @@ class _AboutScreenState extends State<AboutScreen> {
             // App logo
             Container(
               width: 120,
-              height: 120,
+        
               decoration: BoxDecoration(
-                color: AppColors.primary,
+                color: Theme.of(context).colorScheme.primary,
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primary.withOpacity(0.3),
+                    color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
@@ -77,49 +77,49 @@ class _AboutScreenState extends State<AboutScreen> {
                 child: Icon(
                   Icons.directions_bus_rounded,
                   size: 80,
-                  color: AppColors.white,
+                  color: Theme.of(context).colorScheme.primary,
                 ),
               ),
             ),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
 
             // App name
             Text(
               AppConfig.appName,
-              style: AppTextStyles.h1.copyWith(
-                color: AppColors.darkGrey,
+              style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                color: Theme.of(context).colorScheme.primary,
                 fontWeight: FontWeight.bold,
               ),
               textAlign: TextAlign.center,
             ),
 
-            const SizedBox(height: 8),
+            const SizedBox(height: 16),
 
             // Version
             Text(
               'Version $_appVersion',
-              style: AppTextStyles.body.copyWith(
-                color: AppColors.mediumGrey,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.primary,
               ),
               textAlign: TextAlign.center,
             ),
 
-            const SizedBox(height: 32),
+            const SizedBox(height: 16),
 
             // App description
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.lightGrey.withOpacity(0.3),
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Column(
                 children: [
                   Text(
                     'DZ Bus Tracker is a real-time bus tracking application for Algeria, connecting passengers and drivers to make public transport more efficient and accessible.',
-                    style: AppTextStyles.body.copyWith(
-                      color: AppColors.darkGrey,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.primary,
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -128,8 +128,8 @@ class _AboutScreenState extends State<AboutScreen> {
 
                   Text(
                     'Never miss your bus again!',
-                    style: AppTextStyles.body.copyWith(
-                      color: AppColors.primary,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.primary,
                       fontWeight: FontWeight.bold,
                     ),
                     textAlign: TextAlign.center,
@@ -138,44 +138,43 @@ class _AboutScreenState extends State<AboutScreen> {
               ),
             ),
 
-            const SizedBox(height: 32),
+            const SizedBox(height: 16),
 
             // Features
             _buildFeatureList(),
 
-            const SizedBox(height: 32),
+            const SizedBox(height: 16),
 
             // Contact buttons
             Row(
               children: [
                 Expanded(
                   child: CustomButton(
-                    text: 'Visit Website',
-                    onPressed: _openWebsite,
-                    icon: Icons.language,
-                    type: ButtonType.outlined,
-                  ),
+        text: 'Visit Website',
+        onPressed: _openWebsite,
+        icon: Icons.language,
+        type: ButtonType.outline
+      ),
                 ),
 
-                const SizedBox(width: 16),
+                const SizedBox(width: 16, height: 40),
 
                 Expanded(
                   child: CustomButton(
-                    text: 'Contact Support',
-                    onPressed: _openEmail,
-                    icon: Icons.email,
-                  ),
+        text: 'Contact Support',
+        onPressed: _openEmail,
+        ),
                 ),
               ],
             ),
 
-            const SizedBox(height: 32),
+            const SizedBox(height: 16),
 
             // Copyright
             Text(
               '© ${DateTime.now().year} DZ Bus Tracker. All rights reserved.',
-              style: AppTextStyles.caption.copyWith(
-                color: AppColors.mediumGrey,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.primary,
               ),
               textAlign: TextAlign.center,
             ),
@@ -219,8 +218,8 @@ class _AboutScreenState extends State<AboutScreen> {
       children: [
         Text(
           'Key Features',
-          style: AppTextStyles.h2.copyWith(
-            color: AppColors.darkGrey,
+          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+            color: Theme.of(context).colorScheme.primary,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -249,21 +248,21 @@ class _AboutScreenState extends State<AboutScreen> {
           // Icon
           Container(
             width: 40,
-            height: 40,
+        
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Center(
               child: Icon(
                 icon,
-                color: AppColors.primary,
+                color: Theme.of(context).colorScheme.primary,
                 size: 24,
               ),
             ),
           ),
 
-          const SizedBox(width: 16),
+          const SizedBox(width: 16, height: 40),
 
           // Content
           Expanded(
@@ -272,18 +271,18 @@ class _AboutScreenState extends State<AboutScreen> {
               children: [
                 Text(
                   title,
-                  style: AppTextStyles.body.copyWith(
-                    color: AppColors.darkGrey,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.primary,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
 
-                const SizedBox(height: 4),
+                const SizedBox(height: 16),
 
                 Text(
                   description,
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.mediumGrey,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.primary,
                   ),
                 ),
               ],

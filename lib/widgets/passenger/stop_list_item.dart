@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import '../../config/theme_config.dart';
 import '../../widgets/common/glassy_container.dart';
+import '../../widgets/common/custom_card.dart';
 
 class StopListItem extends StatelessWidget {
   final Map<String, dynamic> stop;
@@ -34,11 +35,11 @@ class StopListItem extends StatelessWidget {
     // Lines that pass through this stop if available
     final lines = stop['lines'] as List<dynamic>? ?? [];
 
-    return GlassyContainer(
+    return CustomCard(
+      type: CardType.elevated,
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
-      borderRadius: 12,
-      color: AppColors.glassWhite,
+      borderRadius: BorderRadius.circular(12),
       onTap: onTap,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -51,18 +52,18 @@ class StopListItem extends StatelessWidget {
               Expanded(
                 child: Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.location_on,
                       size: 24,
-                      color: AppColors.primary,
+                      color: Theme.of(context).colorScheme.primary,
                     ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         name,
-                        style: AppTextStyles.body.copyWith(
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           fontWeight: FontWeight.bold,
-                          color: AppColors.darkGrey,
+                          color: Theme.of(context).colorScheme.primary,
                         ),
                       ),
                     ),
@@ -76,8 +77,8 @@ class StopListItem extends StatelessWidget {
                   distance < 1000
                       ? '${distance.toStringAsFixed(0)} m'
                       : '${(distance / 1000).toStringAsFixed(1)} km',
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.primary,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.primary,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -90,8 +91,8 @@ class StopListItem extends StatelessWidget {
               padding: const EdgeInsets.only(left: 32, top: 4),
               child: Text(
                 address,
-                style: AppTextStyles.bodySmall.copyWith(
-                  color: AppColors.mediumGrey,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.primary,
                 ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -107,8 +108,8 @@ class StopListItem extends StatelessWidget {
                 children: [
                   Text(
                     'Lines:',
-                    style: AppTextStyles.caption.copyWith(
-                      color: AppColors.darkGrey,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.primary,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -120,7 +121,7 @@ class StopListItem extends StatelessWidget {
                         final code = line['code'] ?? '';
                         final color = line['color'] != null
                             ? Color(int.parse('0xFF${line['color'].toString().replaceAll('#', '')}'))
-                            : AppColors.primary;
+                            : Theme.of(context).colorScheme.primary;
 
                         return Container(
                           margin: const EdgeInsets.only(right: 8),
@@ -131,8 +132,8 @@ class StopListItem extends StatelessWidget {
                           ),
                           child: Text(
                             code,
-                            style: AppTextStyles.caption.copyWith(
-                              color: AppColors.white,
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Colors.white,
                               fontWeight: FontWeight.w500,
                             ),
                           ),

@@ -8,6 +8,8 @@ import '../../config/route_config.dart';
 import '../../config/theme_config.dart';
 import '../../providers/stop_provider.dart';
 import '../../providers/line_provider.dart';
+import '../../models/line_model.dart';
+import '../../models/api_response_models.dart';
 import '../../providers/passenger_provider.dart';
 import '../../widgets/common/app_bar.dart';
 import '../../widgets/common/glassy_container.dart';
@@ -15,6 +17,7 @@ import '../../widgets/common/loading_indicator.dart';
 import '../../widgets/common/custom_button.dart';
 import '../../widgets/map/map_widget.dart';
 import '../../helpers/error_handler.dart';
+import '../../widgets/common/custom_card.dart';
 
 class StopDetailsScreen extends StatefulWidget {
   const StopDetailsScreen({Key? key}) : super(key: key);
@@ -26,7 +29,7 @@ class StopDetailsScreen extends StatefulWidget {
 class _StopDetailsScreenState extends State<StopDetailsScreen> {
   GoogleMapController? _mapController;
   bool _isLoading = false;
-  List<Map<String, dynamic>> _lines = [];
+  List<Line> _lines = [];
 
   @override
   void initState() {
@@ -56,7 +59,7 @@ class _StopDetailsScreenState extends State<StopDetailsScreen> {
       // Load lines that pass through this stop
       final stopId = stopProvider.selectedStop!['id'];
       final lineProvider = Provider.of<LineProvider>(context, listen: false);
-      await lineProvider.fetchLines(stopId: stopId);
+      await lineProvider.fetchLines(queryParams: LineQueryParameters(stopId: stopId));
 
       setState(() {
         _lines = lineProvider.lines;
@@ -109,7 +112,7 @@ class _StopDetailsScreenState extends State<StopDetailsScreen> {
                 // Line selection (optional)
                 if (_lines.isNotEmpty) ...[
                   const Text('Select Line (Optional)'),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
                     decoration: const InputDecoration(
                       border: OutlineInputBorder(),
@@ -119,13 +122,13 @@ class _StopDetailsScreenState extends State<StopDetailsScreen> {
                     value: selectedLineId,
                     items: _lines.map((line) {
                       return DropdownMenuItem<String>(
-                        value: line['id'],
+                        value: line.id,
                         child: Text(
-                          'Line ${line['code']}',
+                          'Line ${line.code}',
                           style: TextStyle(
-                            color: line['color'] != null
-                                ? Color(int.parse('0xFF${line['color'].toString().replaceAll('#', '')}'))
-                                : AppColors.primary,
+                            color: line.color != null
+                                ? Color(int.parse('0xFF${line.color!.replaceAll('#', '')}'))
+                                : Theme.of(context).colorScheme.primary,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -151,9 +154,9 @@ class _StopDetailsScreenState extends State<StopDetailsScreen> {
                   final count = int.tryParse(passengerCount.text);
                   if (count == null || count <= 0) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Please enter a valid number'),
-                        backgroundColor: AppColors.warning,
+                      SnackBar(
+                        content: const Text('Please enter a valid number'),
+                        backgroundColor: Theme.of(context).colorScheme.primary,
                       ),
                     );
                     return;
@@ -193,9 +196,9 @@ class _StopDetailsScreenState extends State<StopDetailsScreen> {
 
       if (success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Report submitted successfully'),
-            backgroundColor: AppColors.success,
+          SnackBar(
+            content: const Text('Report submitted successfully'),
+            backgroundColor: Theme.of(context).colorScheme.primary,
           ),
         );
       }
@@ -215,7 +218,7 @@ class _StopDetailsScreenState extends State<StopDetailsScreen> {
     }
   }
 
-  void _viewLine(Map<String, dynamic> line) {
+  void _viewLine(Line line) {
     final lineProvider = Provider.of<LineProvider>(context, listen: false);
     lineProvider.setSelectedLine(line);
     AppRouter.navigateTo(context, AppRoutes.lineDetails);
@@ -267,7 +270,6 @@ class _StopDetailsScreenState extends State<StopDetailsScreen> {
               Marker(
                 markerId: MarkerId('stop_${stop['id']}'),
                 position: LatLng(latitude, longitude),
-                icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
                 infoWindow: InfoWindow(
                   title: name,
                   snippet: address,
@@ -281,10 +283,11 @@ class _StopDetailsScreenState extends State<StopDetailsScreen> {
             bottom: 0,
             left: 0,
             right: 0,
-            child: GlassyContainer(
-              borderRadius: 24,
-              color: AppColors.glassDark,
-              border: Border.all(color: Colors.white.withOpacity(0.1)),
+            child: CustomCard(type: CardType.elevated, 
+              borderRadius: BorderRadius.circular(24),
+              backgroundColor: Theme.of(context).colorScheme.surface,
+              borderColor: Colors.white.withOpacity(0.1),
+              borderWidth: 1,
               margin: const EdgeInsets.only(bottom: 16, left: 16, right: 16),
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -294,18 +297,18 @@ class _StopDetailsScreenState extends State<StopDetailsScreen> {
                   // Stop name
                   Row(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.location_on,
                         size: 24,
-                        color: AppColors.primary,
+                        color: Theme.of(context).colorScheme.primary,
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 8, height: 40),
                       Expanded(
                         child: Text(
                           name,
-                          style: AppTextStyles.h3.copyWith(
+                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                             fontWeight: FontWeight.bold,
-                            color: AppColors.white,
+                            color: Theme.of(context).colorScheme.primary,
                           ),
                         ),
                       ),
@@ -318,8 +321,8 @@ class _StopDetailsScreenState extends State<StopDetailsScreen> {
                       padding: const EdgeInsets.only(left: 32, top: 4),
                       child: Text(
                         address,
-                        style: AppTextStyles.body.copyWith(
-                          color: AppColors.white.withOpacity(0.7),
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                         ),
                       ),
                     ),
@@ -330,8 +333,8 @@ class _StopDetailsScreenState extends State<StopDetailsScreen> {
                       padding: const EdgeInsets.only(left: 32, top: 8),
                       child: Text(
                         description,
-                        style: AppTextStyles.bodySmall.copyWith(
-                          color: AppColors.white.withOpacity(0.7),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                           fontStyle: FontStyle.italic,
                         ),
                       ),
@@ -341,11 +344,11 @@ class _StopDetailsScreenState extends State<StopDetailsScreen> {
 
                   // Lines that pass through this stop
                   if (_isLoading)
-                    const Center(
+                    Center(
                       child: Padding(
-                        padding: EdgeInsets.all(8.0),
+                        padding: const EdgeInsets.all(8),
                         child: LoadingIndicator(
-                          color: AppColors.white,
+                          color: Theme.of(context).colorScheme.primary,
                           size: 24,
                         ),
                       ),
@@ -353,8 +356,8 @@ class _StopDetailsScreenState extends State<StopDetailsScreen> {
                   else if (_lines.isEmpty)
                     Text(
                       'No lines pass through this stop',
-                      style: AppTextStyles.body.copyWith(
-                        color: AppColors.white,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.primary,
                         fontStyle: FontStyle.italic,
                       ),
                       textAlign: TextAlign.center,
@@ -365,23 +368,22 @@ class _StopDetailsScreenState extends State<StopDetailsScreen> {
                       children: [
                         Text(
                           'Lines:',
-                          style: AppTextStyles.body.copyWith(
-                            color: AppColors.white,
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Theme.of(context).colorScheme.primary,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 16),
                         SizedBox(
-                          height: 40,
                           child: ListView.builder(
                             scrollDirection: Axis.horizontal,
                             itemCount: _lines.length,
                             itemBuilder: (context, index) {
                               final line = _lines[index];
-                              final code = line['code'] ?? '';
-                              final color = line['color'] != null
-                                  ? Color(int.parse('0xFF${line['color'].toString().replaceAll('#', '')}'))
-                                  : AppColors.primary;
+                              final code = line.code;
+                              final color = line.color != null
+                                  ? Color(int.parse('0xFF${line.color!.replaceAll('#', '')}'))
+                                  : Theme.of(context).colorScheme.primary;
 
                               return GestureDetector(
                                 onTap: () => _viewLine(line),
@@ -394,8 +396,8 @@ class _StopDetailsScreenState extends State<StopDetailsScreen> {
                                   ),
                                   child: Text(
                                     'Line $code',
-                                    style: AppTextStyles.body.copyWith(
-                                      color: AppColors.white,
+                                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                      color: Theme.of(context).colorScheme.primary,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
@@ -411,12 +413,11 @@ class _StopDetailsScreenState extends State<StopDetailsScreen> {
 
                   // Report waiting passengers button
                   CustomButton(
-                    text: 'Report Waiting Passengers',
-                    onPressed: _reportWaitingPassengers,
-                    icon: Icons.people,
-                    color: AppColors.white,
-                    textColor: AppColors.primary,
-                  ),
+        text: 'Report Waiting Passengers',
+        onPressed: _reportWaitingPassengers,
+        icon: Icons.people,
+        color: Theme.of(context).colorScheme.primary
+      ),
                 ],
               ),
             ),

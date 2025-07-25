@@ -9,6 +9,7 @@ import '../../config/route_config.dart';
 import '../../config/theme_config.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/utils/storage_utils.dart';
+import '../../models/user_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/common/loading_indicator.dart';
 
@@ -45,8 +46,12 @@ class _SplashScreenState extends State<SplashScreen> {
       await AppRouter.navigateToAndClearStack(context, AppRoutes.onboarding);
     } else if (authProvider.isAuthenticated) {
       // Navigate to appropriate home screen based on user type
-      if (authProvider.isDriver) {
+      final userType = authProvider.user?.userType;
+      
+      if (userType == UserType.driver) {
         await AppRouter.navigateToAndClearStack(context, AppRoutes.driverHome);
+      } else if (userType == UserType.admin) {
+        await AppRouter.navigateToAndClearStack(context, AppRoutes.adminDashboard);
       } else {
         await AppRouter.navigateToAndClearStack(context, AppRoutes.passengerHome);
       }
@@ -59,7 +64,7 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.primary,
+      backgroundColor: Theme.of(context).colorScheme.primary,
       body: SafeArea(
         child: Center(
           child: Column(
@@ -68,16 +73,16 @@ class _SplashScreenState extends State<SplashScreen> {
               // Logo or App Icon - replace with your actual logo
               Container(
                 width: 120,
-                height: 120,
+        
                 decoration: BoxDecoration(
-                  color: AppColors.white,
+                  color: Theme.of(context).colorScheme.primary,
                   borderRadius: BorderRadius.circular(24),
                 ),
                 child: Center(
                   child: Icon(
                     Icons.directions_bus_rounded,
                     size: 80,
-                    color: AppColors.primary,
+                    color: Theme.of(context).colorScheme.primary,
                   ),
                 ),
               )
@@ -85,38 +90,38 @@ class _SplashScreenState extends State<SplashScreen> {
                   .fade(duration: 500.ms)
                   .scale(delay: 300.ms, duration: 700.ms, curve: Curves.easeOutBack),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
 
               // App Name
               Text(
                 AppConfig.appName,
-                style: AppTextStyles.h1.copyWith(
-                  color: AppColors.white,
+                style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                  color: Theme.of(context).colorScheme.primary,
                   fontWeight: FontWeight.bold,
                 ),
               )
                   .animate()
                   .fade(delay: 500.ms, duration: 700.ms)
-                  .slideY(begin: 0.3, end: 0, curve: Curves.easeOutQuart),
+                  .slideY(begin: 0, end: 0, curve: Curves.easeOutQuart),
 
-              const SizedBox(height: 8),
+              const SizedBox(height: 16),
 
               // Tagline
               Text(
                 'Never Miss Your Bus Again!',
-                style: AppTextStyles.body.copyWith(
-                  color: AppColors.white.withOpacity(0.8),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                 ),
               )
                   .animate()
                   .fade(delay: 800.ms, duration: 700.ms)
-                  .slideY(delay: 800.ms, begin: 0.3, end: 0, curve: Curves.easeOutQuart),
+                  .slideY(delay: 800.ms, begin: 0, end: 0, curve: Curves.easeOutQuart),
 
-              const SizedBox(height: 48),
+              const SizedBox(height: 16),
 
               // Loading Indicator
-              const LoadingIndicator(
-                color: AppColors.white,
+              LoadingIndicator(
+                color: Theme.of(context).colorScheme.primary,
                 type: LoadingIndicatorType.wave,
               )
                   .animate()

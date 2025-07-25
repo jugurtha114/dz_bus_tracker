@@ -44,7 +44,7 @@ class MapWidget extends StatelessWidget {
     this.myLocationButtonEnabled = false,
     this.zoomControlsEnabled = false,
     this.trafficEnabled = false,
-    this.initialZoom = 14.0,
+    this.initialZoom = 14,
     this.cameraTargetBounds,
     this.minMaxZoomPreference,
     this.padding = EdgeInsets.zero,

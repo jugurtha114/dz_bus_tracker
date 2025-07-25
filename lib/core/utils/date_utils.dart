@@ -22,24 +22,29 @@ class DzDateUtils {
   }
 
   // Get relative time (e.g., "2 minutes ago")
+  static String timeAgo(DateTime dateTime, {String locale = 'en'}) {
+    return getTimeAgo(dateTime, locale: locale);
+  }
+
+  // Get relative time (e.g., "2 minutes ago")
   static String getTimeAgo(DateTime dateTime, {String locale = 'en'}) {
     final now = DateTime.now();
     final difference = now.difference(dateTime);
 
     if (difference.inDays > 365) {
-      return '${(difference.inDays / 365).floor()} ${_getYearText(locale, (difference.inDays / 365).floor())}';
+      return '${(difference.inDays / 365).floor()} ${_getYearText(locale, (difference.inDays / 365).floor())} ago';
     }
     if (difference.inDays > 30) {
-      return '${(difference.inDays / 30).floor()} ${_getMonthText(locale, (difference.inDays / 30).floor())}';
+      return '${(difference.inDays / 30).floor()} ${_getMonthText(locale, (difference.inDays / 30).floor())} ago';
     }
     if (difference.inDays > 0) {
-      return '${difference.inDays} ${_getDayText(locale, difference.inDays)}';
+      return '${difference.inDays} ${_getDayText(locale, difference.inDays)} ago';
     }
     if (difference.inHours > 0) {
-      return '${difference.inHours} ${_getHourText(locale, difference.inHours)}';
+      return '${difference.inHours} ${_getHourText(locale, difference.inHours)} ago';
     }
     if (difference.inMinutes > 0) {
-      return '${difference.inMinutes} ${_getMinuteText(locale, difference.inMinutes)}';
+      return '${difference.inMinutes} ${_getMinuteText(locale, difference.inMinutes)} ago';
     }
     return _getJustNowText(locale);
   }

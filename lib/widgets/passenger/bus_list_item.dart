@@ -4,6 +4,7 @@
 import 'package:flutter/material.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import '../../config/theme_config.dart';
+import '../../widgets/common/custom_card.dart';
 import '../../widgets/common/glassy_container.dart';
 import 'occupancy_indicator.dart';
 
@@ -57,11 +58,11 @@ class BusListItem extends StatelessWidget {
       lastUpdateText = 'Updated ${timeago.format(lastUpdate)}';
     }
 
-    return GlassyContainer(
+    return CustomCard(type: CardType.elevated, 
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
-      borderRadius: 12,
-      color: AppColors.glassWhite,
+      borderRadius: BorderRadius.circular(12),
+      backgroundColor: Theme.of(context).colorScheme.surface,
       onTap: onTap,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -76,16 +77,16 @@ class BusListItem extends StatelessWidget {
                 children: [
                   Text(
                     'Bus $licensePlate',
-                    style: AppTextStyles.body.copyWith(
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: AppColors.darkGrey,
+                      color: Theme.of(context).colorScheme.primary,
                     ),
                   ),
                   if (model.isNotEmpty || manufacturer.isNotEmpty)
                     Text(
                       '$manufacturer $model',
-                      style: AppTextStyles.bodySmall.copyWith(
-                        color: AppColors.mediumGrey,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.primary,
                       ),
                     ),
                 ],
@@ -96,13 +97,13 @@ class BusListItem extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: AppColors.primary,
+                    color: Theme.of(context).colorScheme.primary,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
                     'Line $lineCode',
-                    style: AppTextStyles.caption.copyWith(
-                      color: AppColors.white,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.primary,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -110,7 +111,7 @@ class BusListItem extends StatelessWidget {
             ],
           ),
 
-          const SizedBox(height: 8),
+          const SizedBox(height: 16),
 
           // Occupancy indicator
           if (showOccupancy && capacity > 0)
@@ -119,18 +120,18 @@ class BusListItem extends StatelessWidget {
               children: [
                 Text(
                   'Occupancy: $currentPassengers / $capacity passengers',
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.darkGrey,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.primary,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 16),
                 OccupancyIndicator(
                   occupancyPercent: occupancyPercent,
                 ),
               ],
             ),
 
-          const SizedBox(height: 8),
+          const SizedBox(height: 16),
 
           // Bottom info row
           Row(
@@ -140,8 +141,8 @@ class BusListItem extends StatelessWidget {
               if (showEta && bus.containsKey('eta'))
                 Text(
                   'Arriving in ${bus['eta']} min',
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.primary,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.primary,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -150,8 +151,8 @@ class BusListItem extends StatelessWidget {
               if (showDistance && bus.containsKey('distance'))
                 Text(
                   '${bus['distance']} away',
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.darkGrey,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.primary,
                   ),
                 ),
 
@@ -159,8 +160,8 @@ class BusListItem extends StatelessWidget {
               if (lastUpdateText.isNotEmpty)
                 Text(
                   lastUpdateText,
-                  style: AppTextStyles.caption.copyWith(
-                    color: AppColors.mediumGrey,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.primary,
                     fontStyle: FontStyle.italic,
                   ),
                 ),
