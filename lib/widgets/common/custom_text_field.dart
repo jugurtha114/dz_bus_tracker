@@ -2,7 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../config/theme_config.dart';
+import '../../config/app_theme.dart';
 
 class CustomTextField extends StatefulWidget {
   final String label;
@@ -83,7 +83,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
           widget.label,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             fontWeight: FontWeight.w500,
-            color: widget.enabled ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.primary,
+            color: widget.enabled ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
           ),
         ),
         const SizedBox(height: 16),
@@ -104,17 +104,17 @@ class _CustomTextFieldState extends State<CustomTextField> {
           focusNode: widget.focusNode,
           textInputAction: widget.textInputAction,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: widget.enabled ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.primary,
+            color: widget.enabled ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
           ),
           decoration: InputDecoration(
             hintText: widget.hintText,
-            hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.primary),
+            hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
             prefixIcon: widget.prefixIcon,
             suffixIcon: widget.obscureText
                 ? IconButton(
               icon: Icon(
                 _obscureText ? Icons.visibility_off : Icons.visibility,
-                color: Theme.of(context).colorScheme.primary,
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
               ),
               onPressed: () {
                 setState(() {
@@ -124,34 +124,34 @@ class _CustomTextFieldState extends State<CustomTextField> {
             )
                 : widget.suffixIcon,
             errorText: widget.errorText,
-            errorStyle: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.primary),
+            errorStyle: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.error),
             border: widget.showBorder
                 ? OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: widget.borderColor ?? Theme.of(context).colorScheme.primary),
+              borderSide: BorderSide(color: widget.borderColor ?? Theme.of(context).colorScheme.outline),
             )
                 : InputBorder.none,
             enabledBorder: widget.showBorder
                 ? OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: widget.borderColor ?? Theme.of(context).colorScheme.primary),
+              borderSide: BorderSide(color: widget.borderColor ?? Theme.of(context).colorScheme.outline),
             )
                 : InputBorder.none,
             focusedBorder: widget.showBorder
                 ? OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: widget.borderColor ?? Theme.of(context).colorScheme.primary),
+              borderSide: BorderSide(color: widget.borderColor ?? Theme.of(context).colorScheme.primary, width: 2),
             )
                 : InputBorder.none,
             errorBorder: widget.showBorder
                 ? OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
+              borderSide: BorderSide(color: Theme.of(context).colorScheme.error, width: 2),
             )
                 : InputBorder.none,
             contentPadding: widget.contentPadding ?? const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             filled: true,
-            fillColor: widget.fillColor ?? (widget.enabled ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.primary.withOpacity(0.1)),
+            fillColor: widget.fillColor ?? Theme.of(context).colorScheme.surfaceContainer,
             counterText: widget.showCounter ? null : '',
           ),
         ),

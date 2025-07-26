@@ -11,8 +11,10 @@ class ThemeProvider extends ChangeNotifier {
   
   AppThemeMode _themeMode = AppThemeMode.system;
   SharedPreferences? _prefs;
+  bool _isAnimating = false;
 
   AppThemeMode get themeMode => _themeMode;
+  bool get isAnimating => _isAnimating;
   
   ThemeData get lightTheme => AppTheme.lightTheme;
   ThemeData get darkTheme => AppTheme.darkTheme;
@@ -40,8 +42,20 @@ class ThemeProvider extends ChangeNotifier {
   }
 
   Future<void> setThemeMode(AppThemeMode themeMode) async {
+    if (_themeMode == themeMode) return;
+    
+    _isAnimating = true;
+    notifyListeners();
+    
+    // Add a small delay for animation
+    await Future.delayed(const Duration(milliseconds: 100));
+    
     _themeMode = themeMode;
     await _prefs?.setInt(_themeKey, themeMode.index);
+    
+    // Complete animation
+    await Future.delayed(const Duration(milliseconds: 200));
+    _isAnimating = false;
     notifyListeners();
   }
 

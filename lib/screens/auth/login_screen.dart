@@ -5,9 +5,12 @@ import 'package:provider/provider.dart';
 import '../../config/route_config.dart';
 import '../../core/utils/validation_utils.dart';
 import '../../providers/auth_provider.dart';
-import '../../widgets/common/custom_button.dart';
-import '../../widgets/common/custom_text_field.dart';
-import '../../widgets/common/custom_card.dart';
+import '../../widgets/common/enhanced_text_field.dart';
+import '../../widgets/common/modern_card.dart';
+import '../../widgets/common/mobile_optimized_background.dart';
+import '../../widgets/common/modern_button.dart';
+import '../../config/app_theme.dart';
+import '../../config/app_icons.dart';
 import '../../helpers/error_handler.dart';
 import '../../models/user_model.dart';
 
@@ -102,23 +105,19 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.primary,
-      body: Stack(
-        children: [
-          // Background image or gradient
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Theme.of(context).colorScheme.primary,
-                  Theme.of(context).colorScheme.primary,
-                ],
-              ),
-            ),
-          ),
+    return MobileOptimizedBackground(
+      imagePath: 'images/backgrounds/auth_bg.jpg',
+      blurIntensity: 1.5,
+      opacity: 0.3,
+      gradientColors: [
+        Colors.black.withValues(alpha: 0.4),
+        AppTheme.primary.withValues(alpha: 0.2),
+        AppTheme.secondary.withValues(alpha: 0.15),
+      ],
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Stack(
+          children: [
 
           // Content
           SafeArea(
@@ -131,25 +130,21 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   // App Logo
                   Center(
-                    child: Container(
-                      width: 100,
-        
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.primary,
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                            blurRadius: 10,
-                            spreadRadius: 1,
-                          ),
-                        ],
-                      ),
-                      child: Center(
+                    child: ModernCard(
+                      type: ModernCardType.glass,
+                      width: 120,
+                      height: 120,
+                      borderRadius: 60,
+                      padding: const EdgeInsets.all(20),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: AppTheme.primaryGradient,
+                          shape: BoxShape.circle,
+                        ),
                         child: Icon(
                           Icons.directions_bus_rounded,
-                          size: 60,
-                          color: Theme.of(context).colorScheme.primary,
+                          size: 50,
+                          color: Colors.white,
                         ),
                       ),
                     ),
@@ -161,19 +156,35 @@ class _LoginScreenState extends State<LoginScreen> {
                   Text(
                     'Welcome Back',
                     style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                      color: Theme.of(context).colorScheme.primary,
+                      color: Colors.white,
                       fontWeight: FontWeight.bold,
+                      fontSize: 32,
+                      shadows: [
+                        Shadow(
+                          color: Colors.black.withValues(alpha: 0.3),
+                          offset: const Offset(0, 2),
+                          blurRadius: 4,
+                        ),
+                      ],
                     ),
                     textAlign: TextAlign.center,
                   ),
 
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 8),
 
                   // Subtitle
                   Text(
-                    'Sign in to continue',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                    'Sign in to continue your journey',
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: Colors.white.withValues(alpha: 0.8),
+                      fontSize: 16,
+                      shadows: [
+                        Shadow(
+                          color: Colors.black.withValues(alpha: 0.2),
+                          offset: const Offset(0, 1),
+                          blurRadius: 2,
+                        ),
+                      ],
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -181,42 +192,36 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 16),
 
                   // Login Form in a Glass Container
-                  CustomCard(type: CardType.elevated, 
-                    padding: const EdgeInsets.all(24),
+                  ModernCard(
+                    type: ModernCardType.glass,
+                    padding: const EdgeInsets.all(32),
+                    margin: const EdgeInsets.symmetric(horizontal: 8),
                     child: Form(
                       key: _formKey,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           // Email field
-                          CustomTextField(
+                          EnhancedTextField.email(
                             label: 'Email',
                             hintText: 'Enter your email',
                             controller: _emailController,
-                            keyboardType: TextInputType.emailAddress,
-                            prefixIcon: const Icon(Icons.email_outlined),
                             validator: ValidationUtils.validateEmail,
-                            textInputAction: TextInputAction.next,
-                            fillColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                            borderColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                            required: true,
                           ),
 
                           const SizedBox(height: 16),
 
                           // Password field
-                          CustomTextField(
+                          EnhancedTextField.password(
                             label: 'Password',
                             hintText: 'Enter your password',
                             controller: _passwordController,
-                            obscureText: true,
-                            prefixIcon: const Icon(Icons.lock_outline),
                             validator: (value) => ValidationUtils.validateRequired(
                               value,
                               fieldName: 'Password',
                             ),
-                            textInputAction: TextInputAction.done,
-                            fillColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                            borderColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                            required: true,
                           ),
 
                           const SizedBox(height: 16),
@@ -239,12 +244,12 @@ class _LoginScreenState extends State<LoginScreen> {
                           const SizedBox(height: 16),
 
                           // Login button
-                          CustomButton(
-        text: 'Login',
-        onPressed: _login,
-        isLoading: _isLoading,
-        customColor: Theme.of(context).colorScheme.primary
-      ),
+                          PrimaryButton(
+                            text: 'Login',
+                            onPressed: _isLoading ? null : _login,
+                            isLoading: _isLoading,
+                            size: ModernButtonSize.large,
+                          ),
                         ],
                       ),
                     ),
@@ -278,28 +283,18 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 16),
 
                   // Driver Register Button
-                  OutlinedButton(
+                  SecondaryButton(
+                    text: 'Register as Bus Driver',
                     onPressed: _goToDriverRegister,
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Theme.of(context).colorScheme.primary,
-                      side: BorderSide(color: Theme.of(context).colorScheme.primary),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: Text(
-                      'Register as Bus Driver',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                    ),
+                    leadingIcon: Icons.drive_eta_rounded,
+                    size: ModernButtonSize.large,
                   ),
                 ],
               ),
             ),
           ),
-        ],
+          ],
+        ),
       ),
     );
   }

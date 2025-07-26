@@ -11,9 +11,9 @@ class ApiConfig {
   
   // Base URLs for different environments
   static const Map<String, String> _baseUrls = {
-    'development': 'http://0.0:8007',
-    'staging': 'http://0.0:8007',//'https://staging-api.dzbustracker.dz',
-    'production': 'http://0.0:8007', //'https://api.dzbustracker.dz',
+    'development': 'http://192.168.114.253:8007',
+    'staging': 'http://192.168.114.253:8007',//'https://staging-api.dzbustracker.dz',
+    'production': 'http://192.168.114.253:8007', //'https://api.dzbustracker.dz',
   };
   
   /// Get the base URL for the current environment

@@ -48,10 +48,20 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Firebase
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  // Initialize Firebase (check if already initialized)
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } catch (e) {
+    // Firebase already initialized, continue
+    if (e.toString().contains('duplicate-app')) {
+      print('Firebase already initialized, continuing...');
+    } else {
+      print('Firebase initialization error: $e');
+      rethrow;
+    }
+  }
   
   // Set Firebase background message handler
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
@@ -126,11 +136,14 @@ class _AppWithLocalizationState extends State<AppWithLocalization> {
     final localizationProvider = Provider.of<LocalizationProvider>(context);
     final themeProvider = Provider.of<ThemeProvider>(context);
 
-    return MaterialApp(
-      title: AppConfig.appName,
-      theme: themeProvider.lightTheme,
-      darkTheme: themeProvider.darkTheme,
-      themeMode: _getThemeMode(themeProvider.themeMode),
+    return AnimatedTheme(
+      duration: const Duration(milliseconds: 300),
+      data: themeProvider.isDarkMode ? AppTheme.darkTheme : AppTheme.lightTheme,
+      child: MaterialApp(
+        title: AppConfig.appName,
+        theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
+        themeMode: _getThemeMode(themeProvider.themeMode),
       locale: localizationProvider.locale,
       localizationsDelegates: [
         AppLocalizations.delegate,
@@ -142,7 +155,8 @@ class _AppWithLocalizationState extends State<AppWithLocalization> {
       debugShowCheckedModeBanner: !AppConfig.isProduction,
       navigatorKey: NavigationService.navigatorKey,
       initialRoute: AppRoutes.splash,
-      onGenerateRoute: AppRouter.generateRoute,
+        onGenerateRoute: AppRouter.generateRoute,
+      ),
     );
   }
   

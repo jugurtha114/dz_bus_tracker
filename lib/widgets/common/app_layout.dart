@@ -2,23 +2,29 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../config/app_theme.dart';
 import '../../config/route_config.dart';
 import '../../core/constants/app_constants.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/notification_provider.dart';
 import '../../services/navigation_service.dart';
 import '../../localization/app_localizations.dart';
+import 'mobile_optimized_background.dart';
+import 'modern_drawer.dart';
 
 class AppLayout extends StatelessWidget {
   final Widget child;
   final String? title;
   final bool showBackButton;
   final bool showBottomNav;
+  final bool showDrawer;
   final List<Widget>? actions;
   final Widget? floatingActionButton;
   final FloatingActionButtonLocation? floatingActionButtonLocation;
   final int? currentIndex;
   final ValueChanged<int>? onNavItemTapped;
+  final String? backgroundImage;
+  final Color? backgroundColor;
 
   const AppLayout({
     Key? key,
@@ -26,11 +32,14 @@ class AppLayout extends StatelessWidget {
     this.title,
     this.showBackButton = true,
     this.showBottomNav = true,
+    this.showDrawer = true,
     this.actions,
     this.floatingActionButton,
     this.floatingActionButtonLocation,
     this.currentIndex,
     this.onNavItemTapped,
+    this.backgroundImage,
+    this.backgroundColor,
   }) : super(key: key);
 
   @override
@@ -38,10 +47,34 @@ class AppLayout extends StatelessWidget {
     final localizations = AppLocalizations.of(context)!;
     final authProvider = Provider.of<AuthProvider>(context);
     final userType = authProvider.user?.userType.value ?? AppConstants.userTypePassenger;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    Widget bodyContent = child;
+    
+    // Add background if specified
+    if (backgroundImage != null || backgroundColor != null) {
+      bodyContent = MobileOptimizedBackground(
+        imagePath: backgroundImage,
+        blurIntensity: 1.5,
+        opacity: 0.2,
+        enableEffects: backgroundImage != null,
+        gradientColors: backgroundColor != null ? [
+          backgroundColor!,
+          backgroundColor!.withValues(alpha: 0.8),
+        ] : [
+          isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+          isDark ? const Color(0xFF1E293B) : AppTheme.primary.withValues(alpha: 0.02),
+          isDark ? AppTheme.primary.withValues(alpha: 0.05) : AppTheme.secondary.withValues(alpha: 0.02),
+        ],
+        child: child,
+      );
+    }
 
     return Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: _buildAppBar(context, localizations),
-      body: child,
+      drawer: showDrawer ? const ModernDrawer() : null,
+      body: bodyContent,
       bottomNavigationBar: showBottomNav ? _buildBottomNav(context, localizations, userType) : null,
       floatingActionButton: floatingActionButton,
       floatingActionButtonLocation: floatingActionButtonLocation,
@@ -49,35 +82,85 @@ class AppLayout extends StatelessWidget {
   }
 
   PreferredSizeWidget? _buildAppBar(BuildContext context, AppLocalizations localizations) {
-    // Don't show app bar if no title, no back button needed, and no actions
-    if (title == null && !showBackButton && (actions == null || actions!.isEmpty)) {
-      return null;
-    }
-
-    // Check if we should show back button (only if explicitly requested AND can go back)
-    final shouldShowBackButton = showBackButton && NavigationService.canGoBack();
-
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final canGoBack = NavigationService.canGoBack();
+    
+    // Always show app bar for proper navigation
     return AppBar(
+      backgroundColor: Colors.transparent,
+      surfaceTintColor: Colors.transparent,
+      elevation: 0,
       automaticallyImplyLeading: false,
-      leading: shouldShowBackButton
-          ? IconButton(
-              icon: const Icon(Icons.arrow_back),
-              onPressed: () => NavigationService.goBack(),
+      
+      // Leading: Back button or menu
+      leading: showBackButton && canGoBack
+          ? Container(
+              margin: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.1),
+                ),
+              ),
+              child: IconButton(
+                icon: Icon(
+                  Icons.arrow_back_rounded,
+                  color: isDark ? Colors.white : Colors.black87,
+                ),
+                onPressed: () => NavigationService.goBack(),
+              ),
             )
-          : null,
+          : showDrawer
+              ? Container(
+                  margin: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.1),
+                    ),
+                  ),
+                  child: IconButton(
+                    icon: Icon(
+                      Icons.menu_rounded,
+                      color: isDark ? Colors.white : Colors.black87,
+                    ),
+                    onPressed: () => Scaffold.of(context).openDrawer(),
+                  ),
+                )
+              : null,
+      
+      // Title
       title: title != null 
-          ? Text(
-              title!,
-              style: const TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 18,
+          ? Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.05),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                title!,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? Colors.white : Colors.black87,
+                ),
               ),
             ) 
           : null,
-      actions: actions,
-      elevation: 0,
-      backgroundColor: Colors.transparent,
-      surfaceTintColor: Colors.transparent,
+      
+      // Actions
+      actions: actions?.map((action) => Container(
+        margin: const EdgeInsets.only(right: 8),
+        decoration: BoxDecoration(
+          color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.1),
+          ),
+        ),
+        child: action,
+      )).toList(),
     );
   }
 
@@ -209,17 +292,74 @@ class AppLayout extends StatelessWidget {
       }
     }
 
-    return BottomNavigationBar(
-      currentIndex: selectedIndex,
-      onTap: (index) {
-        if (onNavItemTapped != null) {
-          onNavItemTapped!(index);
-        } else {
-          NavigationService.navigateTo(routes[index]);
-        }
-      },
-      type: BottomNavigationBarType.fixed,
-      items: items,
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: (isDark ? Colors.black : Colors.white).withValues(alpha: 0.9),
+        border: Border(
+          top: BorderSide(
+            color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.1),
+            width: 0.5,
+          ),
+        ),
+      ),
+      child: SafeArea(
+        child: Container(
+          height: 65,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: items.asMap().entries.map((entry) {
+              final index = entry.key;
+              final item = entry.value;
+              final isSelected = index == selectedIndex;
+              
+              return GestureDetector(
+                onTap: () {
+                  if (onNavItemTapped != null) {
+                    onNavItemTapped!(index);
+                  } else {
+                    NavigationService.navigateTo(routes[index]);
+                  }
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: isSelected 
+                      ? AppTheme.primary.withValues(alpha: 0.1)
+                      : Colors.transparent,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        (item.icon as Icon).icon!,
+                        color: isSelected 
+                          ? AppTheme.primary
+                          : (isDark ? Colors.white.withValues(alpha: 0.6) : Colors.black.withValues(alpha: 0.6)),
+                        size: 22,
+                      ),
+                      if (isSelected) ...[
+                        const SizedBox(width: 8),
+                        Text(
+                          item.label!,
+                          style: TextStyle(
+                            color: AppTheme.primary,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+      ),
     );
   }
 }

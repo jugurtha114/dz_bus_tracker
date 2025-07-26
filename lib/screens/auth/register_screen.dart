@@ -3,12 +3,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../config/route_config.dart';
-import '../../config/theme_config.dart';
+import '../../config/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/auth/register_form.dart';
-import '../../widgets/common/app_bar.dart';
-import '../../widgets/common/custom_card.dart';
-import '../../widgets/common/glassy_container.dart';
+import '../../widgets/common/modern_card.dart';
+import '../../widgets/common/mobile_optimized_background.dart';
 import '../../helpers/error_handler.dart';
 
 
@@ -77,23 +76,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.primary,
-      body: Stack(
-        children: [
-          // Background gradient
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Theme.of(context).colorScheme.primary,
-                  Theme.of(context).colorScheme.primary,
-                ],
-              ),
-            ),
-          ),
+    return MobileOptimizedBackground(
+      imagePath: 'images/backgrounds/auth_bg.jpg',
+      blurIntensity: 1.5,
+      opacity: 0.3,
+      gradientColors: [
+        Colors.black.withValues(alpha: 0.4),
+        AppTheme.primary.withValues(alpha: 0.2),
+        AppTheme.secondary.withValues(alpha: 0.15),
+      ],
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Stack(
+          children: [
 
           // Content
           SafeArea(
@@ -105,12 +100,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   // Back button
                   Align(
                     alignment: Alignment.topLeft,
-                    child: IconButton(
-                      icon: Icon(
-                        Icons.arrow_back_ios,
-                        color: Theme.of(context).colorScheme.primary,
+                    child: ModernCard(
+                      type: ModernCardType.glass,
+                      width: 48,
+                      height: 48,
+                      padding: EdgeInsets.zero,
+                      child: IconButton(
+                        icon: const Icon(
+                          Icons.arrow_back_rounded,
+                          color: Colors.white,
+                        ),
+                        onPressed: () => Navigator.of(context).pop(),
                       ),
-                      onPressed: () => Navigator.of(context).pop(),
                     ),
                   ),
 
@@ -120,8 +121,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   Text(
                     'Create Account',
                     style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                      color: Theme.of(context).colorScheme.primary,
+                      color: Colors.white,
                       fontWeight: FontWeight.bold,
+                      fontSize: 32,
+                      shadows: [
+                        Shadow(
+                          color: Colors.black.withValues(alpha: 0.3),
+                          offset: const Offset(0, 2),
+                          blurRadius: 4,
+                        ),
+                      ],
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -131,8 +140,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   // Subtitle
                   Text(
                     'Sign up to get started',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: Colors.white.withValues(alpha: 0.8),
+                      fontSize: 16,
+                      shadows: [
+                        Shadow(
+                          color: Colors.black.withValues(alpha: 0.2),
+                          offset: const Offset(0, 1),
+                          blurRadius: 2,
+                        ),
+                      ],
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -140,8 +157,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   const SizedBox(height: 16),
 
                   // Registration form in a glass container
-                  CustomCard(type: CardType.elevated, 
-                    padding: const EdgeInsets.all(24),
+                  ModernCard(
+                    type: ModernCardType.glass,
+                    padding: const EdgeInsets.all(32),
+                    margin: const EdgeInsets.symmetric(horizontal: 8),
                     child: RegisterForm(
                       onSubmit: _register,
                       isLoading: _isLoading,
@@ -157,7 +176,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       Text(
                         'Already have an account? ',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.primary,
+                          color: Colors.white.withValues(alpha: 0.8),
                         ),
                       ),
                       TextButton(
@@ -165,7 +184,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         child: Text(
                           'Login',
                           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Theme.of(context).colorScheme.primary,
+                            color: Colors.white,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -176,7 +195,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
             ),
           ),
-        ],
+          ],
+        ),
       ),
     );
   }

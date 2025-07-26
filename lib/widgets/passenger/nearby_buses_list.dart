@@ -4,10 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../config/route_config.dart';
 import '../../providers/passenger_provider.dart';
+import '../../models/bus_model.dart';
 import 'bus_list_item.dart';
 
 class NearbyBusesList extends StatelessWidget {
-  final List<Map<String, dynamic>> buses;
+  final List<Bus> buses;
   final bool showEmpty;
   final String emptyMessage;
   final double maxHeight;
@@ -46,7 +47,7 @@ class NearbyBusesList extends StatelessWidget {
           final bus = buses[index];
 
           return BusListItem(
-            bus: bus,
+            bus: bus.toJson(), // Convert Bus model to Map for BusListItem
             onTap: () => _onBusTap(context, bus),
           );
         },
@@ -54,11 +55,11 @@ class NearbyBusesList extends StatelessWidget {
     );
   }
 
-  void _onBusTap(BuildContext context, Map<String, dynamic> bus) {
+  void _onBusTap(BuildContext context, Bus bus) {
     final passengerProvider = Provider.of<PassengerProvider>(context, listen: false);
 
     // Set selected bus
-    passengerProvider.trackBus(bus['id']);
+    passengerProvider.trackBus(bus.id);
 
     // Navigate to bus tracking screen
     AppRouter.navigateTo(context, AppRoutes.busTracking);
