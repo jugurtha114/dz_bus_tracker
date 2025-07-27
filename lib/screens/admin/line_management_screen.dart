@@ -1,32 +1,29 @@
 // lib/screens/admin/line_management_screen.dart
 
 import 'package:flutter/material.dart';
-import '../../config/theme_config.dart';
-import '../../core/utils/date_utils.dart';
-import '../../services/line_service.dart';
-import '../../widgets/common/app_layout.dart';
-import '../../widgets/common/custom_card.dart';
-import '../../widgets/common/glassy_container.dart';
-import '../../widgets/common/loading_indicator.dart';
-import '../../localization/app_localizations.dart';
-import '../../helpers/dialog_helper.dart';
+import 'package:provider/provider.dart';
+import '../../config/design_system.dart';
+import '../../providers/admin_provider.dart';
+import '../../widgets/widgets.dart';
+import '../../models/line_model.dart';
 
+/// Comprehensive line management screen for admins to manage bus routes and lines
 class LineManagementScreen extends StatefulWidget {
-  const LineManagementScreen({Key? key}) : super(key: key);
+  const LineManagementScreen({super.key});
 
   @override
   State<LineManagementScreen> createState() => _LineManagementScreenState();
 }
 
-class _LineManagementScreenState extends State<LineManagementScreen> with SingleTickerProviderStateMixin {
+class _LineManagementScreenState extends State<LineManagementScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  final LineService _lineService = LineService();
   bool _isLoading = true;
   String _searchQuery = '';
   
-  List<Map<String, dynamic>> _allLines = [];
-  List<Map<String, dynamic>> _activeLines = [];
-  List<Map<String, dynamic>> _inactiveLines = [];
+  List<Line> _allLines = [];
+  List<Line> _activeLines = [];
+  List<Line> _inactiveLines = [];
 
   @override
   void initState() {
@@ -35,177 +32,86 @@ class _LineManagementScreenState extends State<LineManagementScreen> with Single
     _loadLines();
   }
 
+  Future<void> _loadLines() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final adminProvider = context.read<AdminProvider>();
+      await adminProvider.loadAllLines();
+      
+      setState(() {
+        _allLines = adminProvider.allLines;
+        _activeLines = adminProvider.activeLines;
+        _inactiveLines = adminProvider.inactiveLines;
+      });
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load lines: $error')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
   @override
   void dispose() {
     _tabController.dispose();
     super.dispose();
   }
 
-  Future<void> _loadLines() async {
-    setState(() => _isLoading = true);
-    
-    try {
-      // Simulate loading lines from API
-      await Future.delayed(const Duration(seconds: 1));
-      
-      _allLines = [
-        {
-          'id': '1',
-          'name': 'Line 1 - City Center - Airport',
-          'code': 'L001',
-          'description': 'Main route connecting city center to airport',
-          'status': 'active',
-          'total_stops': 15,
-          'distance': 25,
-          'estimated_duration': '45 minutes',
-          'fare': 150,
-          'created_at': '2024-01-15T10:30:00Z',
-          'updated_at': '2024-07-20T14:15:00Z',
-          'active_buses': 8,
-          'total_buses': 10,
-          'daily_trips': 32,
-          'color': '#2196F3',
-        },
-        {
-          'id': '2',
-          'name': 'Line 2 - University - Shopping Mall',
-          'code': 'L002',
-          'description': 'Student route connecting university to main shopping areas',
-          'status': 'active',
-          'total_stops': 12,
-          'distance': 18,
-          'estimated_duration': '35 minutes',
-          'fare': 120,
-          'created_at': '2024-02-01T09:00:00Z',
-          'updated_at': '2024-07-18T16:30:00Z',
-          'active_buses': 6,
-          'total_buses': 8,
-          'daily_trips': 28,
-          'color': '#4CAF50',
-        },
-        {
-          'id': '3',
-          'name': 'Line 3 - Industrial Zone - Residential',
-          'code': 'L003',
-          'description': 'Worker route connecting industrial areas to residential zones',
-          'status': 'inactive',
-          'total_stops': 20,
-          'distance': 32,
-          'estimated_duration': '55 minutes',
-          'fare': 180,
-          'created_at': '2024-01-20T11:45:00Z',
-          'updated_at': '2024-07-15T08:20:00Z',
-          'active_buses': 0,
-          'total_buses': 12,
-          'daily_trips': 0,
-          'color': '#FF9800',
-        },
-        {
-          'id': '4',
-          'name': 'Line 4 - Beach - Downtown',
-          'code': 'L004',
-          'description': 'Tourist route connecting beach areas to downtown',
-          'status': 'active',
-          'total_stops': 8,
-          'distance': 12,
-          'estimated_duration': '25 minutes',
-          'fare': 100,
-          'created_at': '2024-03-10T15:20:00Z',
-          'updated_at': '2024-07-22T12:45:00Z',
-          'active_buses': 4,
-          'total_buses': 6,
-          'daily_trips': 24,
-          'color': '#9C27B0',
-        },
-        {
-          'id': '5',
-          'name': 'Line 5 - Hospital - Train Station',
-          'code': 'L005',
-          'description': 'Essential services route connecting hospital to train station',
-          'status': 'active',
-          'total_stops': 10,
-          'distance': 15,
-          'estimated_duration': '30 minutes',
-          'fare': 130,
-          'created_at': '2024-02-15T13:10:00Z',
-          'updated_at': '2024-07-19T10:25:00Z',
-          'active_buses': 5,
-          'total_buses': 7,
-          'daily_trips': 30,
-          'color': '#F44336',
-        },
-      ];
-
-      _categorizeLines();
-    } catch (e) {
-      // Handle error
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
-  }
-
-  void _categorizeLines() {
-    _activeLines = _allLines.where((l) => l['status'] == 'active').toList();
-    _inactiveLines = _allLines.where((l) => l['status'] == 'inactive').toList();
-  }
-
-  List<Map<String, dynamic>> _getFilteredLines(List<Map<String, dynamic>> lines) {
-    if (_searchQuery.isEmpty) return lines;
-    
-    return lines.where((line) {
-      final name = line['name'].toLowerCase();
-      final code = line['code'].toLowerCase();
-      final description = line['description'].toLowerCase();
-      final query = _searchQuery.toLowerCase();
-      
-      return name.contains(query) || code.contains(query) || description.contains(query);
-    }).toList();
-  }
-
   @override
   Widget build(BuildContext context) {
-    final localizations = AppLocalizations.of(context)!;
-
-    return AppLayout(
+    return AppPageScaffold(
       title: 'Line Management',
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.add),
+          onPressed: _showAddLineDialog,
+        ),
+        IconButton(
+          icon: const Icon(Icons.refresh),
+          onPressed: _loadLines,
+        ),
+      ],
       child: Column(
         children: [
-          // Search and filters
-          _buildSearchSection(),
+          // Line Statistics Header
+          _buildLineStatistics(),
           
-          // Stats overview
-          _buildStatsOverview(),
+          // Search Bar
+          _buildSearchBar(),
           
-          // Tab bar
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 16),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: TabBar(
-              controller: _tabController,
-              indicatorSize: TabBarIndicatorSize.tab,
-              indicator: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary,
-                borderRadius: BorderRadius.circular(12),
+          // Tab Bar
+          AppTabBar(
+            controller: _tabController,
+            tabs: [
+              AppTab(
+                label: 'All (${_allLines.length})',
+                icon: Icons.route,
               ),
-              labelColor: Theme.of(context).colorScheme.primary,
-              unselectedLabelColor: Theme.of(context).colorScheme.primary,
-              tabs: [
-                _buildTabWithBadge('All Lines', _allLines.length),
-                _buildTabWithBadge('Active', _activeLines.length),
-                _buildTabWithBadge('Inactive', _inactiveLines.length),
-              ],
-            ),
+              AppTab(
+                label: 'Active (${_activeLines.length})',
+                icon: Icons.check_circle,
+              ),
+              AppTab(
+                label: 'Inactive (${_inactiveLines.length})',
+                icon: Icons.pause_circle,
+              ),
+            ],
           ),
           
-          // Tab content
+          // Tab Content
           Expanded(
             child: _isLoading
-                ? const Center(child: LoadingIndicator())
+                ? const LoadingState.fullScreen()
                 : TabBarView(
                     controller: _tabController,
                     children: [
@@ -220,358 +126,337 @@ class _LineManagementScreenState extends State<LineManagementScreen> with Single
     );
   }
 
-  Widget _buildSearchSection() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              onChanged: (value) {
-                setState(() {
-                  _searchQuery = value;
-                });
-              },
-              decoration: InputDecoration(
-                hintText: 'Search lines...',
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-                filled: true,
-                fillColor: Theme.of(context).colorScheme.primary,
-              ),
-            ),
-          ),
-          const SizedBox(width: 12, height: 40),
-          Container(
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: IconButton(
-              icon: const Icon(Icons.add, color: Colors.white),
-              onPressed: _showAddLineDialog,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatsOverview() {
-    final totalBuses = _allLines.fold<int>(0, (sum, line) => sum + (line['total_buses'] as int));
-    final activeBuses = _allLines.fold<int>(0, (sum, line) => sum + (line['active_buses'] as int));
-    final totalTrips = _allLines.fold<int>(0, (sum, line) => sum + (line['daily_trips'] as int));
+  Widget _buildLineStatistics() {
+    final totalBuses = _allLines.fold<int>(0, (sum, line) => sum + (line.totalBuses ?? 0));
+    final activeBuses = _allLines.fold<int>(0, (sum, line) => sum + (line.activeBuses ?? 0));
+    final totalTrips = _allLines.fold<int>(0, (sum, line) => sum + (line.dailyTrips ?? 0));
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        children: [
-          Expanded(
-            child: _buildStatItem(
-              'Total Lines',
-              '${_allLines.length}',
-              Icons.route,
-              Theme.of(context).colorScheme.primary,
-            ),
+      padding: const EdgeInsets.all(DesignSystem.space16),
+      child: StatsSection(
+        title: 'Line Overview',
+        crossAxisCount: 2,
+        stats: [
+          StatItem(
+            value: '${_allLines.length}',
+            label: 'Total\\nLines',
+            icon: Icons.route,
+            color: context.colors.primary,
           ),
-          Expanded(
-            child: _buildStatItem(
-              'Active Buses',
-              '$activeBuses/$totalBuses',
-              Icons.directions_bus,
-              Theme.of(context).colorScheme.primary,
-            ),
+          StatItem(
+            value: '${_activeLines.length}',
+            label: 'Active\\nLines',
+            icon: Icons.check_circle,
+            color: context.successColor,
           ),
-          Expanded(
-            child: _buildStatItem(
-              'Daily Trips',
-              '$totalTrips',
-              Icons.trip_origin,
-              Theme.of(context).colorScheme.primary,
-            ),
+          StatItem(
+            value: '$activeBuses/$totalBuses',
+            label: 'Active\\nBuses',
+            icon: Icons.directions_bus,
+            color: context.infoColor,
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatItem(String title, String value, IconData icon, Color color) {
-    return CustomCard(type: CardType.elevated, 
-      padding: const EdgeInsets.all(12),
-      margin: const EdgeInsets.symmetric(horizontal: 4),
-      child: Column(
-        children: [
-          Icon(icon, color: color, size: 24),
-          const SizedBox(height: 16),
-          Text(
-            value,
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
-          ),
-          Text(
-            title,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(context).colorScheme.primary,
-            ),
-            textAlign: TextAlign.center,
+          StatItem(
+            value: '$totalTrips',
+            label: 'Daily\\nTrips',
+            icon: Icons.trip_origin,
+            color: context.warningColor,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildTabWithBadge(String label, int count) {
-    return Tab(
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(label),
-          const SizedBox(width: 8, height: 40),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Text(
-              '$count',
-              style: const TextStyle(fontSize: 10),
-            ),
-          ),
-        ],
+  Widget _buildSearchBar() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: DesignSystem.space16),
+      child: AppInput(
+        hint: 'Search lines by name, code, or description...',
+        prefixIcon: const Icon(Icons.search),
+        onChanged: (value) {
+          setState(() {
+            _searchQuery = value;
+          });
+        },
       ),
     );
   }
 
-  Widget _buildLinesList(List<Map<String, dynamic>> lines) {
+  Widget _buildLinesList(List<Line> lines) {
     if (lines.isEmpty) {
-      return const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.route, size: 64, color: Colors.grey),
-            SizedBox(),
-            Text('No lines found'),
-          ],
-        ),
+      return EmptyState(
+        title: 'No lines found',
+        message: _searchQuery.isNotEmpty 
+            ? 'No lines match your search criteria'
+            : 'No lines in this category',
+        icon: Icons.route_outlined,
       );
     }
 
     return RefreshIndicator(
       onRefresh: _loadLines,
       child: ListView.builder(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(DesignSystem.space16),
         itemCount: lines.length,
         itemBuilder: (context, index) {
           final line = lines[index];
-          return _buildLineCard(line);
+          return Padding(
+            padding: const EdgeInsets.only(bottom: DesignSystem.space12),
+            child: _buildLineCard(line),
+          );
         },
       ),
     );
   }
 
-  Widget _buildLineCard(Map<String, dynamic> line) {
-    final isActive = line['status'] == 'active';
-    final lineColor = Color(int.parse(line['color'].replaceFirst('#', '0xFF')));
-    final createdDate = DateTime.tryParse(line['created_at'] ?? '');
+  Widget _buildLineCard(Line line) {
+    final lineColor = _getLineColor(line.color);
 
-    return CustomCard(type: CardType.elevated, 
-      margin: const EdgeInsets.only(bottom: 12),
-      child: InkWell(
-        onTap: () => _showLineDetails(line),
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header row
-              Row(
-                children: [
-                  // Line color indicator
-                  Container(
-                    width: 4,
-        
-                    decoration: BoxDecoration(
-                      color: lineColor,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
+    return AppCard(
+      onTap: () => _showLineDetails(line),
+      child: Padding(
+        padding: const EdgeInsets.all(DesignSystem.space16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                // Line Color Indicator
+                Container(
+                  width: 4,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: lineColor,
+                    borderRadius: BorderRadius.circular(2),
                   ),
-                  const SizedBox(width: 12, height: 40),
-                  
-                  // Line info
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Text(
-                              line['code'],
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                fontWeight: FontWeight.w600,
-                                color: lineColor,
-                              ),
+                ),
+                
+                const SizedBox(width: DesignSystem.space12),
+                
+                // Line Info
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            line.code ?? 'Unknown',
+                            style: context.textStyles.titleSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: lineColor,
                             ),
-                            const SizedBox(width: 8, height: 40),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: isActive ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.primary,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Text(
-                                isActive ? 'Active' : 'Inactive',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          line['name'],
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
                           ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  
-                  // Actions
-                  PopupMenuButton<String>(
-                    onSelected: (value) => _handleLineAction(value, line),
-                    itemBuilder: (context) => [
-                      const PopupMenuItem(
-                        value: 'view',
-                        child: Row(
-                          children: [
-                            Icon(Icons.visibility),
-                            SizedBox(width: 8),
-                            Text('View Details'),
-                          ],
-                        ),
+                          const SizedBox(width: DesignSystem.space8),
+                          StatusBadge(
+                            status: line.isActive ? 'ACTIVE' : 'INACTIVE',
+                            color: line.isActive ? DesignSystem.busActive : DesignSystem.busInactive,
+                          ),
+                        ],
                       ),
-                      const PopupMenuItem(
-                        value: 'edit',
-                        child: Row(
-                          children: [
-                            Icon(Icons.edit),
-                            SizedBox(width: 8),
-                            Text('Edit Line'),
-                          ],
-                        ),
-                      ),
-                      const PopupMenuItem(
-                        value: 'stops',
-                        child: Row(
-                          children: [
-                            Icon(Icons.location_on),
-                            SizedBox(width: 8),
-                            Text('Manage Stops'),
-                          ],
-                        ),
-                      ),
-                      PopupMenuItem(
-                        value: isActive ? 'deactivate' : 'activate',
-                        child: Row(
-                          children: [
-                            Icon(isActive ? Icons.pause : Icons.play_arrow),
-                            const SizedBox(width: 8, height: 40),
-                            Text(isActive ? 'Deactivate' : 'Activate'),
-                          ],
-                        ),
-                      ),
-                      const PopupMenuItem(
-                        value: 'delete',
-                        child: Row(
-                          children: [
-                            Icon(Icons.delete, color: Colors.red),
-                            SizedBox(width: 8),
-                            Text('Delete Line', style: TextStyle(color: Colors.red)),
-                          ],
+                      const SizedBox(height: DesignSystem.space4),
+                      Text(
+                        line.name ?? 'Unnamed Line',
+                        style: context.textStyles.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ],
                   ),
-                ],
-              ),
-              
-              const SizedBox(height: 16),
-              
-              // Description
-              Text(
-                line['description'],
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.primary,
                 ),
+                
+                // Actions Menu
+                PopupMenuButton<String>(
+                  onSelected: (value) => _handleLineAction(value, line),
+                  itemBuilder: (context) => [
+                    const PopupMenuItem(
+                      value: 'view',
+                      child: Row(
+                        children: [
+                          Icon(Icons.visibility),
+                          SizedBox(width: 8),
+                          Text('View Details'),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuItem(
+                      value: 'edit',
+                      child: Row(
+                        children: [
+                          Icon(Icons.edit),
+                          SizedBox(width: 8),
+                          Text('Edit Line'),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuItem(
+                      value: 'stops',
+                      child: Row(
+                        children: [
+                          Icon(Icons.location_on),
+                          SizedBox(width: 8),
+                          Text('Manage Stops'),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuItem(
+                      value: 'buses',
+                      child: Row(
+                        children: [
+                          Icon(Icons.directions_bus),
+                          SizedBox(width: 8),
+                          Text('Assign Buses'),
+                        ],
+                      ),
+                    ),
+                    PopupMenuItem(
+                      value: line.isActive ? 'deactivate' : 'activate',
+                      child: Row(
+                        children: [
+                          Icon(line.isActive ? Icons.pause : Icons.play_arrow),
+                          const SizedBox(width: 8),
+                          Text(line.isActive ? 'Deactivate' : 'Activate'),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuItem(
+                      value: 'delete',
+                      child: Row(
+                        children: [
+                          Icon(Icons.delete, color: Colors.red),
+                          SizedBox(width: 8),
+                          Text('Delete Line', style: TextStyle(color: Colors.red)),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            
+            const SizedBox(height: DesignSystem.space8),
+            
+            // Description
+            if (line.description != null && line.description!.isNotEmpty)
+              Text(
+                line.description!,
+                style: context.textStyles.bodyMedium?.copyWith(
+                  color: context.colors.onSurfaceVariant,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
-              
-              const SizedBox(height: 16),
-              
-              // Stats row
-              Row(
-                children: [
-                  _buildStatChip(Icons.location_on, '${line['total_stops']} stops', Theme.of(context).colorScheme.primary),
-                  const SizedBox(width: 8, height: 40),
-                  _buildStatChip(Icons.straighten, '${line['distance']} km', Theme.of(context).colorScheme.primary),
-                  const SizedBox(width: 8, height: 40),
-                  _buildStatChip(Icons.access_time, line['estimated_duration'], Theme.of(context).colorScheme.primary),
-                ],
-              ),
-              
-              const SizedBox(height: 16),
-              
-              // Additional info row
-              Row(
-                children: [
-                  _buildStatChip(Icons.directions_bus, '${line['active_buses']}/${line['total_buses']} buses', Theme.of(context).colorScheme.primary),
-                  const SizedBox(width: 8, height: 40),
-                  _buildStatChip(Icons.trip_origin, '${line['daily_trips']} trips/day', Theme.of(context).colorScheme.primary),
-                  const Spacer(),
-                  Text(
-                    '${line['fare']} DA',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.primary,
+            
+            const SizedBox(height: DesignSystem.space12),
+            
+            // Line Statistics
+            Row(
+              children: [
+                Expanded(
+                  child: _buildStatChip(
+                    'Stops',
+                    '${line.totalStops ?? 0}',
+                    Icons.location_on,
+                  ),
+                ),
+                const SizedBox(width: DesignSystem.space8),
+                Expanded(
+                  child: _buildStatChip(
+                    'Distance',
+                    '${line.distance?.toStringAsFixed(1) ?? '0.0'} km',
+                    Icons.straighten,
+                  ),
+                ),
+                const SizedBox(width: DesignSystem.space8),
+                Expanded(
+                  child: _buildStatChip(
+                    'Duration',
+                    '${line.estimatedDuration ?? 0} min',
+                    Icons.access_time,
+                  ),
+                ),
+              ],
+            ),
+            
+            const SizedBox(height: DesignSystem.space8),
+            
+            // Additional Info
+            Row(
+              children: [
+                Expanded(
+                  child: _buildStatChip(
+                    'Buses',
+                    '${line.activeBuses ?? 0}/${line.totalBuses ?? 0}',
+                    Icons.directions_bus,
+                  ),
+                ),
+                const SizedBox(width: DesignSystem.space8),
+                Expanded(
+                  child: _buildStatChip(
+                    'Trips/Day',
+                    '${line.dailyTrips ?? 0}',
+                    Icons.trip_origin,
+                  ),
+                ),
+                const SizedBox(width: DesignSystem.space8),
+                Expanded(
+                  child: Container(
+                    alignment: Alignment.centerRight,
+                    child: Text(
+                      '${line.fare?.toStringAsFixed(0) ?? '0'} DA',
+                      style: context.textStyles.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: context.colors.primary,
+                      ),
                     ),
                   ),
-                ],
-              ),
-            ],
-          ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildStatChip(IconData icon, String text, Color color) {
+  Widget _buildStatChip(String label, String value, IconData icon) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(
+        horizontal: DesignSystem.space8,
+        vertical: DesignSystem.space4,
+      ),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0),
-        borderRadius: BorderRadius.circular(12),
+        color: context.colors.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(DesignSystem.radiusSmall),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 12, color: color),
-          const SizedBox(width: 4, height: 40),
-          Text(
-            text,
-            style: TextStyle(
-              fontSize: 10,
-              color: color,
-              fontWeight: FontWeight.w500,
+          Icon(
+            icon,
+            size: 14,
+            color: context.colors.onSurfaceVariant,
+          ),
+          const SizedBox(width: DesignSystem.space4),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: context.textStyles.bodySmall?.copyWith(
+                    color: context.colors.onSurfaceVariant,
+                    fontSize: 10,
+                  ),
+                ),
+                Text(
+                  value,
+                  style: context.textStyles.bodySmall?.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ),
           ),
         ],
@@ -579,7 +464,45 @@ class _LineManagementScreenState extends State<LineManagementScreen> with Single
     );
   }
 
-  void _handleLineAction(String action, Map<String, dynamic> line) {
+  // Helper methods
+  List<Line> _getFilteredLines(List<Line> lines) {
+    if (_searchQuery.isEmpty) return lines;
+    
+    final query = _searchQuery.toLowerCase();
+    return lines.where((line) {
+      final name = line.name?.toLowerCase() ?? '';
+      final code = line.code?.toLowerCase() ?? '';
+      final description = line.description?.toLowerCase() ?? '';
+      return name.contains(query) || code.contains(query) || description.contains(query);
+    }).toList();
+  }
+
+  Color _getLineColor(String? colorHex) {
+    if (colorHex == null || colorHex.isEmpty) {
+      return context.colors.primary;
+    }
+    
+    try {
+      final color = colorHex.replaceFirst('#', '');
+      return Color(int.parse('FF$color', radix: 16));
+    } catch (e) {
+      return context.colors.primary;
+    }
+  }
+
+  String _formatDate(DateTime? date) {
+    if (date == null) return 'Unknown';
+    final now = DateTime.now();
+    final difference = now.difference(date);
+    
+    if (difference.inDays == 0) return 'Today';
+    if (difference.inDays < 30) return '${difference.inDays}d ago';
+    if (difference.inDays < 365) return '${(difference.inDays / 30).round()}m ago';
+    return '${(difference.inDays / 365).round()}y ago';
+  }
+
+  // Action handlers
+  void _handleLineAction(String action, Line line) {
     switch (action) {
       case 'view':
         _showLineDetails(line);
@@ -589,6 +512,9 @@ class _LineManagementScreenState extends State<LineManagementScreen> with Single
         break;
       case 'stops':
         _manageLineStops(line);
+        break;
+      case 'buses':
+        _assignBusesToLine(line);
         break;
       case 'activate':
       case 'deactivate':
@@ -600,65 +526,37 @@ class _LineManagementScreenState extends State<LineManagementScreen> with Single
     }
   }
 
-  void _showLineDetails(Map<String, dynamic> line) {
+  void _showLineDetails(Line line) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
       builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0,
-        minChildSize: 0,
-        maxChildSize: 0,
+        initialChildSize: 0.8,
+        maxChildSize: 0.9,
+        minChildSize: 0.5,
         builder: (context, scrollController) => Container(
-          decoration: BoxDecoration(
-            color: Theme.of(context).scaffoldBackgroundColor,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-          ),
+          padding: const EdgeInsets.all(DesignSystem.space16),
           child: Column(
             children: [
-              Container(
-                margin: const EdgeInsets.only(top: 8),
-                width: 40,
-        
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primary,
-                  borderRadius: BorderRadius.circular(2),
+              Text(
+                'Line Details',
+                style: context.textStyles.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
                 ),
               ),
+              const SizedBox(height: DesignSystem.space16),
               Expanded(
-                child: ListView(
+                child: SingleChildScrollView(
                   controller: scrollController,
-                  padding: const EdgeInsets.all(24),
-                  children: [
-                    Text(
-                      'Line Details',
-                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    
-                    _buildDetailRow('Code', line['code']),
-                    _buildDetailRow('Name', line['name']),
-                    _buildDetailRow('Description', line['description']),
-                    _buildDetailRow('Status', line['status']),
-                    _buildDetailRow('Total Stops', '${line['total_stops']}'),
-                    _buildDetailRow('Distance', '${line['distance']} km'),
-                    _buildDetailRow('Duration', line['estimated_duration']),
-                    _buildDetailRow('Fare', '${line['fare']} DA'),
-                    _buildDetailRow('Active Buses', '${line['active_buses']}/${line['total_buses']}'),
-                    _buildDetailRow('Daily Trips', '${line['daily_trips']}'),
-                    _buildDetailRow('Created', 
-                      DateTime.tryParse(line['created_at'] ?? '') != null
-                          ? DzDateUtils.formatDateTime(DateTime.parse(line['created_at']))
-                          : 'Unknown'
-                    ),
-                    _buildDetailRow('Last Updated', 
-                      DateTime.tryParse(line['updated_at'] ?? '') != null
-                          ? DzDateUtils.formatDateTime(DateTime.parse(line['updated_at']))
-                          : 'Unknown'
-                    ),
-                  ],
+                  child: Column(
+                    children: [
+                      _buildLineInfoSection(line),
+                      const SizedBox(height: DesignSystem.space16),
+                      _buildLineStatsSection(line),
+                      const SizedBox(height: DesignSystem.space16),
+                      _buildLineOperationsSection(line),
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -668,26 +566,86 @@ class _LineManagementScreenState extends State<LineManagementScreen> with Single
     );
   }
 
-  Widget _buildDetailRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildLineInfoSection(Line line) {
+    return SectionLayout(
+      title: 'Line Information',
+      child: AppCard(
+        child: Padding(
+          padding: const EdgeInsets.all(DesignSystem.space16),
+          child: Column(
+            children: [
+              _buildDetailRow('Code', line.code ?? 'Not provided'),
+              _buildDetailRow('Name', line.name ?? 'Not provided'),
+              _buildDetailRow('Description', line.description ?? 'Not provided'),
+              _buildDetailRow('Status', line.isActive ? 'Active' : 'Inactive'),
+              _buildDetailRow('Fare', '${line.fare?.toStringAsFixed(0) ?? '0'} DA'),
+              _buildDetailRow('Color', line.color ?? 'Default'),
+              _buildDetailRow('Created', _formatDate(line.createdAt)),
+              _buildDetailRow('Last Updated', _formatDate(line.updatedAt)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLineStatsSection(Line line) {
+    return SectionLayout(
+      title: 'Line Statistics',
+      child: AppCard(
+        child: Padding(
+          padding: const EdgeInsets.all(DesignSystem.space16),
+          child: Column(
+            children: [
+              _buildDetailRow('Total Stops', '${line.totalStops ?? 0}'),
+              _buildDetailRow('Distance', '${line.distance?.toStringAsFixed(1) ?? '0.0'} km'),
+              _buildDetailRow('Estimated Duration', '${line.estimatedDuration ?? 0} minutes'),
+              _buildDetailRow('Total Buses', '${line.totalBuses ?? 0}'),
+              _buildDetailRow('Active Buses', '${line.activeBuses ?? 0}'),
+              _buildDetailRow('Daily Trips', '${line.dailyTrips ?? 0}'),
+              _buildDetailRow('Average Rating', line.averageRating != null 
+                  ? '${line.averageRating!.toStringAsFixed(1)} ⭐'
+                  : 'Not rated'),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLineOperationsSection(Line line) {
+    return SectionLayout(
+      title: 'Operations',
+      child: Column(
         children: [
-          SizedBox(
-            width: 120,
-            child: Text(
-              label,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w500,
-                color: Theme.of(context).colorScheme.primary,
-              ),
+          AppCard(
+            margin: const EdgeInsets.only(bottom: DesignSystem.space8),
+            child: ListTile(
+              leading: const Icon(Icons.location_on),
+              title: const Text('Manage Stops'),
+              subtitle: Text('${line.totalStops ?? 0} stops on this line'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => _manageLineStops(line),
             ),
           ),
-          Expanded(
-            child: Text(
-              value,
-              style: Theme.of(context).textTheme.bodyLarge,
+          AppCard(
+            margin: const EdgeInsets.only(bottom: DesignSystem.space8),
+            child: ListTile(
+              leading: const Icon(Icons.directions_bus),
+              title: const Text('Assign Buses'),
+              subtitle: Text('${line.activeBuses ?? 0}/${line.totalBuses ?? 0} buses assigned'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => _assignBusesToLine(line),
+            ),
+          ),
+          AppCard(
+            margin: const EdgeInsets.only(bottom: DesignSystem.space8),
+            child: ListTile(
+              leading: const Icon(Icons.schedule),
+              title: const Text('Manage Schedule'),
+              subtitle: Text('${line.dailyTrips ?? 0} trips per day'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => _manageLineSchedule(line),
             ),
           ),
         ],
@@ -695,76 +653,151 @@ class _LineManagementScreenState extends State<LineManagementScreen> with Single
     );
   }
 
+  Widget _buildDetailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: DesignSystem.space4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 120,
+            child: Text(
+              label,
+              style: context.textStyles.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w500,
+                color: context.colors.onSurfaceVariant,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: context.textStyles.bodyMedium,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Dialog methods
   void _showAddLineDialog() {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Add line functionality - to be implemented')),
+      const SnackBar(content: Text('Add line form coming soon')),
     );
   }
 
-  void _showEditLineDialog(Map<String, dynamic> line) {
+  void _showEditLineDialog(Line line) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Edit line functionality - to be implemented')),
+      SnackBar(content: Text('Edit line form for ${line.name} coming soon')),
     );
   }
 
-  void _manageLineStops(Map<String, dynamic> line) {
+  void _manageLineStops(Line line) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Manage stops functionality - to be implemented')),
+      SnackBar(content: Text('Stop management for ${line.name} coming soon')),
     );
   }
 
-  void _toggleLineStatus(Map<String, dynamic> line) {
-    final isActive = line['status'] == 'active';
-    
-    DialogHelper.showConfirmDialog(
-      context,
-      title: isActive ? 'Deactivate Line' : 'Activate Line',
-      message: 'Are you sure you want to ${isActive ? 'deactivate' : 'activate'} this line?',
-      confirmText: isActive ? 'Deactivate' : 'Activate',
-      cancelText: 'Cancel',
-    ).then((confirmed) {
-      if (confirmed) {
-        setState(() {
-          line['status'] = isActive ? 'inactive' : 'active';
-          if (!isActive) {
-            line['active_buses'] = line['total_buses'];
-            line['daily_trips'] = 24;
-          } else {
-            line['active_buses'] = 0;
-            line['daily_trips'] = 0;
-          }
-        });
-        _categorizeLines();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Line ${isActive ? 'deactivated' : 'activated'} successfully'),
-            backgroundColor: Theme.of(context).colorScheme.primary,
-          ),
-        );
-      }
-    });
+  void _assignBusesToLine(Line line) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Bus assignment for ${line.name} coming soon')),
+    );
   }
 
-  void _deleteLine(Map<String, dynamic> line) {
-    DialogHelper.showConfirmDialog(
-      context,
-      title: 'Delete Line',
-      message: 'Are you sure you want to delete this line? This action cannot be undone.',
-      confirmText: 'Delete',
-      cancelText: 'Cancel',
-    ).then((confirmed) {
-      if (confirmed) {
-        setState(() {
-          _allLines.remove(line);
-          _categorizeLines();
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Line deleted successfully'),
-            backgroundColor: Colors.red,
+  void _manageLineSchedule(Line line) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Schedule management for ${line.name} coming soon')),
+    );
+  }
+
+  void _toggleLineStatus(Line line) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(line.isActive ? 'Deactivate Line' : 'Activate Line'),
+        content: Text(
+          'Are you sure you want to ${line.isActive ? 'deactivate' : 'activate'} ${line.name}?'
+        ),
+        actions: [
+          AppButton.text(
+            text: 'Cancel',
+            onPressed: () => Navigator.of(context).pop(),
           ),
-        );
-      }
-    });
+          AppButton(
+            text: line.isActive ? 'Deactivate' : 'Activate',
+            onPressed: () {
+              Navigator.of(context).pop();
+              _processLineStatusToggle(line);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _processLineStatusToggle(Line line) async {
+    try {
+      final adminProvider = context.read<AdminProvider>();
+      await adminProvider.toggleLineStatus(line.id!);
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Line ${line.isActive ? 'deactivated' : 'activated'} successfully'),
+          backgroundColor: context.successColor,
+        ),
+      );
+      
+      _loadLines();
+    } catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to update line status: $error')),
+      );
+    }
+  }
+
+  void _deleteLine(Line line) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Line'),
+        content: Text(
+          'Are you sure you want to delete ${line.name}? This action cannot be undone and will affect all associated buses, stops, and schedules.'
+        ),
+        actions: [
+          AppButton.text(
+            text: 'Cancel',
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          AppButton(
+            text: 'Delete',
+            onPressed: () {
+              Navigator.of(context).pop();
+              _processLineDeletion(line);
+            },
+            ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _processLineDeletion(Line line) async {
+    try {
+      final adminProvider = context.read<AdminProvider>();
+      await adminProvider.deleteLine(line.id!);
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${line.name} deleted successfully'),
+          backgroundColor: context.colors.error,
+        ),
+      );
+      
+      _loadLines();
+    } catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to delete line: $error')),
+      );
+    }
   }
 }

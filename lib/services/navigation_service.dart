@@ -6,26 +6,37 @@ import '../core/constants/app_constants.dart';
 import '../providers/auth_provider.dart';
 import '../screens/common/error_screen.dart';
 import '../models/user_model.dart';
+import '../helpers/error_handler.dart';
 import 'package:provider/provider.dart';
 
 class NavigationService {
-  static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+  static final GlobalKey<NavigatorState> navigatorKey =
+      GlobalKey<NavigatorState>();
 
   static BuildContext? get context => navigatorKey.currentContext;
 
   // Navigation methods
   static Future<T?> navigateTo<T>(String routeName, {Object? arguments}) {
-    return navigatorKey.currentState!.pushNamed<T>(routeName, arguments: arguments);
+    return navigatorKey.currentState!.pushNamed<T>(
+      routeName,
+      arguments: arguments,
+    );
   }
 
-  static Future<T?> navigateToReplacement<T>(String routeName, {Object? arguments}) {
+  static Future<T?> navigateToReplacement<T>(
+    String routeName, {
+    Object? arguments,
+  }) {
     return navigatorKey.currentState!.pushReplacementNamed<T, dynamic>(
       routeName,
       arguments: arguments,
     );
   }
 
-  static Future<T?> navigateToAndClearStack<T>(String routeName, {Object? arguments}) {
+  static Future<T?> navigateToAndClearStack<T>(
+    String routeName, {
+    Object? arguments,
+  }) {
     return navigatorKey.currentState!.pushNamedAndRemoveUntil<T>(
       routeName,
       (route) => false,
@@ -124,11 +135,14 @@ class NavigationService {
   }
 
   // Navigate with authentication check
-  static Future<T?> navigateWithAuth<T>(String routeName, {Object? arguments}) async {
+  static Future<T?> navigateWithAuth<T>(
+    String routeName, {
+    Object? arguments,
+  }) async {
     if (context == null) return null;
 
     final authProvider = Provider.of<AuthProvider>(context!, listen: false);
-    
+
     if (!authProvider.isAuthenticated) {
       await navigateToLogin();
       return null;
@@ -138,11 +152,14 @@ class NavigationService {
   }
 
   // Navigate to appropriate route based on deeplink or notification
-  static Future<void> handleDeepLink(String? route, Map<String, dynamic>? params) async {
+  static Future<void> handleDeepLink(
+    String? route,
+    Map<String, dynamic>? params,
+  ) async {
     if (route == null || context == null) return;
 
     final authProvider = Provider.of<AuthProvider>(context!, listen: false);
-    
+
     // If not authenticated, go to login first
     if (!authProvider.isAuthenticated) {
       await navigateToLogin();

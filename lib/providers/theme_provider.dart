@@ -8,17 +8,17 @@ enum AppThemeMode { system, light, dark }
 
 class ThemeProvider extends ChangeNotifier {
   static const String _themeKey = 'theme_mode';
-  
+
   AppThemeMode _themeMode = AppThemeMode.system;
   SharedPreferences? _prefs;
   bool _isAnimating = false;
 
   AppThemeMode get themeMode => _themeMode;
   bool get isAnimating => _isAnimating;
-  
+
   ThemeData get lightTheme => AppTheme.lightTheme;
   ThemeData get darkTheme => AppTheme.darkTheme;
-  
+
   bool get isDarkMode {
     switch (_themeMode) {
       case AppThemeMode.light:
@@ -26,7 +26,8 @@ class ThemeProvider extends ChangeNotifier {
       case AppThemeMode.dark:
         return true;
       case AppThemeMode.system:
-        return WidgetsBinding.instance.platformDispatcher.platformBrightness == Brightness.dark;
+        return WidgetsBinding.instance.platformDispatcher.platformBrightness ==
+            Brightness.dark;
     }
   }
 
@@ -41,18 +42,23 @@ class ThemeProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Public method to load theme mode - for splash screen initialization
+  Future<void> loadThemeMode() async {
+    return _loadThemeMode();
+  }
+
   Future<void> setThemeMode(AppThemeMode themeMode) async {
     if (_themeMode == themeMode) return;
-    
+
     _isAnimating = true;
     notifyListeners();
-    
+
     // Add a small delay for animation
     await Future.delayed(const Duration(milliseconds: 100));
-    
+
     _themeMode = themeMode;
     await _prefs?.setInt(_themeKey, themeMode.index);
-    
+
     // Complete animation
     await Future.delayed(const Duration(milliseconds: 200));
     _isAnimating = false;

@@ -4,6 +4,8 @@ import '../config/api_config.dart';
 import '../core/constants/api_constants.dart';
 import '../core/exceptions/app_exceptions.dart';
 import '../core/network/api_client.dart';
+import '../models/stop_model.dart';
+import '../models/api_response_models.dart';
 
 class StopService {
   final ApiClient _apiClient;
@@ -11,7 +13,7 @@ class StopService {
   StopService({ApiClient? apiClient}) : _apiClient = apiClient ?? ApiClient();
 
   // Get all stops
-  Future<List<Map<String, dynamic>>> getStops({
+  Future<List<Stop>> getStops({
     bool? isActive,
     String? lineId,
   }) async {
@@ -26,15 +28,17 @@ class StopService {
         queryParameters: queryParams,
       );
 
-      if (response is Map<String, dynamic> && response.containsKey(ApiConstants.resultsKey)) {
-        return List<Map<String, dynamic>>.from(response[ApiConstants.resultsKey]);
+      List<Map<String, dynamic>> stopsData = [];
+      if (response is Map<String, dynamic> &&
+          response.containsKey(ApiConstants.resultsKey)) {
+        stopsData = List<Map<String, dynamic>>.from(
+          response[ApiConstants.resultsKey],
+        );
+      } else if (response is List) {
+        stopsData = List<Map<String, dynamic>>.from(response);
       }
 
-      if (response is List) {
-        return List<Map<String, dynamic>>.from(response);
-      }
-
-      return [];
+      return stopsData.map((json) => Stop.fromJson(json)).toList();
     } catch (e) {
       if (e is ApiException) {
         rethrow;
@@ -44,10 +48,12 @@ class StopService {
   }
 
   // Get stop by ID
-  Future<Map<String, dynamic>> getStopById(String stopId) async {
+  Future<Stop> getStopById(String stopId) async {
     try {
-      final response = await _apiClient.get(ApiEndpoints.buildUrl(ApiEndpoints.stopById(stopId)));
-      return response;
+      final response = await _apiClient.get(
+        ApiEndpoints.buildUrl(ApiEndpoints.stopById(stopId)),
+      );
+      return Stop.fromJson(response);
     } catch (e) {
       if (e is ApiException) {
         rethrow;
@@ -131,7 +137,7 @@ class StopService {
   }
 
   // Get nearby stops
-  Future<List<Map<String, dynamic>>> getNearbyStops({
+  Future<List<Stop>> getNearbyStops({
     required double latitude,
     required double longitude,
     double radius = 1000, // default 1km
@@ -146,15 +152,17 @@ class StopService {
         },
       );
 
-      if (response is Map<String, dynamic> && response.containsKey(ApiConstants.resultsKey)) {
-        return List<Map<String, dynamic>>.from(response[ApiConstants.resultsKey]);
+      List<Map<String, dynamic>> stopsData = [];
+      if (response is Map<String, dynamic> &&
+          response.containsKey(ApiConstants.resultsKey)) {
+        stopsData = List<Map<String, dynamic>>.from(
+          response[ApiConstants.resultsKey],
+        );
+      } else if (response is List) {
+        stopsData = List<Map<String, dynamic>>.from(response);
       }
 
-      if (response is List) {
-        return List<Map<String, dynamic>>.from(response);
-      }
-
-      return [];
+      return stopsData.map((json) => Stop.fromJson(json)).toList();
     } catch (e) {
       if (e is ApiException) {
         rethrow;
@@ -170,10 +178,7 @@ class StopService {
     String? lineId,
   }) async {
     try {
-      final Map<String, dynamic> body = {
-        'stop': stopId,
-        'count': count,
-      };
+      final Map<String, dynamic> body = {'stop': stopId, 'count': count};
 
       if (lineId != null) body['line'] = lineId;
 
@@ -187,7 +192,39 @@ class StopService {
       if (e is ApiException) {
         rethrow;
       }
-      throw ApiException('Failed to report waiting passengers: ${e.toString()}');
+      throw ApiException(
+        'Failed to report waiting passengers: ${e.toString()}',
+      );
+    }
+  }
+
+  /// Get all stops for admin management
+  Future<ApiResponse<List<Stop>>> getAllStops() async {
+    try {
+      final response = await _apiClient.get(
+        ApiEndpoints.buildUrl(ApiEndpoints.stops),
+      );
+
+      if (response is Map<String, dynamic> && response.containsKey('results')) {
+        final stops = (response['results'] as List)
+            .map((json) => Stop.fromJson(json))
+            .toList();
+        return ApiResponse.success(data: stops);
+      } else if (response is List) {
+        final stops = response
+            .map((json) => Stop.fromJson(json))
+            .toList();
+        return ApiResponse.success(data: stops);
+      }
+
+      return ApiResponse.error(message: 'Invalid response format');
+    } catch (e) {
+      if (e is ApiException) {
+        return ApiResponse.error(message: e.message);
+      }
+      return ApiResponse.error(
+        message: 'Failed to get all stops: ${e.toString()}',
+      );
     }
   }
 }

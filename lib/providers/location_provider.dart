@@ -11,7 +11,7 @@ class LocationProvider with ChangeNotifier {
   final LocationService _locationService;
 
   LocationProvider({LocationService? locationService})
-      : _locationService = locationService ?? LocationService.instance;
+    : _locationService = locationService ?? LocationService.instance;
 
   // State
   Position? _currentLocation;
@@ -29,10 +29,13 @@ class LocationProvider with ChangeNotifier {
   bool get isTracking => _isTracking;
   List<Position> get locationHistory => _locationHistory;
   String? get error => _error;
+  bool get isLoading => _isTracking; // Use tracking state as loading indicator
 
   // Coordinate getters
-  double get latitude => _currentLocation?.latitude ?? AppConstants.defaultLatitude;
-  double get longitude => _currentLocation?.longitude ?? AppConstants.defaultLongitude;
+  double get latitude =>
+      _currentLocation?.latitude ?? AppConstants.defaultLatitude;
+  double get longitude =>
+      _currentLocation?.longitude ?? AppConstants.defaultLongitude;
 
   // Dispose
   @override
@@ -41,12 +44,18 @@ class LocationProvider with ChangeNotifier {
     super.dispose();
   }
 
+  // Request location permission (alias method)
+  Future<bool> requestLocationPermission() async {
+    return await requestPermission();
+  }
+
   // Request location permission
   Future<bool> requestPermission() async {
     try {
       final permission = await Geolocator.requestPermission();
 
-      _locationPermissionGranted = permission == LocationPermission.whileInUse ||
+      _locationPermissionGranted =
+          permission == LocationPermission.whileInUse ||
           permission == LocationPermission.always;
 
       notifyListeners();
@@ -105,13 +114,16 @@ class LocationProvider with ChangeNotifier {
       );
 
       // Subscribe to location stream
-      _positionStreamSubscription = _locationService.locationStream.listen((position) {
-        _currentLocation = position;
-        _locationHistory.add(position);
-        notifyListeners();
-      }, onError: (error) {
-        _setError(error);
-      });
+      _positionStreamSubscription = _locationService.locationStream.listen(
+        (position) {
+          _currentLocation = position;
+          _locationHistory.add(position);
+          notifyListeners();
+        },
+        onError: (error) {
+          _setError(error);
+        },
+      );
 
       _isTracking = true;
       notifyListeners();

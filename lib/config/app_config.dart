@@ -8,7 +8,8 @@ class AppConfig {
   static const String appName = 'DZ Bus Tracker';
   static const String appVersion = '1.0';
   static const String appBuildNumber = '1';
-  static const String appDescription = 'Smart, real-time bus tracking for Algeria – connecting passengers and drivers like never before.';
+  static const String appDescription =
+      'Smart, real-time bus tracking for Algeria – connecting passengers and drivers like never before.';
   static const String appCopyright = '© 2025 DZ Bus Tracker';
   static const String appWebsite = 'https://dzbusttracker.dz';
   static const String appSupportEmail = 'support@dzbusttracker.dz';
@@ -17,7 +18,11 @@ class AppConfig {
   static const bool isProduction = false;
   static const bool isDevelopment = true;
   static const bool isStaging = false;
-  static const String environment = isDevelopment ? 'dev' : isStaging ? 'staging' : 'production';
+  static const String environment = isDevelopment
+      ? 'dev'
+      : isStaging
+      ? 'staging'
+      : 'production';
 
   // Default configurations
   static const String defaultLanguage = 'fr'; // French as default
@@ -59,11 +64,7 @@ class AppConfig {
   // Cache configuration
   static const bool enableCache = true;
   static const int maxCacheSize = 10 * 1024 * 1024; // 10 MB
-  static const List<String> cachedEndpoints = [
-    '/lines',
-    '/stops',
-    '/buses',
-  ];
+  static const List<String> cachedEndpoints = ['/lines', '/stops', '/buses'];
 
   // Map configuration
   static const String mapType = 'google'; // 'google' or 'osm'
@@ -97,7 +98,8 @@ class AppConfig {
   // Notification configuration
   static const String notificationChannelId = 'dz_bus_tracker_channel';
   static const String notificationChannelName = 'DZ Bus Tracker Notifications';
-  static const String notificationChannelDescription = 'Notifications from DZ Bus Tracker app';
+  static const String notificationChannelDescription =
+      'Notifications from DZ Bus Tracker app';
   static const String notificationIcon = '@mipmap/ic_launcher';
   static const bool enableFCM = true;
 
@@ -121,7 +123,8 @@ class AppConfig {
 
   // Store URLs
   static const String appStoreUrl = 'https://apps.apple.com/app/dzbusttracker';
-  static const String playStoreUrl = 'https://play.google.com/store/apps/details?id=dz.busttracker';
+  static const String playStoreUrl =
+      'https://play.google.com/store/apps/details?id=dz.busttracker';
 
   // Terms and Privacy
   static const String termsUrl = 'https://dzbusttracker.dz/terms';

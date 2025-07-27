@@ -8,7 +8,8 @@ import '../core/network/api_client.dart';
 class ScheduleService {
   final ApiClient _apiClient;
 
-  ScheduleService({ApiClient? apiClient}) : _apiClient = apiClient ?? ApiClient();
+  ScheduleService({ApiClient? apiClient})
+    : _apiClient = apiClient ?? ApiClient();
 
   // Get all schedules
   Future<List<Map<String, dynamic>>> getSchedules({
@@ -26,8 +27,11 @@ class ScheduleService {
         queryParameters: queryParams,
       );
 
-      if (response is Map<String, dynamic> && response.containsKey(ApiConstants.resultsKey)) {
-        return List<Map<String, dynamic>>.from(response[ApiConstants.resultsKey]);
+      if (response is Map<String, dynamic> &&
+          response.containsKey(ApiConstants.resultsKey)) {
+        return List<Map<String, dynamic>>.from(
+          response[ApiConstants.resultsKey],
+        );
       }
 
       if (response is List) {
@@ -105,7 +109,8 @@ class ScheduleService {
 
       if (startTime != null) body['start_time'] = startTime;
       if (endTime != null) body['end_time'] = endTime;
-      if (frequencyMinutes != null) body['frequency_minutes'] = frequencyMinutes;
+      if (frequencyMinutes != null)
+        body['frequency_minutes'] = frequencyMinutes;
       if (isActive != null) body['is_active'] = isActive;
 
       if (body.isEmpty) {
@@ -156,8 +161,11 @@ class ScheduleService {
         queryParameters: queryParams,
       );
 
-      if (response is Map<String, dynamic> && response.containsKey(ApiConstants.resultsKey)) {
-        return List<Map<String, dynamic>>.from(response[ApiConstants.resultsKey]);
+      if (response is Map<String, dynamic> &&
+          response.containsKey(ApiConstants.resultsKey)) {
+        return List<Map<String, dynamic>>.from(
+          response[ApiConstants.resultsKey],
+        );
       }
 
       if (response is List) {

@@ -5,10 +5,7 @@ import 'package:fl_chart/fl_chart.dart';
 import '../../config/theme_config.dart';
 import '../../core/utils/date_utils.dart';
 import '../../services/driver_performance_service.dart';
-import '../../widgets/common/app_layout.dart';
-import '../../widgets/common/glassy_container.dart';
-import '../../widgets/common/custom_card.dart';
-import '../../widgets/common/loading_indicator.dart';
+import '../../widgets/widgets.dart';
 import '../../localization/app_localizations.dart';
 
 class DriverPerformanceDashboard extends StatefulWidget {
@@ -61,9 +58,10 @@ class _DriverPerformanceDashboardState extends State<DriverPerformanceDashboard>
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context)!;
 
-    return AppLayout(
+    return PageLayout(
       title: 'Performance Dashboard',
-      actions: [
+      showAppBar: true,
+      appBarActions: [
         PopupMenuButton<String>(
           icon: const Icon(Icons.more_vert),
           onSelected: (period) {
@@ -80,8 +78,8 @@ class _DriverPerformanceDashboardState extends State<DriverPerformanceDashboard>
           ],
         ),
       ],
-      child: _isLoading
-          ? const Center(child: LoadingIndicator())
+      body: _isLoading
+          ? const LoadingState.fullScreen(message: 'Loading performance data...')
           : RefreshIndicator(
               onRefresh: _loadPerformanceData,
               child: SingleChildScrollView(
@@ -134,7 +132,7 @@ class _DriverPerformanceDashboardState extends State<DriverPerformanceDashboard>
     final previousScore = _performanceData['previous_score']?.toDouble() ?? 82;
     final scoreDiff = overallScore - previousScore;
     
-    return CustomCard(type: CardType.elevated, 
+    return AppCard( 
       child: Column(
         children: [
           Text(
@@ -263,7 +261,7 @@ class _DriverPerformanceDashboardState extends State<DriverPerformanceDashboard>
   }
 
   Widget _buildMetricCard(String title, String value, IconData icon, Color color) {
-    return CustomCard(type: CardType.elevated, 
+    return AppCard( 
       margin: const EdgeInsets.symmetric(horizontal: 4),
       padding: const EdgeInsets.all(12),
       child: Column(
@@ -324,7 +322,7 @@ class _DriverPerformanceDashboardState extends State<DriverPerformanceDashboard>
       child: Column(
         children: [
           // Speed Analysis Chart
-          CustomCard(type: CardType.elevated, 
+          AppCard( 
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -417,7 +415,7 @@ class _DriverPerformanceDashboardState extends State<DriverPerformanceDashboard>
       child: Column(
         children: [
           // Fuel Efficiency Chart
-          CustomCard(type: CardType.elevated, 
+          AppCard( 
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -458,7 +456,7 @@ class _DriverPerformanceDashboardState extends State<DriverPerformanceDashboard>
       child: Column(
         children: [
           // Safety Score Breakdown
-          CustomCard(type: CardType.elevated, 
+          AppCard( 
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -491,7 +489,7 @@ class _DriverPerformanceDashboardState extends State<DriverPerformanceDashboard>
       child: Column(
         children: [
           // Performance Trend Chart
-          CustomCard(type: CardType.elevated, 
+          AppCard( 
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -534,7 +532,7 @@ class _DriverPerformanceDashboardState extends State<DriverPerformanceDashboard>
   }
 
   Widget _buildBehaviorMetric(String title, String value, IconData icon, Color color) {
-    return CustomCard(type: CardType.elevated, 
+    return AppCard( 
       margin: const EdgeInsets.symmetric(horizontal: 4),
       padding: const EdgeInsets.all(12),
       child: Column(
@@ -645,7 +643,7 @@ class _DriverPerformanceDashboardState extends State<DriverPerformanceDashboard>
 
   Widget _buildSafetyEvents(List<Map<String, dynamic>> events) {
     if (events.isEmpty) {
-      return CustomCard(type: CardType.elevated, 
+      return AppCard( 
         child: Center(
           child: Column(
             children: [
@@ -669,7 +667,7 @@ class _DriverPerformanceDashboardState extends State<DriverPerformanceDashboard>
       );
     }
 
-    return CustomCard(type: CardType.elevated, 
+    return AppCard( 
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -770,7 +768,7 @@ class _DriverPerformanceDashboardState extends State<DriverPerformanceDashboard>
   }
 
   Widget _buildTrendCard(String period, String change, String description, Color color, IconData icon) {
-    return CustomCard(type: CardType.elevated, 
+    return AppCard( 
       margin: const EdgeInsets.symmetric(horizontal: 4),
       child: Column(
         children: [
@@ -804,7 +802,7 @@ class _DriverPerformanceDashboardState extends State<DriverPerformanceDashboard>
   Widget _buildAchievements() {
     final achievements = _performanceData['achievements'] as List<Map<String, dynamic>>? ?? [];
     
-    return CustomCard(type: CardType.elevated, 
+    return AppCard( 
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -873,7 +871,7 @@ class _DriverPerformanceDashboardState extends State<DriverPerformanceDashboard>
   Widget _buildImprovementSuggestions() {
     final suggestions = _performanceData['suggestions'] as List<Map<String, dynamic>>? ?? [];
     
-    return CustomCard(type: CardType.elevated, 
+    return AppCard( 
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

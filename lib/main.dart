@@ -30,19 +30,20 @@ import 'providers/passenger_provider.dart';
 import 'providers/stop_provider.dart';
 import 'providers/tracking_provider.dart';
 import 'providers/theme_provider.dart';
+import 'providers/gamification_provider.dart';
 
 /// Firebase background message handler
 /// This must be a top-level function
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   // Ensure Firebase is initialized
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
   print('Handling a background message: ${message.messageId}');
   print('Message data: ${message.data}');
-  print('Message notification: ${message.notification?.title} - ${message.notification?.body}');
+  print(
+    'Message notification: ${message.notification?.title} - ${message.notification?.body}',
+  );
 }
 
 void main() async {
@@ -62,7 +63,7 @@ void main() async {
       rethrow;
     }
   }
-  
+
   // Set Firebase background message handler
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
@@ -88,7 +89,7 @@ class MyApp extends StatelessWidget {
       providers: [
         // Theme provider
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
-        
+
         // Localization provider
         ChangeNotifierProvider(create: (_) => LocalizationProvider()),
 
@@ -104,6 +105,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => StopProvider()),
         ChangeNotifierProvider(create: (_) => TrackingProvider()),
         ChangeNotifierProvider(create: (_) => PassengerProvider()),
+        ChangeNotifierProvider(create: (_) => GamificationProvider()),
       ],
       child: const AppWithLocalization(),
     );
@@ -124,9 +126,15 @@ class _AppWithLocalizationState extends State<AppWithLocalization> {
 
     // Initialize providers after build
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await Provider.of<LocalizationProvider>(context, listen: false).initialize();
+      await Provider.of<LocalizationProvider>(
+        context,
+        listen: false,
+      ).initialize();
       await Provider.of<AuthProvider>(context, listen: false).checkAuth();
-      await Provider.of<NotificationProvider>(context, listen: false).initialize();
+      await Provider.of<NotificationProvider>(
+        context,
+        listen: false,
+      ).initialize();
     });
   }
 
@@ -136,30 +144,25 @@ class _AppWithLocalizationState extends State<AppWithLocalization> {
     final localizationProvider = Provider.of<LocalizationProvider>(context);
     final themeProvider = Provider.of<ThemeProvider>(context);
 
-    return AnimatedTheme(
-      duration: const Duration(milliseconds: 300),
-      data: themeProvider.isDarkMode ? AppTheme.darkTheme : AppTheme.lightTheme,
-      child: MaterialApp(
-        title: AppConfig.appName,
-        theme: AppTheme.lightTheme,
-        darkTheme: AppTheme.darkTheme,
-        themeMode: _getThemeMode(themeProvider.themeMode),
-      locale: localizationProvider.locale,
-      localizationsDelegates: [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: AppLocalizations.supportedLocales,
-      debugShowCheckedModeBanner: !AppConfig.isProduction,
-      navigatorKey: NavigationService.navigatorKey,
-      initialRoute: AppRoutes.splash,
+    return MaterialApp(
+      title: AppConfig.appName,
+      theme: AppTheme.lightTheme,
+      themeMode: ThemeMode.light, // Force light mode only
+        locale: localizationProvider.locale,
+        localizationsDelegates: [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: AppLocalizations.supportedLocales,
+        debugShowCheckedModeBanner: !AppConfig.isProduction,
+        navigatorKey: NavigationService.navigatorKey,
+        initialRoute: AppRoutes.splash,
         onGenerateRoute: AppRouter.generateRoute,
-      ),
-    );
+      );
   }
-  
+
   ThemeMode _getThemeMode(AppThemeMode themeMode) {
     switch (themeMode) {
       case AppThemeMode.light:

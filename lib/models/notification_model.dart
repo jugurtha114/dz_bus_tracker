@@ -22,15 +22,35 @@ enum DeviceType {
 
 /// Notification types with comprehensive coverage
 enum NotificationType {
-  driverApproved('driver_approved', 'Driver Approved', Icons.check_circle, Colors.green),
-  driverRejected('driver_rejected', 'Driver Rejected', Icons.cancel, Colors.red),
-  busArriving('bus_arriving', 'Bus Arriving', Icons.directions_bus, Colors.blue),
+  driverApproved(
+    'driver_approved',
+    'Driver Approved',
+    Icons.check_circle,
+    Colors.green,
+  ),
+  driverRejected(
+    'driver_rejected',
+    'Driver Rejected',
+    Icons.cancel,
+    Colors.red,
+  ),
+  busArriving(
+    'bus_arriving',
+    'Bus Arriving',
+    Icons.directions_bus,
+    Colors.blue,
+  ),
   busDelayed('bus_delayed', 'Bus Delayed', Icons.schedule, Colors.orange),
   busCancelled('bus_cancelled', 'Bus Cancelled', Icons.cancel, Colors.red),
   system('system', 'System', Icons.info, Colors.grey),
   arrival('arrival', 'Bus Arrival', Icons.location_on, Colors.green),
   routeChange('route_change', 'Route Change', Icons.route, Colors.orange),
-  seatAvailability('seat_availability', 'Seat Availability', Icons.event_seat, Colors.blue),
+  seatAvailability(
+    'seat_availability',
+    'Seat Availability',
+    Icons.event_seat,
+    Colors.blue,
+  ),
   tripStart('trip_start', 'Trip Started', Icons.play_arrow, Colors.green),
   tripEnd('trip_end', 'Trip Ended', Icons.stop, Colors.red),
   achievement('achievement', 'Achievement Unlocked', Icons.star, Colors.amber),
@@ -65,14 +85,21 @@ enum NotificationType {
     NotificationType.tripUpdate,
   ].contains(this);
 
-  bool get isGamification => [
-    NotificationType.achievement,
-    NotificationType.reward,
-  ].contains(this);
+  bool get isGamification =>
+      [NotificationType.achievement, NotificationType.reward].contains(this);
 
   bool get isAdmin => [
     NotificationType.driverApproved,
     NotificationType.driverRejected,
+    NotificationType.system,
+  ].contains(this);
+
+  bool get isImportant => [
+    NotificationType.driverApproved,
+    NotificationType.driverRejected,
+    NotificationType.busArriving,
+    NotificationType.busDelayed,
+    NotificationType.busCancelled,
     NotificationType.system,
   ].contains(this);
 }
@@ -156,9 +183,11 @@ class DeviceToken {
   }
 
   // Helper getters
-  String get formattedLastUsed => '${lastUsed.day}/${lastUsed.month}/${lastUsed.year}';
-  String get formattedCreatedAt => '${createdAt.day}/${createdAt.month}/${createdAt.year}';
-  
+  String get formattedLastUsed =>
+      '${lastUsed.day}/${lastUsed.month}/${lastUsed.year}';
+  String get formattedCreatedAt =>
+      '${createdAt.day}/${createdAt.month}/${createdAt.year}';
+
   bool get isRecent => DateTime.now().difference(lastUsed).inDays < 7;
   String get statusText => isActive ? 'Active' : 'Inactive';
   Color get statusColor => isActive ? Colors.green : Colors.grey;
@@ -201,7 +230,9 @@ class UserBrief {
       id: json['id'] as String,
       email: json['email'] as String,
       fullName: json['full_name'] as String,
-      userType: json['user_type'] != null ? UserType.fromValue(json['user_type'] as String) : null,
+      userType: json['user_type'] != null
+          ? UserType.fromValue(json['user_type'] as String)
+          : null,
     );
   }
 
@@ -241,16 +272,23 @@ class AppNotification {
     required this.createdAt,
   });
 
+  /// Convenience getter for type
+  String get type => notificationType.value;
+
   factory AppNotification.fromJson(Map<String, dynamic> json) {
     return AppNotification(
       id: json['id'] as String,
       user: UserBrief.fromJson(json['user'] as Map<String, dynamic>),
-      notificationType: NotificationType.fromValue(json['notification_type'] as String),
+      notificationType: NotificationType.fromValue(
+        json['notification_type'] as String,
+      ),
       title: json['title'] as String,
       message: json['message'] as String,
       channel: NotificationChannel.fromValue(json['channel'] as String),
       isRead: json['is_read'] as bool? ?? false,
-      readAt: json['read_at'] != null ? DateTime.parse(json['read_at'] as String) : null,
+      readAt: json['read_at'] != null
+          ? DateTime.parse(json['read_at'] as String)
+          : null,
       data: json['data'] as Map<String, dynamic>?,
       createdAt: DateTime.parse(json['created_at'] as String),
     );
@@ -275,18 +313,20 @@ class AppNotification {
   IconData get typeIcon => notificationType.icon;
   Color get typeColor => notificationType.color;
   String get typeDisplayName => notificationType.displayName;
-  
+
   String get channelDisplayName => channel.displayName;
   IconData get channelIcon => channel.icon;
 
-  String get formattedCreatedAt => '${createdAt.day}/${createdAt.month}/${createdAt.year}';
-  String get formattedTime => '${createdAt.hour}:${createdAt.minute.toString().padLeft(2, '0')}';
+  String get formattedCreatedAt =>
+      '${createdAt.day}/${createdAt.month}/${createdAt.year}';
+  String get formattedTime =>
+      '${createdAt.hour}:${createdAt.minute.toString().padLeft(2, '0')}';
   String get formattedDateTime => '$formattedCreatedAt $formattedTime';
-  
+
   String get timeAgo {
     final now = DateTime.now();
     final difference = now.difference(createdAt);
-    
+
     if (difference.inMinutes < 1) {
       return 'Just now';
     } else if (difference.inHours < 1) {
@@ -415,12 +455,7 @@ class LineBrief {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'name': name,
-      'code': code,
-      'is_active': isActive,
-    };
+    return {'id': id, 'name': name, 'code': code, 'is_active': isActive};
   }
 }
 
@@ -455,24 +490,34 @@ class NotificationPreference {
   factory NotificationPreference.fromJson(Map<String, dynamic> json) {
     return NotificationPreference(
       id: json['id'] as String,
-      notificationType: NotificationType.fromValue(json['notification_type'] as String),
-      channels: (json['channels'] as List<dynamic>?)
-          ?.map((channel) => NotificationChannel.fromValue(channel as String))
-          .toList() ?? [],
+      notificationType: NotificationType.fromValue(
+        json['notification_type'] as String,
+      ),
+      channels:
+          (json['channels'] as List<dynamic>?)
+              ?.map(
+                (channel) => NotificationChannel.fromValue(channel as String),
+              )
+              .toList() ??
+          [],
       enabled: json['enabled'] as bool? ?? true,
       minutesBeforeArrival: json['minutes_before_arrival'] as int?,
-      quietHoursStart: json['quiet_hours_start'] != null 
+      quietHoursStart: json['quiet_hours_start'] != null
           ? _parseTimeOfDay(json['quiet_hours_start'] as String)
           : null,
-      quietHoursEnd: json['quiet_hours_end'] != null 
+      quietHoursEnd: json['quiet_hours_end'] != null
           ? _parseTimeOfDay(json['quiet_hours_end'] as String)
           : null,
-      favoriteStops: (json['favorite_stops'] as List<dynamic>?)
-          ?.map((stop) => StopBrief.fromJson(stop as Map<String, dynamic>))
-          .toList() ?? [],
-      favoriteLines: (json['favorite_lines'] as List<dynamic>?)
-          ?.map((line) => LineBrief.fromJson(line as Map<String, dynamic>))
-          .toList() ?? [],
+      favoriteStops:
+          (json['favorite_stops'] as List<dynamic>?)
+              ?.map((stop) => StopBrief.fromJson(stop as Map<String, dynamic>))
+              .toList() ??
+          [],
+      favoriteLines:
+          (json['favorite_lines'] as List<dynamic>?)
+              ?.map((line) => LineBrief.fromJson(line as Map<String, dynamic>))
+              .toList() ??
+          [],
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
     );
@@ -485,10 +530,10 @@ class NotificationPreference {
       'channels': channels.map((channel) => channel.value).toList(),
       'enabled': enabled,
       'minutes_before_arrival': minutesBeforeArrival,
-      'quiet_hours_start': quietHoursStart != null 
+      'quiet_hours_start': quietHoursStart != null
           ? '${quietHoursStart!.hour.toString().padLeft(2, '0')}:${quietHoursStart!.minute.toString().padLeft(2, '0')}:00'
           : null,
-      'quiet_hours_end': quietHoursEnd != null 
+      'quiet_hours_end': quietHoursEnd != null
           ? '${quietHoursEnd!.hour.toString().padLeft(2, '0')}:${quietHoursEnd!.minute.toString().padLeft(2, '0')}:00'
           : null,
       'favorite_stops': favoriteStops.map((stop) => stop.toJson()).toList(),
@@ -500,31 +545,30 @@ class NotificationPreference {
 
   static TimeOfDay _parseTimeOfDay(String timeString) {
     final parts = timeString.split(':');
-    return TimeOfDay(
-      hour: int.parse(parts[0]),
-      minute: int.parse(parts[1]),
-    );
+    return TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
   }
 
   // Helper getters
-  String get channelsDisplayText => channels.map((c) => c.displayName).join(', ');
-  
+  String get channelsDisplayText =>
+      channels.map((c) => c.displayName).join(', ');
+
   bool get hasPushNotification => channels.contains(NotificationChannel.push);
   bool get hasSmsNotification => channels.contains(NotificationChannel.sms);
   bool get hasEmailNotification => channels.contains(NotificationChannel.email);
   bool get hasInAppNotification => channels.contains(NotificationChannel.inApp);
-  
+
   bool get hasQuietHours => quietHoursStart != null && quietHoursEnd != null;
-  String get quietHoursText => hasQuietHours 
+  String get quietHoursText => hasQuietHours
       ? '${_formatTimeOfDay(quietHoursStart!)} - ${_formatTimeOfDay(quietHoursEnd!)}'
       : 'None';
-  
-  String get arrivalNotificationText => minutesBeforeArrival != null 
+
+  String get arrivalNotificationText => minutesBeforeArrival != null
       ? '$minutesBeforeArrival minutes before'
       : 'Default';
 
   bool get hasFavorites => favoriteStops.isNotEmpty || favoriteLines.isNotEmpty;
-  String get favoritesText => '${favoriteStops.length} stops, ${favoriteLines.length} lines';
+  String get favoritesText =>
+      '${favoriteStops.length} stops, ${favoriteLines.length} lines';
 
   String _formatTimeOfDay(TimeOfDay time) {
     final hour = time.hour.toString().padLeft(2, '0');
@@ -573,10 +617,7 @@ class DeviceTokenCreateRequest {
   });
 
   Map<String, dynamic> toJson() {
-    return {
-      'token': token,
-      'device_type': deviceType.value,
-    };
+    return {'token': token, 'device_type': deviceType.value};
   }
 }
 
@@ -585,11 +626,7 @@ class DeviceTokenUpdateRequest {
   final DeviceType? deviceType;
   final bool? isActive;
 
-  const DeviceTokenUpdateRequest({
-    this.token,
-    this.deviceType,
-    this.isActive,
-  });
+  const DeviceTokenUpdateRequest({this.token, this.deviceType, this.isActive});
 
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{};
@@ -645,15 +682,20 @@ class NotificationPreferenceUpdateRequest {
 
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{};
-    if (notificationType != null) json['notification_type'] = notificationType!.value;
-    if (channels != null) json['channels'] = channels!.map((c) => c.value).toList();
+    if (notificationType != null)
+      json['notification_type'] = notificationType!.value;
+    if (channels != null)
+      json['channels'] = channels!.map((c) => c.value).toList();
     if (enabled != null) json['enabled'] = enabled;
-    if (minutesBeforeArrival != null) json['minutes_before_arrival'] = minutesBeforeArrival;
+    if (minutesBeforeArrival != null)
+      json['minutes_before_arrival'] = minutesBeforeArrival;
     if (quietHoursStart != null) {
-      json['quiet_hours_start'] = '${quietHoursStart!.hour.toString().padLeft(2, '0')}:${quietHoursStart!.minute.toString().padLeft(2, '0')}:00';
+      json['quiet_hours_start'] =
+          '${quietHoursStart!.hour.toString().padLeft(2, '0')}:${quietHoursStart!.minute.toString().padLeft(2, '0')}:00';
     }
     if (quietHoursEnd != null) {
-      json['quiet_hours_end'] = '${quietHoursEnd!.hour.toString().padLeft(2, '0')}:${quietHoursEnd!.minute.toString().padLeft(2, '0')}:00';
+      json['quiet_hours_end'] =
+          '${quietHoursEnd!.hour.toString().padLeft(2, '0')}:${quietHoursEnd!.minute.toString().padLeft(2, '0')}:00';
     }
     return json;
   }
@@ -711,7 +753,7 @@ class FCMMessage {
         'body': body,
         if (imageUrl != null) 'image': imageUrl,
         if (clickAction != null) 'click_action': clickAction,
-        if (sound != null) 'sound': sound,  
+        if (sound != null) 'sound': sound,
         if (tag != null) 'tag': tag,
         if (color != null) 'color': color,
         if (icon != null) 'icon': icon,
@@ -747,19 +789,19 @@ class FCMNotificationData {
       'notification_id': notificationId,
       'type': type.value,
     };
-    
+
     if (busId != null) map['bus_id'] = busId!;
     if (stopId != null) map['stop_id'] = stopId!;
     if (lineId != null) map['line_id'] = lineId!;
     if (tripId != null) map['trip_id'] = tripId!;
     if (route != null) map['route'] = route!;
-    
+
     if (extra != null) {
       extra!.forEach((key, value) {
         map[key] = value.toString();
       });
     }
-    
+
     return map;
   }
 
@@ -774,7 +816,17 @@ class FCMNotificationData {
       route: map['route'],
       extra: Map<String, dynamic>.fromEntries(
         map.entries
-            .where((entry) => !['notification_id', 'type', 'bus_id', 'stop_id', 'line_id', 'trip_id', 'route'].contains(entry.key))
+            .where(
+              (entry) => ![
+                'notification_id',
+                'type',
+                'bus_id',
+                'stop_id',
+                'line_id',
+                'trip_id',
+                'route',
+              ].contains(entry.key),
+            )
             .map((entry) => MapEntry(entry.key, entry.value)),
       ),
     );

@@ -11,7 +11,8 @@ class LocationService {
 
   StreamSubscription<Position>? _positionStream;
   LatLng? _currentLocation;
-  final StreamController<LatLng> _locationStreamController = StreamController<LatLng>.broadcast();
+  final StreamController<LatLng> _locationStreamController =
+      StreamController<LatLng>.broadcast();
 
   Stream<LatLng> get locationStream => _locationStreamController.stream;
   LatLng? get currentLocation => _currentLocation;
@@ -67,17 +68,16 @@ class LocationService {
       distanceFilter: 10, // Update every 10 meters
     );
 
-    _positionStream = Geolocator.getPositionStream(
-      locationSettings: locationSettings,
-    ).listen(
-      (Position position) {
-        _currentLocation = LatLng(position.latitude, position.longitude);
-        _locationStreamController.add(_currentLocation!);
-      },
-      onError: (error) {
-        // Handle error
-      },
-    );
+    _positionStream =
+        Geolocator.getPositionStream(locationSettings: locationSettings).listen(
+          (Position position) {
+            _currentLocation = LatLng(position.latitude, position.longitude);
+            _locationStreamController.add(_currentLocation!);
+          },
+          onError: (error) {
+            // Handle error
+          },
+        );
   }
 
   void stopLocationTracking() {
@@ -87,11 +87,12 @@ class LocationService {
 
   double calculateDistance(LatLng start, LatLng end) {
     return Geolocator.distanceBetween(
-      start.latitude,
-      start.longitude,
-      end.latitude,
-      end.longitude,
-    ) / 1000; // Convert to kilometers
+          start.latitude,
+          start.longitude,
+          end.latitude,
+          end.longitude,
+        ) /
+        1000; // Convert to kilometers
   }
 
   void dispose() {

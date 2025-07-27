@@ -18,11 +18,14 @@ class AppLocalizations {
   }
 
   // Static field to hold the delegate
-  static const LocalizationsDelegate<AppLocalizations> delegate = _AppLocalizationsDelegate();
+  static const LocalizationsDelegate<AppLocalizations> delegate =
+      _AppLocalizationsDelegate();
 
   // Load the language JSON file from the "assets/translations" folder
   Future<bool> load() async {
-    String jsonString = await rootBundle.loadString('assets/translations/${locale.languageCode}.json');
+    String jsonString = await rootBundle.loadString(
+      'assets/translations/${locale.languageCode}.json',
+    );
     Map<String, dynamic> jsonMap = json.decode(jsonString);
 
     _localizedStrings = jsonMap.map((key, value) {
@@ -50,11 +53,14 @@ class AppLocalizations {
 
   // Get supported locales
   static List<Locale> get supportedLocales {
-    return AppConstants.supportedLanguages.map((language) => Locale(language)).toList();
+    return AppConstants.supportedLanguages
+        .map((language) => Locale(language))
+        .toList();
   }
 }
 
-class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
+class _AppLocalizationsDelegate
+    extends LocalizationsDelegate<AppLocalizations> {
   const _AppLocalizationsDelegate();
 
   @override

@@ -14,7 +14,7 @@ class NotificationUtils {
     // Placeholder initialization - would setup actual notification system
     debugPrint('Notification system initialized (placeholder)');
     _isInitialized = true;
-    
+
     return true;
   }
 
@@ -32,7 +32,7 @@ class NotificationUtils {
     // For now, just print to debug console
     // In a full implementation, this would show actual notifications
     debugPrint('Notification: $title - $body');
-    
+
     // Show a snackbar instead of a real notification for now
     // This is just a placeholder implementation
   }
@@ -72,7 +72,8 @@ class NotificationUtils {
   }
 
   // Show in-app notification using SnackBar
-  static void showInAppNotification(BuildContext context, {
+  static void showInAppNotification(
+    BuildContext context, {
     required String title,
     required String message,
     Color? backgroundColor,
@@ -86,10 +87,7 @@ class NotificationUtils {
           children: [
             Text(
               title,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             const SizedBox(height: 16),
             Text(message),

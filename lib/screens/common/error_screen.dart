@@ -1,115 +1,116 @@
 // lib/screens/common/error_screen.dart
 
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../../config/route_config.dart';
-import '../../config/theme_config.dart';
-import '../../providers/auth_provider.dart';
-import '../../widgets/common/custom_button.dart';
+import '../../config/design_system.dart';
+import '../../widgets/widgets.dart';
 
-enum ErrorType {
-  network,
-  server,
-  notFound,
-  permission,
-  authentication,
-  unknown,
-}
-
+/// Error screen for displaying various error states
 class ErrorScreen extends StatelessWidget {
-  final String message;
-  final ErrorType errorType;
+  final String? title;
+  final String? message;
+  final String? errorCode;
   final VoidCallback? onRetry;
-  final VoidCallback? onGoBack;
-  final bool showHomeButton;
+  final VoidCallback? onGoHome;
 
   const ErrorScreen({
-    Key? key,
-    this.message = 'An error occurred',  // Make message optional with default value
-    this.errorType = ErrorType.unknown,
+    super.key,
+    this.title,
+    this.message,
+    this.errorCode,
     this.onRetry,
-    this.onGoBack,
-    this.showHomeButton = true,
-  }) : super(key: key);
+    this.onGoHome,
+  });
+
+  /// Factory constructor for network errors
+  factory ErrorScreen.network({
+    VoidCallback? onRetry,
+    VoidCallback? onGoHome,
+  }) {
+    return ErrorScreen(
+      title: 'Connection Error',
+      message: 'Please check your internet connection and try again.',
+      errorCode: 'NETWORK_ERROR',
+      onRetry: onRetry,
+      onGoHome: onGoHome,
+    );
+  }
+
+  /// Factory constructor for server errors
+  factory ErrorScreen.server({
+    VoidCallback? onRetry,
+    VoidCallback? onGoHome,
+  }) {
+    return ErrorScreen(
+      title: 'Server Error',
+      message: 'Our servers are experiencing issues. Please try again later.',
+      errorCode: 'SERVER_ERROR',
+      onRetry: onRetry,
+      onGoHome: onGoHome,
+    );
+  }
+
+  /// Factory constructor for not found errors
+  factory ErrorScreen.notFound({
+    VoidCallback? onGoHome,
+  }) {
+    return ErrorScreen(
+      title: 'Page Not Found',
+      message: 'The page you\'re looking for doesn\'t exist or has been moved.',
+      errorCode: '404',
+      onGoHome: onGoHome,
+    );
+  }
+
+  /// Factory constructor for permission errors
+  factory ErrorScreen.permission({
+    VoidCallback? onRetry,
+    VoidCallback? onGoHome,
+  }) {
+    return ErrorScreen(
+      title: 'Permission Denied',
+      message: 'You don\'t have permission to access this resource.',
+      errorCode: 'PERMISSION_DENIED',
+      onRetry: onRetry,
+      onGoHome: onGoHome,
+    );
+  }
+
+  /// Factory constructor for maintenance mode
+  factory ErrorScreen.maintenance({
+    VoidCallback? onRetry,
+  }) {
+    return ErrorScreen(
+      title: 'Under Maintenance',
+      message: 'We\'re performing maintenance to improve your experience. Please check back soon.',
+      errorCode: 'MAINTENANCE',
+      onRetry: onRetry,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // Error icon
-                _buildErrorIcon(context),
-
-                const SizedBox(height: 16),
-
-                // Error title
-                Text(
-                  _getErrorTitle(),
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-
-                const SizedBox(height: 16),
-
-                // Error message
-                Text(
-                  message,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-
-                const SizedBox(height: 16),
-
-                // Retry button
-                if (onRetry != null)
-                  CustomButton(
-        text: 'Try Again',
-        onPressed: onRetry!,
-        ),
-
-                const SizedBox(height: 16),
-
-                // Go back button
-                if (onGoBack != null)
-                  CustomButton(
-        text: 'Go Back',
-        onPressed: onGoBack!,
-        type: ButtonType.outline,
-        ),
-
-                // Home button
-                if (showHomeButton)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 16),
-                    child: CustomButton(
-        text: 'Return to Home',
-        onPressed: (
-      ) {
-                        final authProvider = Provider.of<AuthProvider>(context, listen: false);
-
-                        // Navigate to appropriate home based on user type
-                        if (authProvider.isDriver) {
-                          AppRouter.navigateToAndClearStack(context, AppRoutes.driverHome);
-                        } else {
-                          AppRouter.navigateToAndClearStack(context, AppRoutes.passengerHome);
-                        }
-                      },
-                      type: ButtonType.text,
-                      icon: Icons.home,
-                    ),
-                  ),
-              ],
-            ),
+    return AppPageScaffold(
+      title: 'Error',
+      showBackButton: Navigator.of(context).canPop(),
+      child: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(DesignSystem.space24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Error Icon
+              _buildErrorIcon(context),
+              
+              const SizedBox(height: DesignSystem.space24),
+              
+              // Error Content
+              _buildErrorContent(context),
+              
+              const SizedBox(height: DesignSystem.space32),
+              
+              // Action Buttons
+              _buildActionButtons(context),
+            ],
           ),
         ),
       ),
@@ -120,55 +121,198 @@ class ErrorScreen extends StatelessWidget {
     IconData iconData;
     Color iconColor;
 
-    switch (errorType) {
-      case ErrorType.network:
-        iconData = Icons.signal_wifi_off;
-        iconColor = Theme.of(context).colorScheme.primary;
+    switch (errorCode) {
+      case 'NETWORK_ERROR':
+        iconData = Icons.wifi_off;
+        iconColor = context.colors.error;
         break;
-      case ErrorType.server:
+      case 'SERVER_ERROR':
         iconData = Icons.cloud_off;
-        iconColor = Theme.of(context).colorScheme.primary;
+        iconColor = context.colors.error;
         break;
-      case ErrorType.notFound:
+      case '404':
         iconData = Icons.search_off;
-        iconColor = Theme.of(context).colorScheme.primary;
+        iconColor = context.warningColor;
         break;
-      case ErrorType.permission:
-        iconData = Icons.no_accounts;
-        iconColor = Theme.of(context).colorScheme.primary;
-        break;
-      case ErrorType.authentication:
+      case 'PERMISSION_DENIED':
         iconData = Icons.lock;
-        iconColor = Theme.of(context).colorScheme.primary;
+        iconColor = context.colors.error;
         break;
-      case ErrorType.unknown:
+      case 'MAINTENANCE':
+        iconData = Icons.construction;
+        iconColor = context.infoColor;
+        break;
       default:
         iconData = Icons.error_outline;
-        iconColor = Theme.of(context).colorScheme.primary;
+        iconColor = context.colors.error;
     }
 
-    return Icon(
-      iconData,
-      size: 120,
-      color: iconColor,
+    return Container(
+      width: 120,
+      height: 120,
+      decoration: BoxDecoration(
+        color: iconColor.withValues(alpha: 0.1),
+        shape: BoxShape.circle,
+      ),
+      child: Icon(
+        iconData,
+        size: 60,
+        color: iconColor,
+      ),
     );
   }
 
-  String _getErrorTitle() {
-    switch (errorType) {
-      case ErrorType.network:
-        return 'Network Error';
-      case ErrorType.server:
-        return 'Server Error';
-      case ErrorType.notFound:
-        return 'Not Found';
-      case ErrorType.permission:
-        return 'Permission Denied';
-      case ErrorType.authentication:
-        return 'Authentication Error';
-      case ErrorType.unknown:
-      default:
-        return 'Oops! Something Went Wrong';
-    }
+  Widget _buildErrorContent(BuildContext context) {
+    return AppCard(
+      child: Padding(
+        padding: const EdgeInsets.all(DesignSystem.space24),
+        child: Column(
+          children: [
+            // Error Title
+            Text(
+              title ?? 'Something went wrong',
+              style: context.textStyles.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            
+            const SizedBox(height: DesignSystem.space12),
+            
+            // Error Message
+            Text(
+              message ?? 'An unexpected error occurred. Please try again.',
+              style: context.textStyles.bodyLarge?.copyWith(
+                color: context.colors.onSurfaceVariant,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            
+            // Error Code (if provided)
+            if (errorCode != null) ...[
+              const SizedBox(height: DesignSystem.space16),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: DesignSystem.space12,
+                  vertical: DesignSystem.space6,
+                ),
+                decoration: BoxDecoration(
+                  color: context.colors.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(DesignSystem.radiusSmall),
+                ),
+                child: Text(
+                  'Error Code: $errorCode',
+                  style: context.textStyles.bodySmall?.copyWith(
+                    color: context.colors.onSurfaceVariant,
+                    fontFamily: 'monospace',
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionButtons(BuildContext context) {
+    return Column(
+      children: [
+        // Retry Button (if callback provided)
+        if (onRetry != null)
+          SizedBox(
+            width: double.infinity,
+            child: AppButton(
+              text: 'Try Again',
+              onPressed: onRetry!,
+              icon: Icons.refresh,
+            ),
+          ),
+        
+        // Spacing between buttons
+        if (onRetry != null && onGoHome != null)
+          const SizedBox(height: DesignSystem.space12),
+        
+        // Go Home Button (if callback provided)
+        if (onGoHome != null)
+          SizedBox(
+            width: double.infinity,
+            child: AppButton.outlined(
+              text: 'Go to Home',
+              onPressed: onGoHome!,
+              icon: Icons.home,
+            ),
+          ),
+        
+        // Default back button if no callbacks provided
+        if (onRetry == null && onGoHome == null && Navigator.of(context).canPop())
+          SizedBox(
+            width: double.infinity,
+            child: AppButton.outlined(
+              text: 'Go Back',
+              onPressed: () => Navigator.of(context).pop(),
+              icon: Icons.arrow_back,
+            ),
+          ),
+        
+        const SizedBox(height: DesignSystem.space24),
+        
+        // Additional Help
+        _buildHelpSection(context),
+      ],
+    );
+  }
+
+  Widget _buildHelpSection(BuildContext context) {
+    return AppCard.outlined(
+      child: Padding(
+        padding: const EdgeInsets.all(DesignSystem.space16),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.help_outline,
+                  size: 20,
+                  color: context.colors.primary,
+                ),
+                const SizedBox(width: DesignSystem.space8),
+                Text(
+                  'Need Help?',
+                  style: context.textStyles.titleSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            
+            const SizedBox(height: DesignSystem.space8),
+            
+            Text(
+              'If this problem persists, please contact our support team.',
+              style: context.textStyles.bodySmall?.copyWith(
+                color: context.colors.onSurfaceVariant,
+              ),
+            ),
+            
+            const SizedBox(height: DesignSystem.space12),
+            
+            AppButton.text(
+              text: 'Contact Support',
+              onPressed: () => _contactSupport(context),
+              size: AppButtonSize.small,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _contactSupport(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Support contact feature coming soon'),
+      ),
+    );
   }
 }

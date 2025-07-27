@@ -12,14 +12,7 @@ import '../../providers/bus_provider.dart';
 import '../../providers/tracking_provider.dart';
 import '../../providers/location_provider.dart';
 import '../../providers/notification_provider.dart';
-import '../../widgets/common/app_layout.dart';
-import '../../widgets/common/glassy_container.dart';
-import '../../widgets/common/custom_card.dart';
-import '../../widgets/common/custom_button.dart';
-import '../../widgets/common/loading_indicator.dart';
-import '../../widgets/driver/passenger_counter.dart';
-import '../../widgets/driver/tracking_controls.dart';
-import '../../widgets/map/map_widget.dart';
+import '../../widgets/widgets.dart';
 import '../../services/navigation_service.dart';
 import '../../helpers/dialog_helper.dart';
 import '../../helpers/error_handler.dart';
@@ -382,10 +375,10 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
     final locationProvider = Provider.of<LocationProvider>(context);
     final notificationProvider = Provider.of<NotificationProvider>(context);
 
-    return AppLayout(
+    return PageLayout(
       title: 'Driver Dashboard',
-      currentIndex: 0, // Driver home index
-      actions: [
+      showAppBar: true,
+      appBarActions: [
         // Notification icon with badge
         Stack(
           children: [
@@ -422,23 +415,27 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
           ],
         ),
       ],
-      child: _isLoading && !_isInitialized
-          ? const Center(
-              child: LoadingIndicator(),
-            )
+      body: _isLoading && !_isInitialized
+          ? const LoadingState.fullScreen(message: 'Initializing...')
           : Stack(
               children: [
                 // Map
-                MapWidget(
-                  initialPosition: locationProvider.currentLocation != null
-                      ? LatLng(
-                          locationProvider.latitude,
-                          locationProvider.longitude,
-                        )
-                      : null,
+                GoogleMap(
                   onMapCreated: _onMapCreated,
+                  initialCameraPosition: CameraPosition(
+                    target: locationProvider.currentLocation != null
+                        ? LatLng(
+                            locationProvider.latitude,
+                            locationProvider.longitude,
+                          )
+                        : const LatLng(36.7538, 3.0588), // Default to Algiers
+                    zoom: AppConfig.defaultZoomLevel,
+                  ),
                   markers: _buildMarkers(locationProvider),
                   polylines: _buildPolylines(),
+                  myLocationEnabled: true,
+                  myLocationButtonEnabled: false,
+                  zoomControlsEnabled: false,
                 ),
 
                 // Current Location Button
@@ -459,8 +456,8 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
                   top: 16,
                   left: 16,
                   right: 16,
-                  child: CustomCard(type: CardType.elevated, 
-                    backgroundColor: Theme.of(context).colorScheme.primary,
+                  child: AppCard(
+                    color: Theme.of(context).colorScheme.surfaceVariant,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
@@ -551,9 +548,9 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
                   bottom: 80, // Adjusted to account for bottom navigation
                   left: 0,
                   right: 0,
-                  child: CustomCard(type: CardType.elevated, 
+                  child: AppCard(
                     borderRadius: BorderRadius.circular(24),
-                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    color: Theme.of(context).colorScheme.surfaceVariant,
                     margin: const EdgeInsets.only(bottom: 16, left: 16, right: 16),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -573,17 +570,16 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
                           onCountChanged: _updatePassengerCount,
                           isEnabled: trackingProvider.isTracking,
                           initialCount: trackingProvider.currentTrip?.maxPassengers ?? 0,
+                          maxCapacity: busProvider.selectedBus?.capacity ?? 50,
                         ),
 
                         const SizedBox(height: 16),
 
                         // Line selection button
-                        CustomButton(
-        text: 'Select Line',
-        onPressed: _goToLineSelection,
-        type: ButtonType.outline,
-        color: Theme.of(context).colorScheme.primary,
-        ),
+                        AppButton.outlined(
+                          text: 'Select Line',
+                          onPressed: _goToLineSelection,
+                        ),
                       ],
                     ),
                   ),
@@ -591,7 +587,10 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
 
                 // Loading overlay
                 if (_isLoading && _isInitialized)
-                  const FullScreenLoading(),
+                  LoadingOverlay(
+                    isLoading: true,
+                    child: Container(),
+                  ),
               ],
             ),
     );

@@ -167,15 +167,16 @@ class Anomaly {
 
   String get statusText => resolved ? 'Resolved' : 'Active';
   Color get statusColor => resolved ? Colors.green : severityColor;
-  
+
   bool get hasLocation => locationLatitude != null && locationLongitude != null;
-  
-  String get formattedCreatedAt => '${createdAt.day}/${createdAt.month}/${createdAt.year} ${createdAt.hour}:${createdAt.minute.toString().padLeft(2, '0')}';
-  
-  String get formattedResolvedAt => resolvedAt != null 
+
+  String get formattedCreatedAt =>
+      '${createdAt.day}/${createdAt.month}/${createdAt.year} ${createdAt.hour}:${createdAt.minute.toString().padLeft(2, '0')}';
+
+  String get formattedResolvedAt => resolvedAt != null
       ? '${resolvedAt!.day}/${resolvedAt!.month}/${resolvedAt!.year} ${resolvedAt!.hour}:${resolvedAt!.minute.toString().padLeft(2, '0')}'
       : '';
-  
+
   // Additional properties expected by UI components
   String get typeDisplayName => type.displayName;
   String get severityDisplayName => severity.displayName;
@@ -186,20 +187,18 @@ class Anomaly {
     if (diff.inMinutes > 0) return '${diff.inMinutes}m ago';
     return 'Just now';
   }
+
   bool get isRecent => DateTime.now().difference(createdAt).inHours < 24;
-  
+
   // Location getters for backward compatibility
   double get latitude => locationLatitude ?? 0.0;
   double get longitude => locationLongitude ?? 0.0;
-  
+
   // Object wrappers for compatibility with UI components
-  Map<String, dynamic>? get bus => busId != null 
-    ? {'id': busId, 'license_plate': 'Bus $busId'}
-    : null;
-    
-  Map<String, dynamic>? get trip => tripId != null 
-    ? {'id': tripId}
-    : null;
+  Map<String, dynamic>? get bus =>
+      busId != null ? {'id': busId, 'license_plate': 'Bus $busId'} : null;
+
+  Map<String, dynamic>? get trip => tripId != null ? {'id': tripId} : null;
 
   Anomaly copyWith({
     String? id,
@@ -317,21 +316,27 @@ class LocationUpdate {
   }
 
   // Helper getters
-  String get speedText => speed != null ? '${speed!.toStringAsFixed(1)} km/h' : 'N/A';
-  String get headingText => heading != null ? '${heading!.toStringAsFixed(0)}°' : 'N/A';
-  String get accuracyText => accuracy != null ? '±${accuracy!.toStringAsFixed(1)}m' : 'N/A';
-  String get distanceToStopText => distanceToStop != null 
-      ? '${(distanceToStop! / 1000).toStringAsFixed(2)} km' 
+  String get speedText =>
+      speed != null ? '${speed!.toStringAsFixed(1)} km/h' : 'N/A';
+  String get headingText =>
+      heading != null ? '${heading!.toStringAsFixed(0)}°' : 'N/A';
+  String get accuracyText =>
+      accuracy != null ? '±${accuracy!.toStringAsFixed(1)}m' : 'N/A';
+  String get distanceToStopText => distanceToStop != null
+      ? '${(distanceToStop! / 1000).toStringAsFixed(2)} km'
       : 'N/A';
-  
+
   bool get hasSpeed => speed != null && speed! > 0;
   bool get isStationary => speed != null && speed! < 0.5;
-  bool get isNearStop => distanceToStop != null && distanceToStop! < 100; // within 100m
-  
-  String get formattedTimestamp => '${createdAt.hour}:${createdAt.minute.toString().padLeft(2, '0')}:${createdAt.second.toString().padLeft(2, '0')}';
-  
+  bool get isNearStop =>
+      distanceToStop != null && distanceToStop! < 100; // within 100m
+
+  String get formattedTimestamp =>
+      '${createdAt.hour}:${createdAt.minute.toString().padLeft(2, '0')}:${createdAt.second.toString().padLeft(2, '0')}';
+
   // Additional properties expected by UI components
-  String get formattedCoordinates => '${latitude.toStringAsFixed(6)}, ${longitude.toStringAsFixed(6)}';
+  String get formattedCoordinates =>
+      '${latitude.toStringAsFixed(6)}, ${longitude.toStringAsFixed(6)}';
   String get formattedTime => formattedTimestamp;
   String get timeAgo {
     final diff = DateTime.now().difference(createdAt);
@@ -340,20 +345,21 @@ class LocationUpdate {
     if (diff.inMinutes > 0) return '${diff.inMinutes}m ago';
     return 'Just now';
   }
+
   bool get isRecent => DateTime.now().difference(createdAt).inHours < 24;
-  
+
   // Object wrappers for compatibility with UI components
-  Map<String, dynamic>? get bus => busId != null 
-    ? {'id': busId, 'license_plate': 'Bus $busId'}
-    : null;
-    
-  Map<String, dynamic>? get trip => tripId != null 
-    ? {'id': tripId}
-    : null;
-    
-  Map<String, dynamic>? get nearestStop => nearestStopId != null 
-    ? {'id': nearestStopId, 'name': 'Stop ${nearestStopId?.substring(0, 8) ?? 'Unknown'}'}
-    : null;
+  Map<String, dynamic>? get bus =>
+      busId != null ? {'id': busId, 'license_plate': 'Bus $busId'} : null;
+
+  Map<String, dynamic>? get trip => tripId != null ? {'id': tripId} : null;
+
+  Map<String, dynamic>? get nearestStop => nearestStopId != null
+      ? {
+          'id': nearestStopId,
+          'name': 'Stop ${nearestStopId?.substring(0, 8) ?? 'Unknown'}',
+        }
+      : null;
 
   LocationUpdate copyWith({
     String? id,
@@ -533,10 +539,33 @@ class Trip {
   }
 
   // Helper getters
-  Duration? get duration => endTime != null 
+  Duration? get duration => endTime != null
       ? endTime!.difference(startTime)
       : DateTime.now().difference(startTime);
-  
+
+  /// Get start stop name (alias for startStopId)
+  String? get fromStop => startStopId;
+
+  /// Get end stop name (alias for endStopId)
+  String? get toStop => endStopId;
+
+  /// Get trip status based on completion state
+  String get status {
+    if (isCompleted) {
+      return 'completed';
+    } else if (endTime != null) {
+      return 'ended';
+    } else {
+      return 'active';
+    }
+  }
+
+  /// Get trip rating (mock property)
+  double get rating => 4.2; // Mock rating
+
+  /// Get scheduled time (alias for startTime)
+  DateTime get scheduledTime => startTime;
+
   String get durationText {
     final dur = duration;
     if (dur == null) return 'N/A';
@@ -547,30 +576,32 @@ class Trip {
     }
     return '${minutes}m';
   }
-  
-  String get distanceText => distance != null 
-      ? '${distance!.toStringAsFixed(1)} km' 
-      : 'N/A';
-  
-  String get averageSpeedText => averageSpeed != null 
-      ? '${averageSpeed!.toStringAsFixed(1)} km/h' 
-      : 'N/A';
-  
+
+  String get distanceText =>
+      distance != null ? '${distance!.toStringAsFixed(1)} km' : 'N/A';
+
+  String get averageSpeedText =>
+      averageSpeed != null ? '${averageSpeed!.toStringAsFixed(1)} km/h' : 'N/A';
+
   String get statusText => isCompleted ? 'Completed' : 'In Progress';
   Color get statusColor => isCompleted ? Colors.green : Colors.blue;
-  
-  String get formattedStartTime => '${startTime.day}/${startTime.month}/${startTime.year} ${startTime.hour}:${startTime.minute.toString().padLeft(2, '0')}';
-  String get formattedEndTime => endTime != null 
+
+  String get formattedStartTime =>
+      '${startTime.day}/${startTime.month}/${startTime.year} ${startTime.hour}:${startTime.minute.toString().padLeft(2, '0')}';
+  String get formattedEndTime => endTime != null
       ? '${endTime!.day}/${endTime!.month}/${endTime!.year} ${endTime!.hour}:${endTime!.minute.toString().padLeft(2, '0')}'
       : 'Ongoing';
-  
+
   // Additional properties expected by UI components
   String get formattedDuration => durationText;
   String get formattedDistance => distanceText;
   double get totalDistance => distance ?? 0.0;
-  double? get maxSpeed => averageSpeed != null ? averageSpeed! * 1.2 : null; // Estimate max speed as 20% higher than average
-  IconData get statusIcon => isCompleted ? Icons.check_circle : Icons.play_arrow;
-  
+  double? get maxSpeed => averageSpeed != null
+      ? averageSpeed! * 1.2
+      : null; // Estimate max speed as 20% higher than average
+  IconData get statusIcon =>
+      isCompleted ? Icons.check_circle : Icons.play_arrow;
+
   // Computed properties for UI
   bool get isRecent => DateTime.now().difference(createdAt).inHours < 24;
   String get timeAgo {
@@ -580,18 +611,33 @@ class Trip {
     if (diff.inMinutes > 0) return '${diff.inMinutes}m ago';
     return 'Just now';
   }
-  
+
   // Stop-related properties from details
-  Map<String, dynamic>? get startStop => startStopId != null 
-    ? {'id': startStopId, 'name': 'Stop ${startStopId?.substring(0, 8) ?? 'Unknown'}'}
-    : null;
-  Map<String, dynamic>? get endStop => endStopId != null 
-    ? {'id': endStopId, 'name': 'Stop ${endStopId?.substring(0, 8) ?? 'Unknown'}'}
-    : null;
-  
+  Map<String, dynamic>? get startStop => startStopId != null
+      ? {
+          'id': startStopId,
+          'name': 'Stop ${startStopId?.substring(0, 8) ?? 'Unknown'}',
+        }
+      : null;
+  Map<String, dynamic>? get endStop => endStopId != null
+      ? {
+          'id': endStopId,
+          'name': 'Stop ${endStopId?.substring(0, 8) ?? 'Unknown'}',
+        }
+      : null;
+
   // Line and bus wrapper objects for compatibility
-  Map<String, dynamic> get line => lineDetails ?? {'id': lineId, 'name': 'Line $lineId'};
-  Map<String, dynamic> get bus => busDetails ?? {'id': busId, 'license_plate': 'Bus $busId'};
+  Map<String, dynamic> get line =>
+      lineDetails ?? {'id': lineId, 'name': 'Line $lineId'};
+  Map<String, dynamic> get bus =>
+      busDetails ?? {'id': busId, 'license_plate': 'Bus $busId'};
+      
+  /// Additional properties for UI compatibility
+  String get routeName => lineDetails?['name'] as String? ?? 'Route $lineId';
+  String get startLocation => startStopId ?? 'Start Stop';
+  String get endLocation => endStopId ?? 'End Stop';
+  int get currentPassengers => maxPassengers;
+  String get nextStop => 'Next Stop'; // Mock - should come from tracking data
 }
 
 /// BusLine assignment model for tracking bus-line relationships
@@ -632,7 +678,9 @@ class BusLine {
       lineId: json['line'] as String,
       lineDetails: json['line_details'] as Map<String, dynamic>?,
       isActive: json['is_active'] as bool? ?? false,
-      trackingStatus: TrackingStatus.fromValue(json['tracking_status'] as String? ?? 'idle'),
+      trackingStatus: TrackingStatus.fromValue(
+        json['tracking_status'] as String? ?? 'idle',
+      ),
       tripId: json['trip_id'] as String?,
       startTime: json['start_time'] != null
           ? DateTime.parse(json['start_time'] as String)
@@ -687,19 +735,41 @@ class BusLine {
 
   String get statusText => isActive ? 'Active' : 'Inactive';
   Color get statusColor => isActive ? Colors.green : Colors.red;
-  
+
   bool get hasCurrentTrip => tripId != null;
   bool get isTracking => trackingStatus == TrackingStatus.active;
-  
+
   // Additional properties expected by UI components
   String get trackingStatusText => trackingStatus.displayName;
-  String get formattedAssignedAt => startTime != null 
+  String get formattedAssignedAt => startTime != null
       ? '${startTime!.day}/${startTime!.month}/${startTime!.year} ${startTime!.hour}:${startTime!.minute.toString().padLeft(2, '0')}'
       : 'Not assigned';
-  
+
   // Object wrappers for compatibility with UI components
-  Map<String, dynamic> get bus => busDetails ?? {'id': busId, 'license_plate': 'Bus $busId'};
-  Map<String, dynamic> get line => lineDetails ?? {'id': lineId, 'name': 'Line $lineId'};
+  Map<String, dynamic> get bus =>
+      busDetails ?? {'id': busId, 'license_plate': 'Bus $busId'};
+  Map<String, dynamic> get line =>
+      lineDetails ?? {'id': lineId, 'name': 'Line $lineId'};
+
+  /// Create BusLine from Line model
+  factory BusLine.fromLine(dynamic line) {
+    // For now, create a basic BusLine from a Line
+    // This is a temporary solution - needs proper implementation
+    return BusLine(
+      id: line.id ?? '',
+      busId: '', // No bus assigned yet
+      busDetails: null,
+      lineId: line.id ?? '',
+      lineDetails: {'name': line.name ?? '', 'color': line.color ?? ''},
+      isActive: false,
+      trackingStatus: TrackingStatus.idle,
+      tripId: null,
+      startTime: null,
+      endTime: null,
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+    );
+  }
 
   BusLine copyWith({
     String? id,
@@ -735,16 +805,18 @@ class BusLine {
 /// Request models for Tracking operations
 
 class AnomalyCreateRequest {
+  final String? busId;
   final AnomalyType type;
   final String description;
-  final AnomalySeverity? severity;
+  final AnomalySeverity severity;
   final double? locationLatitude;
   final double? locationLongitude;
 
   const AnomalyCreateRequest({
+    this.busId,
     required this.type,
     required this.description,
-    this.severity,
+    required this.severity,
     this.locationLatitude,
     this.locationLongitude,
   });
@@ -753,28 +825,35 @@ class AnomalyCreateRequest {
     return {
       'type': type.value,
       'description': description,
-      if (severity != null) 'severity': severity!.value,
-      if (locationLatitude != null) 'location_latitude': locationLatitude.toString(),
-      if (locationLongitude != null) 'location_longitude': locationLongitude.toString(),
+      'severity': severity.value,
+      if (busId != null) 'bus_id': busId,
+      if (locationLatitude != null)
+        'location_latitude': locationLatitude.toString(),
+      if (locationLongitude != null)
+        'location_longitude': locationLongitude.toString(),
     };
   }
 }
 
 class LocationUpdateCreateRequest {
+  final String? busId;
   final double latitude;
   final double longitude;
   final double? altitude;
   final double? speed;
   final double? heading;
   final double? accuracy;
+  final String? tripId;
 
   const LocationUpdateCreateRequest({
+    this.busId,
     required this.latitude,
     required this.longitude,
     this.altitude,
     this.speed,
     this.heading,
     this.accuracy,
+    this.tripId,
   });
 
   Map<String, dynamic> toJson() {
@@ -793,7 +872,9 @@ class TripCreateRequest {
   final String busId;
   final String driverId;
   final String lineId;
-  final DateTime startTime;
+  final String originStopId;
+  final String destinationStopId;
+  final DateTime? scheduledDeparture;
   final String? startStopId;
   final String? notes;
 
@@ -801,7 +882,9 @@ class TripCreateRequest {
     required this.busId,
     required this.driverId,
     required this.lineId,
-    required this.startTime,
+    required this.originStopId,
+    required this.destinationStopId,
+    this.scheduledDeparture,
     this.startStopId,
     this.notes,
   });
@@ -811,7 +894,9 @@ class TripCreateRequest {
       'bus': busId,
       'driver': driverId,
       'line': lineId,
-      'start_time': startTime.toIso8601String(),
+      'origin_stop_id': originStopId,
+      'destination_stop_id': destinationStopId,
+      if (scheduledDeparture != null) 'scheduled_departure': scheduledDeparture!.toIso8601String(),
       if (startStopId != null) 'start_stop': startStopId,
       if (notes != null) 'notes': notes,
     };
@@ -822,16 +907,10 @@ class BusLineCreateRequest {
   final String busId;
   final String lineId;
 
-  const BusLineCreateRequest({
-    required this.busId,
-    required this.lineId,
-  });
+  const BusLineCreateRequest({required this.busId, required this.lineId});
 
   Map<String, dynamic> toJson() {
-    return {
-      'bus': busId,
-      'line': lineId,
-    };
+    return {'bus': busId, 'line': lineId};
   }
 }
 
@@ -867,20 +946,94 @@ class TripQueryParameters {
 
   Map<String, dynamic> toMap() {
     final params = <String, dynamic>{};
-    
+
     if (busId != null) params['bus'] = busId;
     if (driverId != null) params['driver'] = driverId;
     if (lineId != null) params['line'] = lineId;
     if (isCompleted != null) params['is_completed'] = isCompleted;
-    if (startTimeAfter != null) params['start_time__gte'] = startTimeAfter!.toIso8601String();
-    if (startTimeBefore != null) params['start_time__lte'] = startTimeBefore!.toIso8601String();
-    if (endTimeAfter != null) params['end_time__gte'] = endTimeAfter!.toIso8601String();
-    if (endTimeBefore != null) params['end_time__lte'] = endTimeBefore!.toIso8601String();
-    if (orderBy != null && orderBy!.isNotEmpty) params['ordering'] = orderBy!.join(',');
+    if (startTimeAfter != null)
+      params['start_time__gte'] = startTimeAfter!.toIso8601String();
+    if (startTimeBefore != null)
+      params['start_time__lte'] = startTimeBefore!.toIso8601String();
+    if (endTimeAfter != null)
+      params['end_time__gte'] = endTimeAfter!.toIso8601String();
+    if (endTimeBefore != null)
+      params['end_time__lte'] = endTimeBefore!.toIso8601String();
+    if (orderBy != null && orderBy!.isNotEmpty)
+      params['ordering'] = orderBy!.join(',');
     if (offset != null) params['offset'] = offset;
     if (limit != null) params['limit'] = limit;
     if (pageSize != null) params['page_size'] = pageSize;
-    
+
     return params;
+  }
+}
+
+/// Real-time tracking event types
+enum TrackingEventType {
+  busLocationUpdate,
+  tripUpdate,
+  anomalyDetected,
+  arrivalEstimate,
+  driverStatusUpdate,
+  lineStatusUpdate,
+  connectionError,
+  connectionClosed,
+  error,
+}
+
+/// Real-time tracking event
+class TrackingEvent {
+  final TrackingEventType type;
+  final String? busId;
+  final String? tripId;
+  final String? driverId;
+  final String? lineId;
+  final Map<String, dynamic> data;
+  final DateTime timestamp;
+
+  TrackingEvent({
+    required this.type,
+    this.busId,
+    this.tripId,
+    this.driverId,
+    this.lineId,
+    required this.data,
+    required this.timestamp,
+  });
+
+  factory TrackingEvent.fromJson(Map<String, dynamic> json) {
+    return TrackingEvent(
+      type: _parseEventType(json['type'] as String?),
+      busId: json['bus_id'] as String?,
+      tripId: json['trip_id'] as String?,
+      driverId: json['driver_id'] as String?,
+      lineId: json['line_id'] as String?,
+      data: json,
+      timestamp: DateTime.tryParse(json['timestamp'] as String? ?? '') ?? DateTime.now(),
+    );
+  }
+
+  static TrackingEventType _parseEventType(String? type) {
+    switch (type) {
+      case 'bus_location_update':
+        return TrackingEventType.busLocationUpdate;
+      case 'trip_update':
+        return TrackingEventType.tripUpdate;
+      case 'anomaly_detected':
+        return TrackingEventType.anomalyDetected;
+      case 'arrival_estimate':
+        return TrackingEventType.arrivalEstimate;
+      case 'driver_status_update':
+        return TrackingEventType.driverStatusUpdate;
+      case 'line_status_update':
+        return TrackingEventType.lineStatusUpdate;
+      case 'connection_error':
+        return TrackingEventType.connectionError;
+      case 'connection_closed':
+        return TrackingEventType.connectionClosed;
+      default:
+        return TrackingEventType.error;
+    }
   }
 }

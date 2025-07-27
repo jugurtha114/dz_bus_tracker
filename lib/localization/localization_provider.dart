@@ -8,15 +8,18 @@ class LocalizationProvider with ChangeNotifier {
   Locale _locale;
 
   LocalizationProvider({Locale? locale})
-      : _locale = locale ?? Locale(AppConstants.defaultLanguage);
+    : _locale = locale ?? Locale(AppConstants.defaultLanguage);
 
   Locale get locale => _locale;
 
   // Initialize the locale from storage
   Future<void> initialize() async {
-    final savedLanguage = await StorageUtils.getFromStorage<String>(AppConstants.languageKey);
+    final savedLanguage = await StorageUtils.getFromStorage<String>(
+      AppConstants.languageKey,
+    );
 
-    if (savedLanguage != null && AppConstants.supportedLanguages.contains(savedLanguage)) {
+    if (savedLanguage != null &&
+        AppConstants.supportedLanguages.contains(savedLanguage)) {
       _locale = Locale(savedLanguage);
     } else {
       _locale = Locale(AppConstants.defaultLanguage);
@@ -27,7 +30,8 @@ class LocalizationProvider with ChangeNotifier {
 
   // Change the app language
   Future<void> changeLocale(String languageCode) async {
-    if (AppConstants.supportedLanguages.contains(languageCode) && languageCode != _locale.languageCode) {
+    if (AppConstants.supportedLanguages.contains(languageCode) &&
+        languageCode != _locale.languageCode) {
       _locale = Locale(languageCode);
 
       await StorageUtils.saveToStorage(AppConstants.languageKey, languageCode);
@@ -38,7 +42,8 @@ class LocalizationProvider with ChangeNotifier {
 
   // Get language name
   String getLanguageName(String languageCode) {
-    return AppConstants.languageNames[languageCode] ?? languageCode.toUpperCase();
+    return AppConstants.languageNames[languageCode] ??
+        languageCode.toUpperCase();
   }
 
   // Get current language name

@@ -10,14 +10,10 @@ import '../../config/theme_config.dart';
 import '../../models/bus_model.dart';
 import '../../providers/passenger_provider.dart';
 import '../../providers/location_provider.dart';
-import '../../widgets/common/app_layout.dart';
-import '../../widgets/common/glassy_container.dart';
-import '../../widgets/common/loading_indicator.dart';
-import '../../widgets/map/map_widget.dart';
-import '../../widgets/passenger/occupancy_indicator.dart';
+import '../../widgets/widgets.dart';
+import '../../widgets/features/passenger/occupancy_indicator.dart';
 import '../../services/navigation_service.dart';
 import '../../helpers/error_handler.dart';
-import '../../widgets/common/custom_card.dart';
 
 class BusTrackingScreen extends StatefulWidget {
   const BusTrackingScreen({Key? key}) : super(key: key);
@@ -269,10 +265,10 @@ class _BusTrackingScreenState extends State<BusTrackingScreen> {
 
     if (bus == null) {
       // Return early if no bus is selected
-      return AppLayout(
+      return PageLayout(
+        showAppBar: true,
         title: 'Bus Tracking',
-        showBottomNav: false, // No bottom nav for tracking screen
-        child: const Center(
+        body: const Center(
           child: Text('No bus selected'),
         ),
       );
@@ -296,10 +292,10 @@ class _BusTrackingScreenState extends State<BusTrackingScreen> {
     // Note: Line info would come from a separate API call
     // For now using placeholder values
 
-    return AppLayout(
+    return PageLayout(
       title: 'Bus Tracking',
-      showBottomNav: false, // No bottom nav for tracking screen
-      actions: [
+      showAppBar: true,
+      appBarActions: [
         // Rate driver button
         IconButton(
           icon: const Icon(Icons.star),
@@ -307,12 +303,15 @@ class _BusTrackingScreenState extends State<BusTrackingScreen> {
           tooltip: 'Rate Driver',
         ),
       ],
-      child: Stack(
+      body: Stack(
         children: [
           // Map
-          MapWidget(
-            initialPosition: _getBusPosition(bus),
+          GoogleMap(
             onMapCreated: _onMapCreated,
+            initialCameraPosition: CameraPosition(
+              target: const LatLng(36.7538, 3.0588),
+              zoom: AppConfig.defaultZoomLevel,
+            ),
             markers: _buildMarkers(bus, locationProvider),
             polylines: _buildPolylines(),
             onCameraMove: (_) {
@@ -358,11 +357,9 @@ class _BusTrackingScreenState extends State<BusTrackingScreen> {
             bottom: 0,
             left: 0,
             right: 0,
-            child: CustomCard(type: CardType.elevated, 
+            child: AppCard(
               borderRadius: BorderRadius.circular(24),
-              backgroundColor: Theme.of(context).colorScheme.surface,
-              borderColor: Colors.white.withOpacity(0.1),
-              borderWidth: 1,
+              color: Theme.of(context).colorScheme.surface,
               margin: const EdgeInsets.only(bottom: 16, left: 16, right: 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -427,7 +424,8 @@ class _BusTrackingScreenState extends State<BusTrackingScreen> {
                         ),
                         const SizedBox(height: 16),
                         OccupancyIndicator(
-                          occupancyPercent: occupancyPercent,
+                          currentCount: currentPassengers,
+                          maxCapacity: capacity,
                           showText: true,
                         ),
                       ],
@@ -451,7 +449,7 @@ class _BusTrackingScreenState extends State<BusTrackingScreen> {
 
           // Loading indicator
           if (_isLoading)
-            const FullScreenLoading(),
+            const LoadingState.fullScreen(),
         ],
       ),
     );

@@ -30,9 +30,8 @@ class AuthService {
       if (response is Map<String, dynamic> &&
           response.containsKey(ApiConstants.accessKey) &&
           response.containsKey(ApiConstants.refreshKey)) {
-
         final authTokens = AuthTokenResponse.fromJson(response);
-        
+
         // Save auth tokens
         await _saveAuthData(
           token: authTokens.accessToken,
@@ -122,12 +121,17 @@ class AuthService {
         files: request.getFiles(),
       );
 
-      return AuthResponse.success(response, message: 'Driver registration successful');
+      return AuthResponse.success(
+        response,
+        message: 'Driver registration successful',
+      );
     } catch (e) {
       if (e is ApiException) {
         return AuthResponse.failure(e.message);
       }
-      return AuthResponse.failure('Driver registration failed: ${e.toString()}');
+      return AuthResponse.failure(
+        'Driver registration failed: ${e.toString()}',
+      );
     }
   }
 
@@ -142,7 +146,10 @@ class AuthService {
         body: request.toJson(),
       );
 
-      return AuthResponse.success(response, message: 'Password reset email sent');
+      return AuthResponse.success(
+        response,
+        message: 'Password reset email sent',
+      );
     } catch (e) {
       if (e is ApiException) {
         return AuthResponse.failure(e.message);
@@ -171,12 +178,17 @@ class AuthService {
         body: request.toJson(),
       );
 
-      return AuthResponse.success(response, message: 'Password reset successful');
+      return AuthResponse.success(
+        response,
+        message: 'Password reset successful',
+      );
     } catch (e) {
       if (e is ApiException) {
         return AuthResponse.failure(e.message);
       }
-      return AuthResponse.failure('Password reset confirmation failed: ${e.toString()}');
+      return AuthResponse.failure(
+        'Password reset confirmation failed: ${e.toString()}',
+      );
     }
   }
 
@@ -191,7 +203,10 @@ class AuthService {
       // Even if the API call fails, we should still clear local auth data
       debugPrint('Logout API call failed: ${e.toString()}');
       await _clearAuthData();
-      return AuthResponse.success(null, message: 'Logout completed (with API warning)');
+      return AuthResponse.success(
+        null,
+        message: 'Logout completed (with API warning)',
+      );
     }
   }
 
@@ -206,9 +221,8 @@ class AuthService {
 
       if (response is Map<String, dynamic> &&
           response.containsKey(ApiConstants.accessKey)) {
-
         final newAccessToken = response[ApiConstants.accessKey] as String;
-        
+
         // Save new access token
         await StorageUtils.saveToStorage(AppConstants.tokenKey, newAccessToken);
 
@@ -241,7 +255,9 @@ class AuthService {
 
   /// Check if user is authenticated
   Future<bool> isAuthenticated() async {
-    final token = await StorageUtils.getFromStorage<String>(AppConstants.tokenKey);
+    final token = await StorageUtils.getFromStorage<String>(
+      AppConstants.tokenKey,
+    );
 
     if (token == null || token.isEmpty) {
       return false;
@@ -259,7 +275,9 @@ class AuthService {
 
   // Get refresh token
   Future<String?> getRefreshToken() async {
-    return await StorageUtils.getFromStorage<String>(AppConstants.refreshTokenKey);
+    return await StorageUtils.getFromStorage<String>(
+      AppConstants.refreshTokenKey,
+    );
   }
 
   // Save authentication data
@@ -268,7 +286,10 @@ class AuthService {
     required String refreshToken,
   }) async {
     await StorageUtils.saveToStorage(AppConstants.tokenKey, token);
-    await StorageUtils.saveToStorage(AppConstants.refreshTokenKey, refreshToken);
+    await StorageUtils.saveToStorage(
+      AppConstants.refreshTokenKey,
+      refreshToken,
+    );
   }
 
   // Clear authentication data

@@ -24,7 +24,8 @@ class PermissionHelper {
       final shouldOpenSettings = await DialogHelper.showConfirmDialog(
         context,
         title: 'Location Permission Required',
-        message: 'Location permission is required for this feature. Please enable it in app settings.',
+        message:
+            'Location permission is required for this feature. Please enable it in app settings.',
         confirmText: 'Open Settings',
         cancelText: 'Cancel',
       );
@@ -55,7 +56,8 @@ class PermissionHelper {
       final shouldOpenSettings = await DialogHelper.showConfirmDialog(
         context,
         title: 'Notification Permission Required',
-        message: 'Notification permission is required for this feature. Please enable it in app settings.',
+        message:
+            'Notification permission is required for this feature. Please enable it in app settings.',
         confirmText: 'Open Settings',
         cancelText: 'Cancel',
       );
@@ -85,7 +87,8 @@ class PermissionHelper {
       final shouldOpenSettings = await DialogHelper.showConfirmDialog(
         context,
         title: 'Camera Permission Required',
-        message: 'Camera permission is required for this feature. Please enable it in app settings.',
+        message:
+            'Camera permission is required for this feature. Please enable it in app settings.',
         confirmText: 'Open Settings',
         cancelText: 'Cancel',
       );
@@ -115,7 +118,8 @@ class PermissionHelper {
       final shouldOpenSettings = await DialogHelper.showConfirmDialog(
         context,
         title: 'Storage Permission Required',
-        message: 'Storage permission is required for this feature. Please enable it in app settings.',
+        message:
+            'Storage permission is required for this feature. Please enable it in app settings.',
         confirmText: 'Open Settings',
         cancelText: 'Cancel',
       );
@@ -139,9 +143,9 @@ class PermissionHelper {
 
   // Handle permission exception
   static void handlePermissionException(
-      BuildContext context,
-      LocationException exception,
-      ) {
+    BuildContext context,
+    LocationException exception,
+  ) {
     if (exception.message.contains('Location permission is denied')) {
       DialogHelper.showConfirmDialog(
         context,

@@ -73,10 +73,7 @@ class TripService extends BaseService {
   }
 
   // End a trip
-  Future<void> endTrip({
-    required String tripId,
-    String? notes,
-  }) async {
+  Future<void> endTrip({required String tripId, String? notes}) async {
     try {
       final body = {
         'status': 'completed',
@@ -251,10 +248,12 @@ class TripService extends BaseService {
   }) async {
     try {
       final queryParams = <String, String>{};
-      
+
       if (period != null) queryParams['period'] = period;
-      if (startDate != null) queryParams['start_date'] = startDate.toIso8601String().split('T')[0];
-      if (endDate != null) queryParams['end_date'] = endDate.toIso8601String().split('T')[0];
+      if (startDate != null)
+        queryParams['start_date'] = startDate.toIso8601String().split('T')[0];
+      if (endDate != null)
+        queryParams['end_date'] = endDate.toIso8601String().split('T')[0];
       if (lineId != null) queryParams['line_id'] = lineId;
       if (driverId != null) queryParams['driver_id'] = driverId;
 
@@ -277,10 +276,12 @@ class TripService extends BaseService {
   }) async {
     try {
       final queryParams = <String, String>{};
-      
+
       if (period != null) queryParams['period'] = period;
-      if (startDate != null) queryParams['start_date'] = startDate.toIso8601String().split('T')[0];
-      if (endDate != null) queryParams['end_date'] = endDate.toIso8601String().split('T')[0];
+      if (startDate != null)
+        queryParams['start_date'] = startDate.toIso8601String().split('T')[0];
+      if (endDate != null)
+        queryParams['end_date'] = endDate.toIso8601String().split('T')[0];
 
       final response = await apiClient.get(
         ApiEndpoints.buildUrl('$_baseEndpoint/line-statistics/'),
@@ -299,7 +300,7 @@ class TripService extends BaseService {
   }) async {
     try {
       final queryParams = <String, String>{};
-      
+
       if (date != null) {
         queryParams['date'] = date.toIso8601String().split('T')[0];
       }
@@ -322,9 +323,11 @@ class TripService extends BaseService {
   }) async {
     try {
       final queryParams = <String, String>{};
-      
-      if (startDate != null) queryParams['start_date'] = startDate.toIso8601String().split('T')[0];
-      if (endDate != null) queryParams['end_date'] = endDate.toIso8601String().split('T')[0];
+
+      if (startDate != null)
+        queryParams['start_date'] = startDate.toIso8601String().split('T')[0];
+      if (endDate != null)
+        queryParams['end_date'] = endDate.toIso8601String().split('T')[0];
 
       final response = await apiClient.get(
         ApiEndpoints.buildUrl('$_baseEndpoint/daily-statistics/'),
@@ -343,10 +346,8 @@ class TripService extends BaseService {
     int limit = 10,
   }) async {
     try {
-      final queryParams = <String, String>{
-        'limit': limit.toString(),
-      };
-      
+      final queryParams = <String, String>{'limit': limit.toString()};
+
       if (period != null) queryParams['period'] = period;
 
       final response = await apiClient.get(
@@ -371,12 +372,14 @@ class TripService extends BaseService {
   }) async {
     try {
       final queryParams = <String, String>{};
-      
+
       if (lineId != null) queryParams['line_id'] = lineId;
       if (driverId != null) queryParams['driver_id'] = driverId;
       if (busId != null) queryParams['bus_id'] = busId;
-      if (startDate != null) queryParams['start_date'] = startDate.toIso8601String().split('T')[0];
-      if (endDate != null) queryParams['end_date'] = endDate.toIso8601String().split('T')[0];
+      if (startDate != null)
+        queryParams['start_date'] = startDate.toIso8601String().split('T')[0];
+      if (endDate != null)
+        queryParams['end_date'] = endDate.toIso8601String().split('T')[0];
       if (limit != null) queryParams['limit'] = limit.toString();
 
       final response = await apiClient.get(
@@ -394,7 +397,7 @@ class TripService extends BaseService {
     if (error is ApiException) {
       return error;
     }
-    
+
     return ApiException(
       'An error occurred while processing trip data',
       statusCode: 500,

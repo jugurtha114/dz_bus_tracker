@@ -137,6 +137,28 @@ class Achievement {
   final int progress;
   final double progressPercentage;
 
+  // Convenience getters for UI compatibility
+  String get title => name;
+  int get points => pointsReward ?? 0;
+  
+  // Category mapping based on achievement type
+  String get category {
+    switch (achievementType) {
+      case AchievementType.trips:
+        return 'trips';
+      case AchievementType.distance:
+        return 'travel';
+      case AchievementType.eco:
+        return 'eco';
+      case AchievementType.social:
+        return 'social';
+      case AchievementType.streak:
+        return 'travel';
+      default:
+        return 'general';
+    }
+  }
+
   const Achievement({
     required this.id,
     required this.name,
@@ -157,13 +179,18 @@ class Achievement {
       name: json['name'] as String,
       description: json['description'] as String,
       icon: json['icon'] as String,
-      achievementType: AchievementType.fromValue(json['achievement_type'] as String),
+      achievementType: AchievementType.fromValue(
+        json['achievement_type'] as String,
+      ),
       thresholdValue: json['threshold_value'] as int?,
       pointsReward: json['points_reward'] as int?,
-      rarity: json['rarity'] != null ? Rarity.fromValue(json['rarity'] as String) : null,
+      rarity: json['rarity'] != null
+          ? Rarity.fromValue(json['rarity'] as String)
+          : null,
       isUnlocked: json['is_unlocked'] as bool? ?? false,
       progress: json['progress'] as int? ?? 0,
-      progressPercentage: (json['progress_percentage'] as num?)?.toDouble() ?? 0.0,
+      progressPercentage:
+          (json['progress_percentage'] as num?)?.toDouble() ?? 0.0,
     );
   }
 
@@ -222,10 +249,12 @@ class Achievement {
 
   String get statusText => isUnlocked ? 'Unlocked' : 'Locked';
   Color get statusColor => isUnlocked ? Colors.green : Colors.grey;
-  
-  String get progressText => '$progress${thresholdValue != null ? '/${thresholdValue}' : ''}';
-  String get progressPercentageText => '${progressPercentage.toStringAsFixed(1)}%';
-  
+
+  String get progressText =>
+      '$progress${thresholdValue != null ? '/${thresholdValue}' : ''}';
+  String get progressPercentageText =>
+      '${progressPercentage.toStringAsFixed(1)}%';
+
   bool get isCompleted => progressPercentage >= 100.0;
   bool get isNearCompletion => progressPercentage >= 80.0 && !isCompleted;
 
@@ -378,12 +407,15 @@ class Challenge {
   }
 
   Duration get duration => endDate.difference(startDate);
-  Duration? get timeLeft => isActive ? endDate.difference(DateTime.now()) : null;
-  
-  String get formattedStartDate => '${startDate.day}/${startDate.month}/${startDate.year}';
-  String get formattedEndDate => '${endDate.day}/${endDate.month}/${endDate.year}';
+  Duration? get timeLeft =>
+      isActive ? endDate.difference(DateTime.now()) : null;
+
+  String get formattedStartDate =>
+      '${startDate.day}/${startDate.month}/${startDate.year}';
+  String get formattedEndDate =>
+      '${endDate.day}/${endDate.month}/${endDate.year}';
   String get formattedDuration => '${duration.inDays} days';
-  
+
   double get progressValue {
     if (targetValue == 0) return 0.0;
     return (currentValue / targetValue).clamp(0.0, 1.0);
@@ -539,8 +571,9 @@ class Reward {
 
   bool get isExpired => DateTime.now().isAfter(validUntil);
   bool get isUpcoming => DateTime.now().isBefore(validFrom);
-  
-  int get remainingQuantity => quantityAvailable == -1 ? -1 : quantityAvailable - quantityRedeemed;
+
+  int get remainingQuantity =>
+      quantityAvailable == -1 ? -1 : quantityAvailable - quantityRedeemed;
   bool get isOutOfStock => quantityAvailable != -1 && remainingQuantity <= 0;
   bool get isUnlimited => quantityAvailable == -1;
 
@@ -564,11 +597,14 @@ class Reward {
     return '$remainingQuantity remaining';
   }
 
-  String get formattedValidFrom => '${validFrom.day}/${validFrom.month}/${validFrom.year}';
-  String get formattedValidUntil => '${validUntil.day}/${validUntil.month}/${validUntil.year}';
+  String get formattedValidFrom =>
+      '${validFrom.day}/${validFrom.month}/${validFrom.year}';
+  String get formattedValidUntil =>
+      '${validUntil.day}/${validUntil.month}/${validUntil.year}';
   String get validityPeriod => '$formattedValidFrom - $formattedValidUntil';
 
-  bool get canRedeem => isCurrentlyAvailable && canAfford && isValidNow && !isOutOfStock;
+  bool get canRedeem =>
+      isCurrentlyAvailable && canAfford && isValidNow && !isOutOfStock;
 
   Reward copyWith({
     String? id,
@@ -622,7 +658,9 @@ class PointTransaction {
   factory PointTransaction.fromJson(Map<String, dynamic> json) {
     return PointTransaction(
       id: json['id'] as String,
-      transactionType: TransactionType.fromValue(json['transaction_type'] as String),
+      transactionType: TransactionType.fromValue(
+        json['transaction_type'] as String,
+      ),
       points: json['points'] as int? ?? 0,
       description: json['description'] as String? ?? '',
       createdAt: DateTime.parse(json['created_at'] as String),
@@ -642,10 +680,10 @@ class PointTransaction {
   // Helper getters
   bool get isPositive => points > 0;
   bool get isNegative => points < 0;
-  
+
   Color get pointsColor => isPositive ? Colors.green : Colors.red;
   String get pointsText => '${isPositive ? '+' : ''}$points';
-  
+
   IconData get typeIcon {
     switch (transactionType) {
       case TransactionType.tripComplete:
@@ -684,8 +722,10 @@ class PointTransaction {
     }
   }
 
-  String get formattedDate => '${createdAt.day}/${createdAt.month}/${createdAt.year}';
-  String get formattedTime => '${createdAt.hour}:${createdAt.minute.toString().padLeft(2, '0')}';
+  String get formattedDate =>
+      '${createdAt.day}/${createdAt.month}/${createdAt.year}';
+  String get formattedTime =>
+      '${createdAt.hour}:${createdAt.minute.toString().padLeft(2, '0')}';
   String get formattedDateTime => '$formattedDate $formattedTime';
 
   PointTransaction copyWith({
@@ -724,7 +764,9 @@ class UserBrief {
       id: json['id'] as String,
       email: json['email'] as String,
       fullName: json['full_name'] as String,
-      userType: json['user_type'] != null ? UserType.fromValue(json['user_type'] as String) : null,
+      userType: json['user_type'] != null
+          ? UserType.fromValue(json['user_type'] as String)
+          : null,
     );
   }
 
@@ -758,6 +800,13 @@ class UserProfile {
   final DateTime createdAt;
   final DateTime updatedAt;
 
+  // Convenience getters for UI compatibility
+  int get level => currentLevel;
+  int get points => totalPoints;
+  int get streak => currentStreak;
+  double get carbonFootprintSaved => carbonSaved;
+  double get nextLevelProgress => levelProgress / 100.0;
+
   const UserProfile({
     required this.id,
     required this.user,
@@ -788,12 +837,17 @@ class UserProfile {
       nextLevelPoints: json['next_level_points'] as int? ?? 0,
       levelProgress: json['level_progress'] as int? ?? 0,
       totalTrips: json['total_trips'] as int? ?? 0,
-      totalDistance: double.tryParse(json['total_distance']?.toString() ?? '0') ?? 0.0,
-      carbonSaved: double.tryParse(json['carbon_saved']?.toString() ?? '0') ?? 0.0,
+      totalDistance:
+          double.tryParse(json['total_distance']?.toString() ?? '0') ?? 0.0,
+      carbonSaved:
+          double.tryParse(json['carbon_saved']?.toString() ?? '0') ?? 0.0,
       currentStreak: json['current_streak'] as int? ?? 0,
       longestStreak: json['longest_streak'] as int? ?? 0,
-      lastTripDate: json['last_trip_date'] != null ? DateTime.parse(json['last_trip_date'] as String) : null,
-      receiveAchievementNotifications: json['receive_achievement_notifications'] as bool? ?? true,
+      lastTripDate: json['last_trip_date'] != null
+          ? DateTime.parse(json['last_trip_date'] as String)
+          : null,
+      receiveAchievementNotifications:
+          json['receive_achievement_notifications'] as bool? ?? true,
       displayOnLeaderboard: json['display_on_leaderboard'] as bool? ?? true,
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
@@ -825,20 +879,23 @@ class UserProfile {
   // Helper getters
   String get formattedTotalDistance => '${totalDistance.toStringAsFixed(1)} km';
   String get formattedCarbonSaved => '${carbonSaved.toStringAsFixed(1)} kg';
-  
+
   String get levelProgressText => '$levelProgress%';
   double get levelProgressValue => levelProgress / 100.0;
-  
+
   int get pointsToNextLevel => nextLevelPoints - experiencePoints;
-  String get pointsToNextLevelText => '$pointsToNextLevel points to level ${currentLevel + 1}';
-  
-  bool get hasRecentTrip => lastTripDate != null && 
+  String get pointsToNextLevelText =>
+      '$pointsToNextLevel points to level ${currentLevel + 1}';
+
+  bool get hasRecentTrip =>
+      lastTripDate != null &&
       DateTime.now().difference(lastTripDate!).inDays < 7;
-  
+
   String get streakText => '$currentStreak day${currentStreak != 1 ? 's' : ''}';
-  String get longestStreakText => '$longestStreak day${longestStreak != 1 ? 's' : ''}';
-  
-  String get lastTripText => lastTripDate != null 
+  String get longestStreakText =>
+      '$longestStreak day${longestStreak != 1 ? 's' : ''}';
+
+  String get lastTripText => lastTripDate != null
       ? '${lastTripDate!.day}/${lastTripDate!.month}/${lastTripDate!.year}'
       : 'No trips yet';
 
@@ -875,7 +932,9 @@ class UserProfile {
       currentStreak: currentStreak ?? this.currentStreak,
       longestStreak: longestStreak ?? this.longestStreak,
       lastTripDate: lastTripDate ?? this.lastTripDate,
-      receiveAchievementNotifications: receiveAchievementNotifications ?? this.receiveAchievementNotifications,
+      receiveAchievementNotifications:
+          receiveAchievementNotifications ??
+          this.receiveAchievementNotifications,
       displayOnLeaderboard: displayOnLeaderboard ?? this.displayOnLeaderboard,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -922,28 +981,40 @@ class LeaderboardEntry {
   // Helper getters
   String get rankText {
     switch (rank) {
-      case 1: return '1st';
-      case 2: return '2nd';
-      case 3: return '3rd';
-      default: return '${rank}th';
+      case 1:
+        return '1st';
+      case 2:
+        return '2nd';
+      case 3:
+        return '3rd';
+      default:
+        return '${rank}th';
     }
   }
 
   Color get rankColor {
     switch (rank) {
-      case 1: return Colors.amber;
-      case 2: return Colors.grey[400]!;
-      case 3: return Colors.brown;
-      default: return Colors.blue;
+      case 1:
+        return Colors.amber;
+      case 2:
+        return Colors.grey[400]!;
+      case 3:
+        return Colors.brown;
+      default:
+        return Colors.blue;
     }
   }
 
   IconData? get rankIcon {
     switch (rank) {
-      case 1: return Icons.looks_one;
-      case 2: return Icons.looks_two;
-      case 3: return Icons.looks_3;
-      default: return null;
+      case 1:
+        return Icons.looks_one;
+      case 2:
+        return Icons.looks_two;
+      case 3:
+        return Icons.looks_3;
+      default:
+        return null;
     }
   }
 
@@ -964,7 +1035,8 @@ class UserProfileUpdateRequest {
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{};
     if (receiveAchievementNotifications != null) {
-      json['receive_achievement_notifications'] = receiveAchievementNotifications;
+      json['receive_achievement_notifications'] =
+          receiveAchievementNotifications;
     }
     if (displayOnLeaderboard != null) {
       json['display_on_leaderboard'] = displayOnLeaderboard;

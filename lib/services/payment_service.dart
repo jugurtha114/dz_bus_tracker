@@ -21,8 +21,10 @@ class PaymentService {
 
   Future<bool> topUpWallet(double amount) async {
     try {
-      final response = await _apiClient.post('/payment/wallet/topup', body: {
-        'amount': amount});
+      final response = await _apiClient.post(
+        '/payment/wallet/topup',
+        body: {'amount': amount},
+      );
       return response != null;
     } catch (e) {
       // Simulate success for now
@@ -50,7 +52,7 @@ class PaymentService {
     } catch (e) {
       // Simulate payment processing
       await Future.delayed(const Duration(seconds: 3));
-      
+
       // Simulate success rate of 90%
       return DateTime.now().millisecond % 10 != 0;
     }
@@ -69,7 +71,7 @@ class PaymentService {
         '/payment/history',
         queryParameters: queryParams,
       );
-      
+
       return List<Map<String, dynamic>>.from(response['payments']);
     } catch (e) {
       // Return mock data
@@ -86,10 +88,7 @@ class PaymentService {
       // Return mock data
       await Future.delayed(const Duration(milliseconds: 300));
       return {
-        'wallet': {
-          'enabled': true,
-          'balance': 2450,
-        },
+        'wallet': {'enabled': true, 'balance': 2450},
         'card': {
           'enabled': true,
           'supported_types': ['visa', 'mastercard', 'cib'],
@@ -98,9 +97,7 @@ class PaymentService {
           'enabled': true,
           'providers': ['cib_mobile', 'baridi_mob', 'mobilis_money'],
         },
-        'cash': {
-          'enabled': true,
-        },
+        'cash': {'enabled': true},
       };
     }
   }
@@ -111,11 +108,11 @@ class PaymentService {
     Map<String, dynamic>? metadata,
   }) async {
     try {
-      final response = await _apiClient.post('/payment/qr/generate', body: {
-        'amount': amount,
-        'method': method,
-        'metadata': metadata});
-      
+      final response = await _apiClient.post(
+        '/payment/qr/generate',
+        body: {'amount': amount, 'method': method, 'metadata': metadata},
+      );
+
       return response['qr_code'];
     } catch (e) {
       // Generate mock QR code
@@ -126,9 +123,11 @@ class PaymentService {
 
   Future<bool> refundPayment(String paymentId, {String? reason}) async {
     try {
-      final response = await _apiClient.post('/payment/$paymentId/refund', body: {
-        'reason': reason});
-      
+      final response = await _apiClient.post(
+        '/payment/$paymentId/refund',
+        body: {'reason': reason},
+      );
+
       return response != null;
     } catch (e) {
       // Simulate refund processing
@@ -154,7 +153,7 @@ class PaymentService {
         '/payment/stats',
         queryParameters: queryParams,
       );
-      
+
       return response;
     } catch (e) {
       // Return mock stats
@@ -163,12 +162,7 @@ class PaymentService {
         'total_spent': 1280,
         'total_transactions': 42,
         'average_trip_cost': 145,
-        'payment_methods': {
-          'wallet': 0,
-          'card': 0,
-          'cash': 0,
-          'mobile': 0,
-        },
+        'payment_methods': {'wallet': 0, 'card': 0, 'cash': 0, 'mobile': 0},
         'monthly_spending': [
           {'month': 'Jan', 'amount': 420},
           {'month': 'Feb', 'amount': 380},

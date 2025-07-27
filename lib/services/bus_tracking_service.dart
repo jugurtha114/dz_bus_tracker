@@ -9,7 +9,8 @@ import '../core/exceptions/app_exceptions.dart';
 class BusTrackingService {
   final ApiClient _apiClient = ApiClient();
   Timer? _trackingTimer;
-  final Map<String, StreamController<Map<String, dynamic>>> _trackingStreams = {};
+  final Map<String, StreamController<Map<String, dynamic>>> _trackingStreams =
+      {};
 
   Future<Map<String, dynamic>> getBusInfo(String busId) async {
     try {
@@ -45,15 +46,19 @@ class BusTrackingService {
 
   Future<List<Map<String, dynamic>>> getNearbyBuses(
     double latitude,
-    double longitude,
-    {double radiusKm = 5}
-  ) async {
+    double longitude, {
+    double radiusKm = 5,
+  }) async {
     try {
-      final response = await _apiClient.get('/buses/nearby', queryParameters: {
-        'latitude': latitude,
-        'longitude': longitude,
-        'radius': radiusKm});
-      
+      final response = await _apiClient.get(
+        '/buses/nearby',
+        queryParameters: {
+          'latitude': latitude,
+          'longitude': longitude,
+          'radius': radiusKm,
+        },
+      );
+
       return List<Map<String, dynamic>>.from(response['buses']);
     } catch (e) {
       await Future.delayed(const Duration(milliseconds: 600));
@@ -63,10 +68,11 @@ class BusTrackingService {
 
   Stream<Map<String, dynamic>> trackBusRealTime(String busId) {
     if (!_trackingStreams.containsKey(busId)) {
-      _trackingStreams[busId] = StreamController<Map<String, dynamic>>.broadcast();
+      _trackingStreams[busId] =
+          StreamController<Map<String, dynamic>>.broadcast();
       _startRealTimeTracking(busId);
     }
-    
+
     return _trackingStreams[busId]!.stream;
   }
 
@@ -88,10 +94,7 @@ class BusTrackingService {
     }
   }
 
-  Future<Map<String, dynamic>> getETAToStop(
-    String busId,
-    String stopId,
-  ) async {
+  Future<Map<String, dynamic>> getETAToStop(String busId, String stopId) async {
     try {
       final response = await _apiClient.get('/buses/$busId/eta/$stopId');
       return response;
@@ -123,14 +126,15 @@ class BusTrackingService {
 
   Future<bool> subscribeToNotifications(
     String busId,
-    String notificationType,
-    {Map<String, dynamic>? options}
-  ) async {
+    String notificationType, {
+    Map<String, dynamic>? options,
+  }) async {
     try {
-      final response = await _apiClient.post('/buses/$busId/notifications', body: {
-        'type': notificationType,
-        'options': options});
-      
+      final response = await _apiClient.post(
+        '/buses/$busId/notifications',
+        body: {'type': notificationType, 'options': options},
+      );
+
       return response != null;
     } catch (e) {
       await Future.delayed(const Duration(milliseconds: 300));
@@ -139,19 +143,21 @@ class BusTrackingService {
   }
 
   Future<List<Map<String, dynamic>>> getBusHistory(
-    String busId,
-    {DateTime? startDate, DateTime? endDate}
-  ) async {
+    String busId, {
+    DateTime? startDate,
+    DateTime? endDate,
+  }) async {
     try {
       final queryParams = <String, dynamic>{};
-      if (startDate != null) queryParams['start_date'] = startDate.toIso8601String();
+      if (startDate != null)
+        queryParams['start_date'] = startDate.toIso8601String();
       if (endDate != null) queryParams['end_date'] = endDate.toIso8601String();
 
       final response = await _apiClient.get(
         '/buses/$busId/history',
         queryParameters: queryParams,
       );
-      
+
       return List<Map<String, dynamic>>.from(response['history']);
     } catch (e) {
       await Future.delayed(const Duration(milliseconds: 600));
@@ -162,22 +168,29 @@ class BusTrackingService {
   // Utility methods
   double calculateDistance(LatLng point1, LatLng point2) {
     const double earthRadiusKm = 6371;
-    
+
     final double lat1Rad = point1.latitude * pi / 180;
     final double lat2Rad = point2.latitude * pi / 180;
     final double deltaLatRad = (point2.latitude - point1.latitude) * pi / 180;
     final double deltaLonRad = (point2.longitude - point1.longitude) * pi / 180;
-    
-    final double a = sin(deltaLatRad / 2) * sin(deltaLatRad / 2) +
-        cos(lat1Rad) * cos(lat2Rad) *
-        sin(deltaLonRad / 2) * sin(deltaLonRad / 2);
-    
+
+    final double a =
+        sin(deltaLatRad / 2) * sin(deltaLatRad / 2) +
+        cos(lat1Rad) *
+            cos(lat2Rad) *
+            sin(deltaLonRad / 2) *
+            sin(deltaLonRad / 2);
+
     final double c = 2 * atan2(sqrt(a), sqrt(1 - a));
-    
+
     return earthRadiusKm * c;
   }
 
-  int calculateETAMinutes(LatLng busLocation, LatLng destination, {double averageSpeedKmh = 30}) {
+  int calculateETAMinutes(
+    LatLng busLocation,
+    LatLng destination, {
+    double averageSpeedKmh = 30,
+  }) {
     final distance = calculateDistance(busLocation, destination);
     return (distance / averageSpeedKmh * 60).round();
   }
@@ -198,10 +211,7 @@ class BusTrackingService {
       'model': 'Mercedes Citaro',
       'capacity': 40,
       'current_passengers': 18,
-      'driver': {
-        'name': 'Ahmed Ben Ali',
-        'rating': 4,
-      },
+      'driver': {'name': 'Ahmed Ben Ali', 'rating': 4},
       'line': {
         'id': 'line_1',
         'name': 'Line 1 - City Center - Airport',
@@ -220,7 +230,7 @@ class BusTrackingService {
     final random = Random();
     final baseLatitude = 36 + (random.nextDouble() - 0) * 0;
     final baseLongitude = 3 + (random.nextDouble() - 0) * 0;
-    
+
     return {
       'bus_id': busId,
       'latitude': baseLatitude,
@@ -279,10 +289,13 @@ class BusTrackingService {
     };
   }
 
-  List<Map<String, dynamic>> _getMockNearbyBuses(double latitude, double longitude) {
+  List<Map<String, dynamic>> _getMockNearbyBuses(
+    double latitude,
+    double longitude,
+  ) {
     final random = Random();
     final buses = <Map<String, dynamic>>[];
-    
+
     for (int i = 1; i <= 5; i++) {
       buses.add({
         'id': 'bus_$i',
@@ -294,21 +307,24 @@ class BusTrackingService {
         'eta_minutes': 5 + random.nextInt(20),
         'passenger_count': random.nextInt(40),
         'capacity': 40,
-        'status': ['active', 'at_stop', 'delayed'][random.nextInt(3)]});
+        'status': ['active', 'at_stop', 'delayed'][random.nextInt(3)],
+      });
     }
-    
+
     return buses;
   }
 
   Map<String, dynamic> _getMockETA(String busId, String stopId) {
     final random = Random();
     final etaMinutes = 5 + random.nextInt(15);
-    
+
     return {
       'bus_id': busId,
       'stop_id': stopId,
       'eta_minutes': etaMinutes,
-      'eta_time': DateTime.now().add(Duration(minutes: etaMinutes)).toIso8601String(),
+      'eta_time': DateTime.now()
+          .add(Duration(minutes: etaMinutes))
+          .toIso8601String(),
       'confidence': 0 + random.nextDouble() * 0,
       'stops_remaining': 2 + random.nextInt(4),
       'distance_km': random.nextDouble() * 3,
@@ -334,26 +350,51 @@ class BusTrackingService {
     return {
       'bus_id': busId,
       'daily_schedule': [
-        {'departure_time': '06:00', 'arrival_time': '07:30', 'trip_id': 'trip_1'},
-        {'departure_time': '08:00', 'arrival_time': '09:30', 'trip_id': 'trip_2'},
-        {'departure_time': '10:00', 'arrival_time': '11:30', 'trip_id': 'trip_3'},
-        {'departure_time': '12:00', 'arrival_time': '13:30', 'trip_id': 'trip_4'},
-        {'departure_time': '14:00', 'arrival_time': '15:30', 'trip_id': 'trip_5'},
-        {'departure_time': '16:00', 'arrival_time': '17:30', 'trip_id': 'trip_6'},
-        {'departure_time': '18:00', 'arrival_time': '19:30', 'trip_id': 'trip_7'},
+        {
+          'departure_time': '06:00',
+          'arrival_time': '07:30',
+          'trip_id': 'trip_1',
+        },
+        {
+          'departure_time': '08:00',
+          'arrival_time': '09:30',
+          'trip_id': 'trip_2',
+        },
+        {
+          'departure_time': '10:00',
+          'arrival_time': '11:30',
+          'trip_id': 'trip_3',
+        },
+        {
+          'departure_time': '12:00',
+          'arrival_time': '13:30',
+          'trip_id': 'trip_4',
+        },
+        {
+          'departure_time': '14:00',
+          'arrival_time': '15:30',
+          'trip_id': 'trip_5',
+        },
+        {
+          'departure_time': '16:00',
+          'arrival_time': '17:30',
+          'trip_id': 'trip_6',
+        },
+        {
+          'departure_time': '18:00',
+          'arrival_time': '19:30',
+          'trip_id': 'trip_7',
+        },
       ],
       'frequency_minutes': 120,
-      'operating_hours': {
-        'start': '06:00',
-        'end': '20:00',
-      },
+      'operating_hours': {'start': '06:00', 'end': '20:00'},
     };
   }
 
   List<Map<String, dynamic>> _getMockBusHistory(String busId) {
     final random = Random();
     final history = <Map<String, dynamic>>[];
-    
+
     for (int i = 0; i < 20; i++) {
       final timestamp = DateTime.now().subtract(Duration(minutes: i * 15));
       history.add({
@@ -362,9 +403,10 @@ class BusTrackingService {
         'longitude': 3 + (random.nextDouble() - 0) * 0,
         'speed': 20 + random.nextInt(30),
         'passenger_count': 10 + random.nextInt(30),
-        'status': ['active', 'at_stop', 'in_transit'][random.nextInt(3)]});
+        'status': ['active', 'at_stop', 'in_transit'][random.nextInt(3)],
+      });
     }
-    
+
     return history;
   }
 

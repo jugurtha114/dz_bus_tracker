@@ -1,8 +1,13 @@
 // lib/config/theme_config.dart
+// DEPRECATED: Use DesignSystem instead
+// This file is kept for backward compatibility only
 
 import 'package:flutter/material.dart';
 import 'dart:ui';
+import 'design_system.dart';
 
+/// Legacy Color System - DEPRECATED
+/// Use DesignSystem colors instead
 class AppColors {
   // Main colors
   static const Color primary = Color(0xFF1976D2);
@@ -88,109 +93,13 @@ class AppTextStyles {
   );
 }
 
+/// Legacy Theme Class - DEPRECATED
+/// Use DesignSystem instead
 class AppTheme {
-  // lib/config/theme_config.dart - using CardThemeData
-
+  /// Legacy Light Theme - DEPRECATED
+  /// Use DesignSystem.lightTheme instead
   static ThemeData get lightTheme {
-    return ThemeData(
-      primaryColor: AppColors.primary,
-      primaryColorDark: AppColors.primaryDark,
-      primaryColorLight: AppColors.primaryLight,
-      colorScheme: const ColorScheme.light(
-        primary: AppColors.primary,
-        secondary: AppColors.accent,
-        onPrimary: AppColors.white,
-        onSecondary: AppColors.white,
-        surface: AppColors.white,
-        error: AppColors.error,
-      ),
-      scaffoldBackgroundColor: AppColors.background,
-      appBarTheme: AppBarTheme(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
-        titleTextStyle: AppTextStyles.h2.copyWith(color: AppColors.primary),
-        iconTheme: const IconThemeData(color: AppColors.primary),
-      ),
-      textTheme: const TextTheme(
-        headlineLarge: AppTextStyles.h1,
-        headlineMedium: AppTextStyles.h2,
-        headlineSmall: AppTextStyles.h3,
-        bodyLarge: AppTextStyles.body,
-        bodyMedium: AppTextStyles.bodySmall,
-        labelLarge: AppTextStyles.button,
-        bodySmall: AppTextStyles.caption,
-      ),
-      buttonTheme: ButtonThemeData(
-        buttonColor: AppColors.primary,
-        textTheme: ButtonTextTheme.primary,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
-      ),
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          foregroundColor: AppColors.white,
-          backgroundColor: AppColors.primary,
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-          elevation: 0,
-        ),
-      ),
-      textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(
-          foregroundColor: AppColors.primary,
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-        ),
-      ),
-      outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.primary,
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
-          side: const BorderSide(color: AppColors.primary),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-        ),
-      ),
-      inputDecorationTheme: InputDecorationTheme(
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: AppColors.lightGrey),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: AppColors.lightGrey),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: AppColors.primary),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: AppColors.error),
-        ),
-        contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-        filled: true,
-        fillColor: AppColors.white,
-      ),
-      // Use CardThemeData instead of CardTheme
-      cardTheme: CardThemeData(
-        clipBehavior: Clip.antiAlias,
-        color: Colors.transparent,
-        elevation: 0,
-        margin: EdgeInsets.zero,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        shadowColor: Colors.transparent,
-      ),
-    );
+    return DesignSystem.lightTheme;
   }
 
   // Helper method to create glass effect containers

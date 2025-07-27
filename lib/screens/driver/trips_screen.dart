@@ -9,10 +9,7 @@ import '../../models/tracking_model.dart';
 import '../../providers/driver_provider.dart';
 import '../../providers/tracking_provider.dart';
 import '../../services/navigation_service.dart';
-import '../../widgets/common/app_layout.dart';
-import '../../widgets/common/glassy_container.dart';
-import '../../widgets/common/custom_card.dart';
-import '../../widgets/common/loading_indicator.dart';
+import '../../widgets/widgets.dart';
 import '../../localization/app_localizations.dart';
 import '../../helpers/dialog_helper.dart';
 
@@ -62,15 +59,16 @@ class _TripsScreenState extends State<TripsScreen> with SingleTickerProviderStat
     final driverProvider = Provider.of<DriverProvider>(context);
     final trackingProvider = Provider.of<TrackingProvider>(context);
 
-    return AppLayout(
+    return PageLayout(
+      showAppBar: true,
       title: localizations.translate('trips'),
-      actions: [
+      appBarActions: [
         IconButton(
           icon: const Icon(Icons.filter_list),
           onPressed: _showFilterDialog,
         ),
       ],
-      child: Column(
+      body: Column(
         children: [
           // Stats overview
           _buildStatsOverview(localizations, driverProvider),
@@ -94,7 +92,7 @@ class _TripsScreenState extends State<TripsScreen> with SingleTickerProviderStat
           // Tab content
           Expanded(
             child: _isLoading
-                ? const Center(child: LoadingIndicator())
+                ? const LoadingState.fullScreen(message: 'Loading trips...')
                 : TabBarView(
                     controller: _tabController,
                     children: [
@@ -160,7 +158,7 @@ class _TripsScreenState extends State<TripsScreen> with SingleTickerProviderStat
   }
 
   Widget _buildStatCard(String title, String value, IconData icon, Color color) {
-    return CustomCard(type: CardType.elevated, 
+    return AppCard( 
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
@@ -254,7 +252,7 @@ class _TripsScreenState extends State<TripsScreen> with SingleTickerProviderStat
         statusText = localizations.translate('unknown');
     }
 
-    return CustomCard(type: CardType.elevated, 
+    return AppCard( 
       margin: const EdgeInsets.only(bottom: 16),
       child: InkWell(
         onTap: () => _showTripDetails(trip, localizations),

@@ -16,12 +16,9 @@ class ApiClient {
   final http.Client _client;
   final List<Interceptor> _interceptors;
 
-  ApiClient({
-    http.Client? client,
-    List<Interceptor>? interceptors,
-  })
-      : _client = client ?? http.Client(),
-        _interceptors = interceptors ?? [AuthInterceptor(), LoggingInterceptor()];
+  ApiClient({http.Client? client, List<Interceptor>? interceptors})
+    : _client = client ?? http.Client(),
+      _interceptors = interceptors ?? [AuthInterceptor(), LoggingInterceptor()];
 
   // Add an interceptor
   void addInterceptor(Interceptor interceptor) {
@@ -30,11 +27,11 @@ class ApiClient {
 
   // HTTP GET request
   Future<dynamic> get(
-      String url, {
-        Map<String, String>? headers,
-        Map<String, dynamic>? queryParameters,
-        bool forceRefresh = false,
-      }) async {
+    String url, {
+    Map<String, String>? headers,
+    Map<String, dynamic>? queryParameters,
+    bool forceRefresh = false,
+  }) async {
     try {
       final Uri uri = _buildUri(url, queryParameters);
       final requestHeaders = await _prepareHeaders(headers);
@@ -72,11 +69,11 @@ class ApiClient {
 
   // HTTP POST request
   Future<dynamic> post(
-      String url, {
-        Map<String, String>? headers,
-        Map<String, dynamic>? queryParameters,
-        dynamic body,
-      }) async {
+    String url, {
+    Map<String, String>? headers,
+    Map<String, dynamic>? queryParameters,
+    dynamic body,
+  }) async {
     try {
       final Uri uri = _buildUri(url, queryParameters);
       final requestHeaders = await _prepareHeaders(headers);
@@ -92,10 +89,10 @@ class ApiClient {
       // Send request
       final response = await _client
           .post(
-        interceptedRequest.uri,
-        headers: interceptedRequest.headers,
-        body: interceptedRequest.body,
-      )
+            interceptedRequest.uri,
+            headers: interceptedRequest.headers,
+            body: interceptedRequest.body,
+          )
           .timeout(Duration(milliseconds: ApiConstants.connectTimeout));
 
       // Apply response interceptors
@@ -119,11 +116,11 @@ class ApiClient {
 
   // HTTP PUT request
   Future<dynamic> put(
-      String url, {
-        Map<String, String>? headers,
-        Map<String, dynamic>? queryParameters,
-        dynamic body,
-      }) async {
+    String url, {
+    Map<String, String>? headers,
+    Map<String, dynamic>? queryParameters,
+    dynamic body,
+  }) async {
     try {
       final Uri uri = _buildUri(url, queryParameters);
       final requestHeaders = await _prepareHeaders(headers);
@@ -139,10 +136,10 @@ class ApiClient {
       // Send request
       final response = await _client
           .put(
-        interceptedRequest.uri,
-        headers: interceptedRequest.headers,
-        body: interceptedRequest.body,
-      )
+            interceptedRequest.uri,
+            headers: interceptedRequest.headers,
+            body: interceptedRequest.body,
+          )
           .timeout(Duration(milliseconds: ApiConstants.connectTimeout));
 
       // Apply response interceptors
@@ -166,11 +163,11 @@ class ApiClient {
 
   // HTTP DELETE request
   Future<dynamic> delete(
-      String url, {
-        Map<String, String>? headers,
-        Map<String, dynamic>? queryParameters,
-        dynamic body,
-      }) async {
+    String url, {
+    Map<String, String>? headers,
+    Map<String, dynamic>? queryParameters,
+    dynamic body,
+  }) async {
     try {
       final Uri uri = _buildUri(url, queryParameters);
       final requestHeaders = await _prepareHeaders(headers);
@@ -186,10 +183,10 @@ class ApiClient {
       // Send request
       final response = await _client
           .delete(
-        interceptedRequest.uri,
-        headers: interceptedRequest.headers,
-        body: interceptedRequest.body,
-      )
+            interceptedRequest.uri,
+            headers: interceptedRequest.headers,
+            body: interceptedRequest.body,
+          )
           .timeout(Duration(milliseconds: ApiConstants.connectTimeout));
 
       // Apply response interceptors
@@ -213,11 +210,11 @@ class ApiClient {
 
   // HTTP PATCH request
   Future<dynamic> patch(
-      String url, {
-        Map<String, String>? headers,
-        Map<String, dynamic>? queryParameters,
-        dynamic body,
-      }) async {
+    String url, {
+    Map<String, String>? headers,
+    Map<String, dynamic>? queryParameters,
+    dynamic body,
+  }) async {
     try {
       final Uri uri = _buildUri(url, queryParameters);
       final requestHeaders = await _prepareHeaders(headers);
@@ -233,10 +230,10 @@ class ApiClient {
       // Send request
       final response = await _client
           .patch(
-        interceptedRequest.uri,
-        headers: interceptedRequest.headers,
-        body: interceptedRequest.body,
-      )
+            interceptedRequest.uri,
+            headers: interceptedRequest.headers,
+            body: interceptedRequest.body,
+          )
           .timeout(Duration(milliseconds: ApiConstants.connectTimeout));
 
       // Apply response interceptors
@@ -259,16 +256,16 @@ class ApiClient {
   }
 
   // Multipart request for file uploads
-// lib/core/network/api_client.dart - just the multipartRequest method
+  // lib/core/network/api_client.dart - just the multipartRequest method
 
   Future<dynamic> multipartRequest(
-      String url, {
-        required String method,
-        Map<String, String>? headers,
-        Map<String, dynamic>? queryParameters,
-        Map<String, String>? fields,
-        Map<String, dynamic>? files,
-      }) async {
+    String url, {
+    required String method,
+    Map<String, String>? headers,
+    Map<String, dynamic>? queryParameters,
+    Map<String, String>? fields,
+    Map<String, dynamic>? files,
+  }) async {
     try {
       final Uri uri = _buildUri(url, queryParameters);
       final requestHeaders = await _prepareHeaders(headers);
@@ -359,7 +356,7 @@ class ApiClient {
 
       // Send request with timeout
       final streamedResponse = await request.send().timeout(
-          Duration(milliseconds: ApiConstants.connectTimeout)
+        Duration(milliseconds: ApiConstants.connectTimeout),
       );
 
       // Convert to regular response
@@ -386,7 +383,6 @@ class ApiClient {
     }
   }
 
-
   // Build URI with query parameters
   Uri _buildUri(String url, Map<String, dynamic>? queryParameters) {
     if (queryParameters != null && queryParameters.isNotEmpty) {
@@ -397,7 +393,9 @@ class ApiClient {
   }
 
   // Prepare default headers
-  Future<Map<String, String>> _prepareHeaders(Map<String, String>? headers) async {
+  Future<Map<String, String>> _prepareHeaders(
+    Map<String, String>? headers,
+  ) async {
     final defaultHeaders = {
       ApiConstants.contentTypeKey: ApiConstants.contentTypeJson,
     };
@@ -426,10 +424,10 @@ class ApiClient {
 
   // Apply request interceptors
   Future<InterceptedRequest> _applyRequestInterceptors(
-      Uri uri,
-      Map<String, String> headers,
-      dynamic body,
-      ) async {
+    Uri uri,
+    Map<String, String> headers,
+    dynamic body,
+  ) async {
     var interceptedRequest = InterceptedRequest(uri, headers, body);
 
     for (final interceptor in _interceptors) {
@@ -440,7 +438,9 @@ class ApiClient {
   }
 
   // Apply response interceptors
-  Future<http.Response> _applyResponseInterceptors(http.Response response) async {
+  Future<http.Response> _applyResponseInterceptors(
+    http.Response response,
+  ) async {
     var interceptedResponse = response;
 
     for (final interceptor in _interceptors) {
@@ -477,7 +477,10 @@ class ApiClient {
         final errorJson = json.decode(responseBody);
 
         if (errorJson is Map<String, dynamic>) {
-          throw ApiUtils.handleApiError(errorJson, defaultMessage: errorMessage);
+          throw ApiUtils.handleApiError(
+            errorJson,
+            defaultMessage: errorMessage,
+          );
         }
       } catch (e) {
         if (e is AppException) {

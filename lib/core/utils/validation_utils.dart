@@ -7,7 +7,9 @@ class ValidationUtils {
       return false;
     }
 
-    final emailRegExp = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
+    final emailRegExp = RegExp(
+      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+    );
     return emailRegExp.hasMatch(email);
   }
 
@@ -62,20 +64,28 @@ class ValidationUtils {
   }
 
   // Get password validation message
-  static String? validatePassword(String? password, {int minLength = 8, String? errorMessage}) {
+  static String? validatePassword(
+    String? password, {
+    int minLength = 8,
+    String? errorMessage,
+  }) {
     if (password == null || password.isEmpty) {
       return 'Password is required';
     }
 
     if (!isValidPassword(password, minLength: minLength)) {
-      return errorMessage ?? 'Password must be at least $minLength characters long';
+      return errorMessage ??
+          'Password must be at least $minLength characters long';
     }
 
     return null;
   }
 
   // Validate confirm password
-  static String? validateConfirmPassword(String? password, String? confirmPassword) {
+  static String? validateConfirmPassword(
+    String? password,
+    String? confirmPassword,
+  ) {
     if (confirmPassword == null || confirmPassword.isEmpty) {
       return 'Confirm password is required';
     }
@@ -88,7 +98,11 @@ class ValidationUtils {
   }
 
   // Validate required field
-  static String? validateRequired(String? value, {String? fieldName, String? errorMessage}) {
+  static String? validateRequired(
+    String? value, {
+    String? fieldName,
+    String? errorMessage,
+  }) {
     if (value == null || value.trim().isEmpty) {
       return errorMessage ?? '${fieldName ?? 'This field'} is required';
     }
@@ -97,26 +111,38 @@ class ValidationUtils {
   }
 
   // Validate minimum length
-  static String? validateMinLength(String? value, int minLength, {String? fieldName, String? errorMessage}) {
+  static String? validateMinLength(
+    String? value,
+    int minLength, {
+    String? fieldName,
+    String? errorMessage,
+  }) {
     if (value == null || value.isEmpty) {
       return 'This field is required';
     }
 
     if (value.length < minLength) {
-      return errorMessage ?? '${fieldName ?? 'This field'} must be at least $minLength characters long';
+      return errorMessage ??
+          '${fieldName ?? 'This field'} must be at least $minLength characters long';
     }
 
     return null;
   }
 
   // Validate maximum length
-  static String? validateMaxLength(String? value, int maxLength, {String? fieldName, String? errorMessage}) {
+  static String? validateMaxLength(
+    String? value,
+    int maxLength, {
+    String? fieldName,
+    String? errorMessage,
+  }) {
     if (value == null || value.isEmpty) {
       return null; // Not required
     }
 
     if (value.length > maxLength) {
-      return errorMessage ?? '${fieldName ?? 'This field'} must be at most $maxLength characters long';
+      return errorMessage ??
+          '${fieldName ?? 'This field'} must be at most $maxLength characters long';
     }
 
     return null;
@@ -132,7 +158,11 @@ class ValidationUtils {
   }
 
   // Get numeric validation message
-  static String? validateNumeric(String? value, {String? fieldName, String? errorMessage}) {
+  static String? validateNumeric(
+    String? value, {
+    String? fieldName,
+    String? errorMessage,
+  }) {
     if (value == null || value.isEmpty) {
       return 'This field is required';
     }
@@ -154,7 +184,11 @@ class ValidationUtils {
   }
 
   // Get integer validation message
-  static String? validateInteger(String? value, {String? fieldName, String? errorMessage}) {
+  static String? validateInteger(
+    String? value, {
+    String? fieldName,
+    String? errorMessage,
+  }) {
     if (value == null || value.isEmpty) {
       return 'This field is required';
     }
@@ -167,7 +201,8 @@ class ValidationUtils {
   }
 
   // Validate value range
-  static String? validateRange(String? value, {
+  static String? validateRange(
+    String? value, {
     String? fieldName,
     double? min,
     double? max,
@@ -183,11 +218,13 @@ class ValidationUtils {
     }
 
     if (min != null && numericValue < min) {
-      return errorMessage ?? '${fieldName ?? 'This field'} must be at least $min';
+      return errorMessage ??
+          '${fieldName ?? 'This field'} must be at least $min';
     }
 
     if (max != null && numericValue > max) {
-      return errorMessage ?? '${fieldName ?? 'This field'} must be at most $max';
+      return errorMessage ??
+          '${fieldName ?? 'This field'} must be at most $max';
     }
 
     return null;

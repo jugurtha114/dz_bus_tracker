@@ -255,7 +255,7 @@ class BusLocationQueryParameters extends QueryParameters {
   }
 }
 
-/// Driver rating query parameters  
+/// Driver rating query parameters
 class DriverRatingQueryParameters extends QueryParameters {
   DriverRatingQueryParameters({
     DateTime? createdAfter,
@@ -354,7 +354,6 @@ class AnomalyQueryParameters extends QueryParameters {
     addPagination(page: page, pageSize: pageSize);
   }
 }
-
 
 /// Location update query parameters
 class LocationUpdateQueryParameters extends QueryParameters {
@@ -572,11 +571,7 @@ class ApiError {
   final int? code;
   final Map<String, List<String>>? fieldErrors;
 
-  const ApiError({
-    required this.message,
-    this.code,
-    this.fieldErrors,
-  });
+  const ApiError({required this.message, this.code, this.fieldErrors});
 
   factory ApiError.fromJson(Map<String, dynamic> json) {
     // Handle different error response formats
@@ -602,7 +597,10 @@ class ApiError {
     // Extract field errors
     final Map<String, List<String>> extractedFieldErrors = {};
     json.forEach((key, value) {
-      if (key != 'detail' && key != 'message' && key != 'error' && key != 'non_field_errors') {
+      if (key != 'detail' &&
+          key != 'message' &&
+          key != 'error' &&
+          key != 'non_field_errors') {
         if (value is List) {
           extractedFieldErrors[key] = value.map((e) => e.toString()).toList();
         } else {
@@ -615,10 +613,7 @@ class ApiError {
       fieldErrors = extractedFieldErrors;
     }
 
-    return ApiError(
-      message: message,
-      fieldErrors: fieldErrors,
-    );
+    return ApiError(message: message, fieldErrors: fieldErrors);
   }
 
   bool get hasFieldErrors => fieldErrors != null && fieldErrors!.isNotEmpty;

@@ -31,6 +31,10 @@ dependencies:
   path_provider: ^2.1.2
   flutter_secure_storage: ^9.0.0
   http_parser: ^4.1.2
+  
+  # Real-time Communication
+  web_socket_channel: ^2.4.0
+  socket_io_client: ^2.0.3
 
   # Location & Maps
   geolocator: ^10.1.0

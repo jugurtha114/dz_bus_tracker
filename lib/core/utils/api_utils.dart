@@ -35,10 +35,14 @@ class ApiUtils {
       bool hasFieldErrors = false;
 
       error.forEach((key, value) {
-        if (key != ApiConstants.errorKey && key != ApiConstants.detailKey && key != ApiConstants.messageKey) {
+        if (key != ApiConstants.errorKey &&
+            key != ApiConstants.detailKey &&
+            key != ApiConstants.messageKey) {
           hasFieldErrors = true;
           if (value is List) {
-            fieldErrors[key] = List<String>.from(value.map((e) => e.toString()));
+            fieldErrors[key] = List<String>.from(
+              value.map((e) => e.toString()),
+            );
           } else {
             fieldErrors[key] = [value.toString()];
           }
@@ -54,15 +58,22 @@ class ApiUtils {
       }
 
       // If we can't extract a specific error, return a generic message
-      return ApiException(defaultMessage ?? 'An error occurred while processing your request.');
+      return ApiException(
+        defaultMessage ?? 'An error occurred while processing your request.',
+      );
     }
 
     // Handle network or unexpected errors
-    return ApiException(defaultMessage ?? 'An unexpected error occurred. Please try again.');
+    return ApiException(
+      defaultMessage ?? 'An unexpected error occurred. Please try again.',
+    );
   }
 
   // Parse API response
-  static T parseResponse<T>(Map<String, dynamic> json, T Function(Map<String, dynamic>) parser) {
+  static T parseResponse<T>(
+    Map<String, dynamic> json,
+    T Function(Map<String, dynamic>) parser,
+  ) {
     try {
       return parser(json);
     } catch (e) {
@@ -73,10 +84,10 @@ class ApiUtils {
 
   // Parse list from API response
   static List<T> parseResponseList<T>(
-      Map<String, dynamic> json,
-      T Function(Map<String, dynamic>) parser,
-      {String resultsKey = ApiConstants.resultsKey}
-      ) {
+    Map<String, dynamic> json,
+    T Function(Map<String, dynamic>) parser, {
+    String resultsKey = ApiConstants.resultsKey,
+  }) {
     try {
       if (json.containsKey(resultsKey) && json[resultsKey] is List) {
         return (json[resultsKey] as List)
@@ -98,7 +109,9 @@ class ApiUtils {
   }
 
   // Format query parameters for API requests
-  static Map<String, String> formatQueryParameters(Map<String, dynamic> params) {
+  static Map<String, String> formatQueryParameters(
+    Map<String, dynamic> params,
+  ) {
     final formattedParams = <String, String>{};
 
     params.forEach((key, value) {

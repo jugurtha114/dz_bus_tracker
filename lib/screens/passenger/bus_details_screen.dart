@@ -2,26 +2,21 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:timeago/timeago.dart' as timeago;
+import '../../config/design_system.dart';
 import '../../config/route_config.dart';
-import '../../config/theme_config.dart';
-import '../../models/bus_model.dart';
 import '../../providers/bus_provider.dart';
 import '../../providers/passenger_provider.dart';
-import '../../widgets/common/app_bar.dart';
-import '../../widgets/common/custom_button.dart';
-import '../../widgets/common/glassy_container.dart';
-import '../../widgets/common/loading_indicator.dart';
-import '../../helpers/error_handler.dart';
-import '../../widgets/common/custom_card.dart';
+import '../../widgets/widgets.dart';
+import '../../models/bus_model.dart';
 
+/// Modern bus details screen showing comprehensive bus information
 class BusDetailsScreen extends StatefulWidget {
   final String busId;
 
   const BusDetailsScreen({
-    Key? key,
+    super.key,
     required this.busId,
-  }) : super(key: key);
+  });
 
   @override
   State<BusDetailsScreen> createState() => _BusDetailsScreenState();
@@ -30,7 +25,6 @@ class BusDetailsScreen extends StatefulWidget {
 class _BusDetailsScreenState extends State<BusDetailsScreen> {
   bool _isLoading = true;
   Bus? _busData;
-  String? _error;
 
   @override
   void initState() {
@@ -41,436 +35,240 @@ class _BusDetailsScreenState extends State<BusDetailsScreen> {
   Future<void> _loadBusDetails() async {
     setState(() {
       _isLoading = true;
-      _error = null;
     });
 
     try {
-      final busProvider = Provider.of<BusProvider>(context, listen: false);
+      final busProvider = context.read<BusProvider>();
       await busProvider.fetchBusById(widget.busId);
-
+      
       setState(() {
         _busData = busProvider.selectedBus;
-        _isLoading = false;
       });
-    } catch (e) {
-      setState(() {
-        _error = ErrorHandler.handleError(e);
-        _isLoading = false;
-      });
-    }
-  }
-
-  void _trackBus() {
-    if (_busData != null) {
-      final passengerProvider = Provider.of<PassengerProvider>(context, listen: false);
-      passengerProvider.trackBus(_busData!.id);
-      AppRouter.navigateTo(context, AppRoutes.busTracking);
-    }
-  }
-
-  void _rateDriver() {
-    if (_busData != null && _busData!.driver != null) {
-      AppRouter.navigateTo(
-        context,
-        AppRoutes.rateDriver,
-        arguments: {
-          'driverId': _busData!.driver,
-          'busId': _busData!.id,
-        },
-      );
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load bus details: $error')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: const DzAppBar(
-        title: 'Bus Details',
-      ),
-      body: _isLoading
-          ? const Center(child: LoadingIndicator())
-          : _error != null
-          ? Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.error_outline,
-              size: 64,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Error loading bus details',
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              _error!,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.primary,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
-            CustomButton(
-        text: 'Try Again',
-        onPressed: _loadBusDetails,
+    return AppPageScaffold(
+      title: 'Bus Details',
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.refresh),
+          onPressed: _loadBusDetails,
         ),
-          ],
-        ),
-      )
-          : _buildContent(),
+      ],
+      child: _isLoading
+          ? const LoadingState.fullScreen()
+          : _busData == null
+              ? const EmptyState(
+                  title: 'Bus not found',
+                  message: 'The requested bus could not be found.',
+                  icon: Icons.directions_bus_outlined,
+                )
+              : RefreshIndicator(
+                  onRefresh: _loadBusDetails,
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: Column(
+                      children: [
+                        // Bus Header
+                        _buildBusHeader(context, _busData!),
+                        
+                        const SizedBox(height: DesignSystem.space16),
+                        
+                        // Quick Actions
+                        _buildQuickActions(context, _busData!),
+                        
+                        const SizedBox(height: DesignSystem.space16),
+                        
+                        // Bus Information
+                        _buildBusInformation(context, _busData!),
+                        
+                        const SizedBox(height: DesignSystem.space16),
+                        
+                        // Route Information
+                        _buildRouteInformation(context, _busData!),
+                        
+                        const SizedBox(height: DesignSystem.space16),
+                        
+                        // Schedule Information
+                        _buildScheduleInformation(context, _busData!),
+                        
+                        const SizedBox(height: DesignSystem.space16),
+                        
+                        // Real-time Status
+                        _buildRealTimeStatus(context, _busData!),
+                        
+                        const SizedBox(height: DesignSystem.space24),
+                      ],
+                    ),
+                  ),
+                ),
     );
   }
 
-  Widget _buildContent() {
-    if (_busData == null) {
-      return const Center(
-        child: Text('No bus details available'),
-      );
-    }
-
-    // Extract bus data
-    final licensePlate = _busData!.licensePlate ?? 'N/A';
-    final model = _busData!.model ?? 'N/A';
-    final manufacturer = _busData!.manufacturer ?? 'N/A';
-    final year = _busData!.year?.toString() ?? 'N/A';
-    final capacity = _busData!.capacity?.toString() ?? 'N/A';
-    final isAirConditioned = _busData!.isAirConditioned == true;
-    final status = _busData!.status.toString();
-    final isActive = _busData!.isActive == true;
-
-    // Extract occupancy data
-    int? occupancy;
-    // Note: Real-time occupancy would come from tracking service
-    // For now using placeholder data
-    occupancy = null;
-
-    // Calculate occupancy percentage
-    final occupancyPercentage = occupancy != null && int.tryParse(capacity) != null
-        ? (occupancy / int.parse(capacity) * 100).round()
-        : null;
-
-    // Check if the bus is being tracked
-    final isTracking = _busData!.isActive;
-    // Note: Real tracking status would come from tracking service
-
-    // Get last update time
-    String lastUpdateText = 'Not tracking';
-    if (isTracking &&
-        _busData!.currentLocation != null &&
-        _busData!.currentLocation!.containsKey('timestamp')) {
-      final timestamp = DateTime.tryParse(_busData!.currentLocation!['timestamp']);
-      if (timestamp != null) {
-        lastUpdateText = 'Updated ${timeago.format(timestamp)}';
-      }
-    }
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+  Widget _buildBusHeader(BuildContext context, Bus bus) {
+    return Container(
+      padding: const EdgeInsets.all(DesignSystem.space24),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            context.colors.primary,
+            context.colors.primary.withValues(alpha: 0.8),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(DesignSystem.radiusLarge),
+      ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Bus Image (placeholder)
-          ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: Container(
-              color: Theme.of(context).colorScheme.primary,
-              child: Center(
+          // Bus icon and number
+          Row(
+            children: [
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: context.colors.onPrimary,
+                  shape: BoxShape.circle,
+                ),
                 child: Icon(
                   Icons.directions_bus,
-                  size: 80,
-                  color: Theme.of(context).colorScheme.primary,
+                  size: 30,
+                  color: context.colors.primary,
                 ),
               ),
-            ),
+              
+              const SizedBox(width: DesignSystem.space16),
+              
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Bus ${bus.number}',
+                      style: context.textStyles.headlineMedium?.copyWith(
+                        color: context.colors.onPrimary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      bus.licensePlate ?? 'License: N/A',
+                      style: context.textStyles.bodyLarge?.copyWith(
+                        color: context.colors.onPrimary.withValues(alpha: 0.9),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              
+              StatusBadge(
+                status: bus.status?.value.toUpperCase() ?? 'UNKNOWN',
+                color: _getBusStatusColor(bus.status?.value),
+              ),
+            ],
           ),
-
-          const SizedBox(height: 16),
-
-          // Bus basic info
-          CustomCard(type: CardType.elevated, 
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // License plate & status
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'License Plate',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
-                        ),
-                        Text(
-                          licensePlate,
-                          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: isActive ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.primary,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Text(
-                        isActive ? 'Active' : 'Inactive',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.primary,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ],
+          
+          const SizedBox(height: DesignSystem.space20),
+          
+          // Key metrics
+          Row(
+            children: [
+              Expanded(
+                child: _buildMetric(
+                  context,
+                  'Capacity',
+                  '${bus.capacity ?? 0}',
+                  Icons.people,
+                  context.colors.onPrimary,
                 ),
-
-                const SizedBox(height: 16),
-
-                // Model & manufacturer
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildInfoItem('Model', model),
-                    ),
-                    Expanded(
-                      child: _buildInfoItem('Manufacturer', manufacturer),
-                    ),
-                  ],
+              ),
+              Expanded(
+                child: _buildMetric(
+                  context,
+                  'Occupancy',
+                  _getOccupancyText(bus.occupancyLevel),
+                  Icons.event_seat,
+                  context.colors.onPrimary,
                 ),
-
-                const SizedBox(height: 16),
-
-                // Year & capacity
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildInfoItem('Year', year),
-                    ),
-                    Expanded(
-                      child: _buildInfoItem('Capacity', '$capacity passengers'),
-                    ),
-                  ],
+              ),
+              Expanded(
+                child: _buildMetric(
+                  context,
+                  'Speed',
+                  '${bus.currentSpeed?.toStringAsFixed(0) ?? '0'} km/h',
+                  Icons.speed,
+                  context.colors.onPrimary,
                 ),
-
-                const SizedBox(height: 16),
-
-                // Air conditioning & status
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildInfoItem(
-                        'Air Conditioning',
-                        isAirConditioned ? 'Available' : 'Not available',
-                        icon: isAirConditioned ? Icons.ac_unit : Icons.highlight_off,
-                        iconColor: isAirConditioned ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.primary,
-                      ),
-                    ),
-                    Expanded(
-                      child: _buildInfoItem(
-                        'Status',
-                        status.toString().toUpperCase(),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
+        ],
+      ),
+    );
+  }
 
-          const SizedBox(height: 16),
-
-          // Current tracking info
-          CustomCard(type: CardType.elevated, 
-            backgroundColor: isTracking ? Theme.of(context).colorScheme.primaryContainer : Theme.of(context).colorScheme.surface,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Live Tracking',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: isTracking ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.primary,
-                  ),
-                ),
-
-                const SizedBox(height: 16),
-
-                Text(
-                  isTracking
-                      ? 'This bus is currently being tracked.'
-                      : 'This bus is not currently being tracked.',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: isTracking ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.primary,
-                  ),
-                ),
-
-                const SizedBox(height: 16),
-
-                if (isTracking) ...[
-                  // Last update time
-                  _buildInfoItem(
-                    'Last Update',
-                    lastUpdateText,
-                    textColor: Theme.of(context).colorScheme.primary,
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Current location - in a real app, you'd show a small map here
-                  Text(
-                    'Current Location',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primary,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Center(
-                      child: Icon(
-                        Icons.map,
-                        size: 40,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                    ),
-                  ),
-                ],
-
-                const SizedBox(height: 16),
-
-                // Occupancy information
-                if (occupancy != null && occupancyPercentage != null) ...[
-                  Text(
-                    'Current Occupancy',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: isTracking ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.primary,
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  Row(
-                    children: [
-                      // Occupancy number
-                      Text(
-                        '$occupancy / $capacity',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: isTracking ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.primary,
-                        ),
-                      ),
-
-                      const SizedBox(width: 16, height: 40),
-
-                      // Progress bar
-                      Expanded(
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(4),
-                          child: LinearProgressIndicator(
-                            value: occupancyPercentage / 100,
-                            backgroundColor: isTracking
-                                ? Theme.of(context).colorScheme.primary
-                                : Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                            color: _getOccupancyColor(occupancyPercentage),
-                            minHeight: 8,
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(width: 8, height: 40),
-
-                      // Percentage
-                      Text(
-                        '$occupancyPercentage%',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: isTracking
-                              ? _getOccupancyColor(occupancyPercentage)
-                              : Theme.of(context).colorScheme.primary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-
-                const SizedBox(height: 16),
-
-                // Track button
-                Center(
-                  child: CustomButton(
-        text: isTracking ? 'View Live Tracking' : 'Track This Bus',
-        onPressed: _trackBus,
-        color: isTracking ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.primary,
+  Widget _buildMetric(BuildContext context, String label, String value, IconData icon, Color color) {
+    return Column(
+      children: [
+        Icon(icon, color: color.withValues(alpha: 0.9), size: 20),
+        const SizedBox(height: DesignSystem.space4),
+        Text(
+          value,
+          style: context.textStyles.titleMedium?.copyWith(
+            color: color,
+            fontWeight: FontWeight.bold,
+          ),
         ),
-                ),
-              ],
+        Text(
+          label,
+          style: context.textStyles.bodySmall?.copyWith(
+            color: color.withValues(alpha: 0.8),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildQuickActions(BuildContext context, Bus bus) {
+    return SectionLayout(
+      title: 'Quick Actions',
+      child: Row(
+        children: [
+          Expanded(
+            child: AppButton(
+              text: 'Track Live',
+              onPressed: () => _trackBusLive(bus),
+              icon: Icons.location_on,
             ),
           ),
-
-          const SizedBox(height: 16),
-
-          // Rate driver
-          CustomCard(type: CardType.elevated, 
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 24,
-                      backgroundColor: Theme.of(context).colorScheme.primary,
-                      child: Icon(
-                        Icons.person,
-                        color: Theme.of(context).colorScheme.onPrimary,
-                        size: 32,
-                      ),
-                    ),
-
-                    const SizedBox(width: 16, height: 40),
-
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Rate the Driver',
-                            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-
-                          Text(
-                            'Share your experience with this bus driver',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Theme.of(context).colorScheme.primary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 16),
-
-                CustomButton(
-        text: 'Rate Driver',
-        onPressed: _rateDriver,
-        type: ButtonType.outline,
-        ),
-              ],
+          const SizedBox(width: DesignSystem.space12),
+          Expanded(
+            child: AppButton.outlined(
+              text: 'Set Alert',
+              onPressed: () => _setArrivalAlert(bus),
+              icon: Icons.notifications,
+            ),
+          ),
+          const SizedBox(width: DesignSystem.space12),
+          Expanded(
+            child: AppButton.outlined(
+              text: 'Share',
+              onPressed: () => _shareBus(bus),
+              icon: Icons.share,
             ),
           ),
         ],
@@ -478,56 +276,322 @@ class _BusDetailsScreenState extends State<BusDetailsScreen> {
     );
   }
 
-  Widget _buildInfoItem(
-      String label,
-      String value, {
-        IconData? icon,
-        Color? iconColor,
-        Color? textColor,
-      }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: textColor != null ? textColor.withOpacity(0.1) : Theme.of(context).colorScheme.primary,
+  Widget _buildBusInformation(BuildContext context, Bus bus) {
+    return SectionLayout(
+      title: 'Bus Information',
+      child: AppCard(
+        child: Padding(
+          padding: const EdgeInsets.all(DesignSystem.space16),
+          child: Column(
+            children: [
+              _buildInfoRow('Bus Number', bus.number ?? 'Unknown'),
+              _buildInfoRow('License Plate', bus.licensePlate ?? 'N/A'),
+              _buildInfoRow('Model', bus.model ?? 'N/A'),
+              _buildInfoRow('Year', bus.year?.toString() ?? 'N/A'),
+              _buildInfoRow('Capacity', '${bus.capacity ?? 0} passengers'),
+              _buildInfoRow('Driver', bus.driverName ?? 'Not assigned'),
+              _buildInfoRow('Status', bus.status?.value.toUpperCase() ?? 'UNKNOWN'),
+            ],
           ),
         ),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            if (icon != null) ...[
-              Icon(
-                icon,
-                size: 16,
-                color: iconColor ?? Theme.of(context).colorScheme.primary,
-              ),
-              const SizedBox(width: 8, height: 40),
-            ],
-            Expanded(
-              child: Text(
-                value,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w500,
-                  color: textColor ?? Theme.of(context).colorScheme.primary,
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
-        ),
-      ],
+      ),
     );
   }
 
-  Color _getOccupancyColor(int percentage) {
-    if (percentage < 50) {
-      return Theme.of(context).colorScheme.primary;
-    } else if (percentage < 80) {
-      return Theme.of(context).colorScheme.primary;
-    } else {
-      return Theme.of(context).colorScheme.primary;
+  Widget _buildRouteInformation(BuildContext context, Bus bus) {
+    return SectionLayout(
+      title: 'Route Information',
+      child: AppCard(
+        child: Padding(
+          padding: const EdgeInsets.all(DesignSystem.space16),
+          child: Column(
+            children: [
+              _buildInfoRow('Current Route', bus.currentRoute ?? 'No active route'),
+              _buildInfoRow('Direction', bus.direction ?? 'N/A'),
+              _buildInfoRow('Next Stop', bus.nextStop ?? 'Unknown'),
+              _buildInfoRow('Distance to Next', '${(bus.distanceToNextStop is double ? (bus.distanceToNextStop as double).toStringAsFixed(1) : bus.distanceToNextStop?.toString() ?? '0.0')} km'),
+              _buildInfoRow('ETA', bus.estimatedArrival ?? 'Calculating...'),
+              
+              const SizedBox(height: DesignSystem.space12),
+              
+              AppButton.text(
+                text: 'View Full Route',
+                onPressed: () => _viewFullRoute(bus),
+                icon: Icons.route,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildScheduleInformation(BuildContext context, Bus bus) {
+    return SectionLayout(
+      title: 'Schedule Information',
+      child: AppCard(
+        child: Padding(
+          padding: const EdgeInsets.all(DesignSystem.space16),
+          child: Column(
+            children: [
+              _buildInfoRow('First Departure', bus.firstDeparture ?? 'N/A'),
+              _buildInfoRow('Last Departure', bus.lastDeparture ?? 'N/A'),
+              _buildInfoRow('Frequency', '${bus.frequency ?? 0} minutes'),
+              _buildInfoRow('Service Days', bus.serviceDays ?? 'Daily'),
+              
+              const SizedBox(height: DesignSystem.space12),
+              
+              AppButton.text(
+                text: 'View Schedule',
+                onPressed: () => _viewSchedule(bus),
+                icon: Icons.schedule,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRealTimeStatus(BuildContext context, Bus bus) {
+    return SectionLayout(
+      title: 'Real-time Status',
+      child: AppCard(
+        child: Padding(
+          padding: const EdgeInsets.all(DesignSystem.space16),
+          child: Column(
+            children: [
+              // Current location
+              Row(
+                children: [
+                  Icon(
+                    Icons.location_on,
+                    color: context.colors.primary,
+                    size: 20,
+                  ),
+                  const SizedBox(width: DesignSystem.space8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Current Location',
+                          style: context.textStyles.bodySmall?.copyWith(
+                            color: context.colors.onSurfaceVariant,
+                          ),
+                        ),
+                        Text(
+                          '${bus.currentLocation?['latitude']?.toStringAsFixed(6) ?? '0.000000'}, '
+                          '${bus.currentLocation?['longitude']?.toStringAsFixed(6) ?? '0.000000'}',
+                          style: context.textStyles.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  AppButton.text(
+                    text: 'View on Map',
+                    onPressed: () => _viewOnMap(bus),
+                    size: AppButtonSize.small,
+                  ),
+                ],
+              ),
+              
+              const SizedBox(height: DesignSystem.space16),
+              
+              // Last update
+              _buildInfoRow('Last Update', _formatLastUpdate(bus.lastUpdate)),
+              _buildInfoRow('Current Speed', '${bus.currentSpeed?.toStringAsFixed(1) ?? '0.0'} km/h'),
+              _buildInfoRow('Passengers', '${bus.currentPassengers ?? 0}/${bus.capacity ?? 0}'),
+              
+              // Occupancy indicator
+              const SizedBox(height: DesignSystem.space12),
+              
+              Container(
+                padding: const EdgeInsets.all(DesignSystem.space12),
+                decoration: BoxDecoration(
+                  color: _getOccupancyColor(bus.occupancyLevel).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(DesignSystem.radiusMedium),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.people,
+                      color: _getOccupancyColor(bus.occupancyLevel),
+                    ),
+                    const SizedBox(width: DesignSystem.space8),
+                    Expanded(
+                      child: Text(
+                        'Occupancy Level: ${_getOccupancyText(bus.occupancyLevel)}',
+                        style: context.textStyles.bodyMedium?.copyWith(
+                          color: _getOccupancyColor(bus.occupancyLevel),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: DesignSystem.space8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: context.textStyles.bodyMedium?.copyWith(
+              color: context.colors.onSurfaceVariant,
+            ),
+          ),
+          Flexible(
+            child: Text(
+              value,
+              style: context.textStyles.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w500,
+              ),
+              textAlign: TextAlign.end,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Color _getBusStatusColor(String? status) {
+    switch (status?.toLowerCase()) {
+      case 'active':
+        return DesignSystem.busActive;
+      case 'delayed':
+        return DesignSystem.warning;
+      case 'offline':
+        return DesignSystem.busInactive;
+      default:
+        return DesignSystem.onSurfaceVariant;
     }
+  }
+
+  String _getOccupancyText(String? occupancyLevel) {
+    switch (occupancyLevel?.toLowerCase()) {
+      case 'low':
+        return 'Low';
+      case 'medium':
+        return 'Medium';
+      case 'high':
+        return 'High';
+      default:
+        return 'Unknown';
+    }
+  }
+
+  Color _getOccupancyColor(String? occupancyLevel) {
+    switch (occupancyLevel?.toLowerCase()) {
+      case 'low':
+        return context.successColor;
+      case 'medium':
+        return context.warningColor;
+      case 'high':
+        return context.colors.error;
+      default:
+        return context.colors.onSurfaceVariant;
+    }
+  }
+
+  String _formatLastUpdate(DateTime? lastUpdate) {
+    if (lastUpdate == null) return 'Never';
+    
+    final now = DateTime.now();
+    final difference = now.difference(lastUpdate);
+    
+    if (difference.inSeconds < 60) {
+      return 'Just now';
+    } else if (difference.inMinutes < 60) {
+      return '${difference.inMinutes} minutes ago';
+    } else if (difference.inHours < 24) {
+      return '${difference.inHours} hours ago';
+    } else {
+      return '${difference.inDays} days ago';
+    }
+  }
+
+  void _trackBusLive(Bus bus) {
+    Navigator.of(context).pushNamed(
+      AppRoutes.busTracking,
+      arguments: {'busId': bus.id},
+    );
+  }
+
+  void _setArrivalAlert(Bus bus) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Set Arrival Alert'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('Get notified when Bus ${bus.number} is approaching your location.'),
+            const SizedBox(height: DesignSystem.space16),
+            Text(
+              'Select notification distance:',
+              style: context.textStyles.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            // Add distance selection UI here
+          ],
+        ),
+        actions: [
+          AppButton.text(
+            text: 'Cancel',
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          AppButton(
+            text: 'Set Alert',
+            onPressed: () {
+              Navigator.of(context).pop();
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Alert set for Bus ${bus.number}')),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _shareBus(Bus bus) {
+    // Implement bus sharing functionality
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Sharing Bus ${bus.number} information')),
+    );
+  }
+
+  void _viewFullRoute(Bus bus) {
+    // Navigate to route details
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Route details functionality coming soon')),
+    );
+  }
+
+  void _viewSchedule(Bus bus) {
+    // Navigate to schedule view
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Schedule view functionality coming soon')),
+    );
+  }
+
+  void _viewOnMap(Bus bus) {
+    Navigator.of(context).pushNamed(
+      AppRoutes.busTracking,
+      arguments: {'busId': bus.id},
+    );
   }
 }

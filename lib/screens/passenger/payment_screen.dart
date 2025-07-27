@@ -1,172 +1,172 @@
 // lib/screens/passenger/payment_screen.dart
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import '../../core/utils/date_utils.dart';
-import '../../services/payment_service.dart';
-import '../../widgets/common/app_layout.dart';
-import '../../widgets/common/custom_button.dart';
-import '../../widgets/common/custom_card.dart';
-import '../../widgets/common/custom_app_bar.dart';
-import '../../widgets/common/loading_indicator.dart';
-import '../../widgets/common/loading_states.dart';
-import '../../widgets/common/error_states.dart';
-import '../../localization/app_localizations.dart';
-import '../../helpers/dialog_helper.dart';
-import '../../utils/responsive_utils.dart';
+import 'package:provider/provider.dart';
+import '../../config/design_system.dart';
+import '../../providers/passenger_provider.dart';
+import '../../widgets/widgets.dart';
 
+/// Modern payment screen for bus fares
 class PaymentScreen extends StatefulWidget {
   final Map<String, dynamic>? tripDetails;
   final double? fareAmount;
-  
+
   const PaymentScreen({
-    Key? key,
+    super.key,
     this.tripDetails,
     this.fareAmount,
-  }) : super(key: key);
+  });
 
   @override
   State<PaymentScreen> createState() => _PaymentScreenState();
 }
 
-class _PaymentScreenState extends State<PaymentScreen> with TickerProviderStateMixin {
-  late TabController _tabController;
-  final PaymentService _paymentService = PaymentService();
-  
-  bool _isProcessing = false;
+class _PaymentScreenState extends State<PaymentScreen> {
   String _selectedPaymentMethod = 'card';
+  bool _isProcessing = false;
+  final _formKey = GlobalKey<FormState>();
   
-  // Card payment controllers
-  final _cardNumberController = TextEditingController();
-  final _expiryController = TextEditingController();
-  final _cvvController = TextEditingController();
-  final _cardHolderController = TextEditingController();
-  
-  // Wallet balance
-  double _walletBalance = 2450;
-  
+  // Card details controllers
+  late TextEditingController _cardNumberController;
+  late TextEditingController _expiryController;
+  late TextEditingController _cvvController;
+  late TextEditingController _holderNameController;
+
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
-    _loadWalletBalance();
+    _initializeControllers();
+  }
+
+  void _initializeControllers() {
+    _cardNumberController = TextEditingController();
+    _expiryController = TextEditingController();
+    _cvvController = TextEditingController();
+    _holderNameController = TextEditingController();
   }
 
   @override
   void dispose() {
-    _tabController.dispose();
     _cardNumberController.dispose();
     _expiryController.dispose();
     _cvvController.dispose();
-    _cardHolderController.dispose();
+    _holderNameController.dispose();
     super.dispose();
-  }
-
-  Future<void> _loadWalletBalance() async {
-    try {
-      final balance = await _paymentService.getWalletBalance();
-      setState(() {
-        _walletBalance = balance;
-      });
-    } catch (e) {
-      // Handle error
-    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final localizations = AppLocalizations.of(context)!;
-    final fareAmount = widget.fareAmount ?? 150;
-
-    return AppLayout(
+    return AppPageScaffold(
       title: 'Payment',
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Trip summary
-            _buildTripSummary(localizations, fareAmount),
-            const SizedBox(height: 16),
+            // Trip Summary
+            _buildTripSummary(context),
             
-            // Payment methods
-            _buildPaymentMethods(localizations),
-            const SizedBox(height: 16),
+            const SizedBox(height: DesignSystem.space16),
             
-            // Payment form
-            _buildPaymentForm(localizations),
-            const SizedBox(height: 16),
+            // Payment Amount
+            _buildPaymentAmount(context),
             
-            // Payment button
-            _buildPaymentButton(localizations, fareAmount),
+            const SizedBox(height: DesignSystem.space24),
+            
+            // Payment Methods
+            _buildPaymentMethods(context),
+            
+            const SizedBox(height: DesignSystem.space24),
+            
+            // Payment Form
+            _buildPaymentForm(context),
+            
+            const SizedBox(height: DesignSystem.space32),
+            
+            // Pay Button
+            _buildPayButton(context),
+            
+            const SizedBox(height: DesignSystem.space24),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildTripSummary(AppLocalizations localizations, double fareAmount) {
-    final trip = widget.tripDetails;
+  Widget _buildTripSummary(BuildContext context) {
+    final tripDetails = widget.tripDetails;
     
-    return CustomCard(type: CardType.elevated, 
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Trip Summary',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 16),
-          
-          if (trip != null) ...[
-            _buildSummaryRow('Line', trip['lineName'] ?? 'Unknown Line'),
-            _buildSummaryRow('From', trip['originStop'] ?? 'Unknown'),
-            _buildSummaryRow('To', trip['destinationStop'] ?? 'Unknown'),
-            _buildSummaryRow('Date', DzDateUtils.formatDate(DateTime.now())),
-            _buildSummaryRow('Time', DzDateUtils.formatTime(DateTime.now())),
-            const Divider(),
-          ],
-          
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return SectionLayout(
+      title: 'Trip Summary',
+      child: AppCard(
+        child: Padding(
+          padding: const EdgeInsets.all(DesignSystem.space16),
+          child: Column(
             children: [
-              Text(
-                'Total Amount',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+              Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: context.colors.primaryContainer,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.directions_bus,
+                      color: context.colors.onPrimaryContainer,
+                    ),
+                  ),
+                  const SizedBox(width: DesignSystem.space12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Bus ${tripDetails?['busNumber'] ?? 'Unknown'}',
+                          style: context.textStyles.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          '${tripDetails?['route'] ?? 'Route not specified'}',
+                          style: context.textStyles.bodyMedium?.copyWith(
+                            color: context.colors.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-              Text(
-                '$fareAmount DA',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-              ),
+              
+              const SizedBox(height: DesignSystem.space16),
+              
+              // Trip details
+              _buildTripDetailRow('From', tripDetails?['startLocation'] ?? 'Unknown'),
+              _buildTripDetailRow('To', tripDetails?['endLocation'] ?? 'Unknown'),
+              _buildTripDetailRow('Date', tripDetails?['date'] ?? 'Today'),
+              _buildTripDetailRow('Time', tripDetails?['time'] ?? 'Now'),
             ],
           ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildSummaryRow(String label, String value) {
+  Widget _buildTripDetailRow(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.only(bottom: DesignSystem.space8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
             label,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(context).colorScheme.primary,
+            style: context.textStyles.bodyMedium?.copyWith(
+              color: context.colors.onSurfaceVariant,
             ),
           ),
           Text(
             value,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            style: context.textStyles.bodyMedium?.copyWith(
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -175,440 +175,256 @@ class _PaymentScreenState extends State<PaymentScreen> with TickerProviderStateM
     );
   }
 
-  Widget _buildPaymentMethods(AppLocalizations localizations) {
-    return CustomCard(type: CardType.elevated, 
+  Widget _buildPaymentAmount(BuildContext context) {
+    final amount = widget.fareAmount ?? 5.50;
+    
+    return Container(
+      padding: const EdgeInsets.all(DesignSystem.space24),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            context.colors.primary,
+            context.colors.primary.withValues(alpha: 0.8),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(DesignSystem.radiusLarge),
+      ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Payment Method',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+            'Total Amount',
+            style: context.textStyles.bodyLarge?.copyWith(
+              color: context.colors.onPrimary.withValues(alpha: 0.9),
+            ),
+          ),
+          const SizedBox(height: DesignSystem.space8),
+          Text(
+            '\$${amount.toStringAsFixed(2)}',
+            style: context.textStyles.displaySmall?.copyWith(
+              color: context.colors.onPrimary,
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 16),
-          
-          // Payment method options
-          _buildPaymentOption(
-            'wallet',
-            'Wallet',
-            Icons.account_balance_wallet,
-            'Balance: $_walletBalance DA',
-            Theme.of(context).colorScheme.primary,
+          const SizedBox(height: DesignSystem.space4),
+          Text(
+            'Including taxes and fees',
+            style: context.textStyles.bodySmall?.copyWith(
+              color: context.colors.onPrimary.withValues(alpha: 0.8),
+            ),
           ),
-          _buildPaymentOption(
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPaymentMethods(BuildContext context) {
+    return SectionLayout(
+      title: 'Payment Method',
+      child: Column(
+        children: [
+          _buildPaymentMethodOption(
             'card',
             'Credit/Debit Card',
             Icons.credit_card,
-            'Visa, Mastercard, CIB',
-            Theme.of(context).colorScheme.primary,
+            'Visa, Mastercard, etc.',
           ),
-          _buildPaymentOption(
-            'mobile',
-            'Mobile Payment',
-            Icons.smartphone,
-            'CIB Mobile, Baridi Mob',
-            Theme.of(context).colorScheme.primary,
+          const SizedBox(height: DesignSystem.space8),
+          _buildPaymentMethodOption(
+            'digital_wallet',
+            'Digital Wallet',
+            Icons.account_balance_wallet,
+            'Apple Pay, Google Pay, etc.',
           ),
-          _buildPaymentOption(
+          const SizedBox(height: DesignSystem.space8),
+          _buildPaymentMethodOption(
+            'bus_pass',
+            'Bus Pass',
+            Icons.confirmation_number,
+            'Use your monthly pass',
+          ),
+          const SizedBox(height: DesignSystem.space8),
+          _buildPaymentMethodOption(
             'cash',
-            'Cash Payment',
+            'Cash',
             Icons.money,
-            'Pay driver directly',
-            Theme.of(context).colorScheme.primary,
+            'Pay with exact change',
           ),
         ],
       ),
     );
   }
 
-  Widget _buildPaymentOption(String method, String title, IconData icon, String subtitle, Color color) {
-    final isSelected = _selectedPaymentMethod == method;
+  Widget _buildPaymentMethodOption(
+    String value,
+    String title,
+    IconData icon,
+    String subtitle,
+  ) {
+    final isSelected = _selectedPaymentMethod == value;
     
-    return GestureDetector(
+    return AppCard(
       onTap: () {
         setState(() {
-          _selectedPaymentMethod = method;
+          _selectedPaymentMethod = value;
         });
       },
       child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: isSelected ? color.withValues(alpha: 0) : Colors.transparent,
+        decoration: isSelected ? BoxDecoration(
           border: Border.all(
-            color: isSelected ? color : Theme.of(context).colorScheme.primary,
-            width: isSelected ? 2 : 1,
+            color: context.colors.primary,
+            width: 2,
           ),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(icon, color: color, size: 24),
+          borderRadius: BorderRadius.circular(DesignSystem.radiusLarge),
+        ) : null,
+        child: ListTile(
+          leading: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: isSelected 
+                  ? context.colors.primary
+                  : context.colors.surfaceContainerHighest,
+              shape: BoxShape.circle,
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: isSelected ? color : null,
-                    ),
-                  ),
-                  Text(
-                    subtitle,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                  ),
-                ],
-              ),
+            child: Icon(
+              icon,
+              color: isSelected 
+                  ? context.colors.onPrimary
+                  : context.colors.onSurfaceVariant,
+              size: 20,
             ),
-            if (isSelected)
-              Icon(Icons.check_circle, color: color, size: 20),
-          ],
+          ),
+          title: Text(
+            title,
+            style: context.textStyles.titleSmall?.copyWith(
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            ),
+          ),
+          subtitle: Text(subtitle),
+          trailing: isSelected 
+              ? Icon(
+                  Icons.check_circle,
+                  color: context.colors.primary,
+                )
+              : null,
         ),
       ),
     );
   }
 
-  Widget _buildPaymentForm(AppLocalizations localizations) {
+  Widget _buildPaymentForm(BuildContext context) {
     switch (_selectedPaymentMethod) {
       case 'card':
-        return _buildCardForm();
-      case 'mobile':
-        return _buildMobileForm();
-      case 'wallet':
-        return _buildWalletForm();
+        return _buildCardForm(context);
+      case 'digital_wallet':
+        return _buildDigitalWalletForm(context);
+      case 'bus_pass':
+        return _buildBusPassForm(context);
       case 'cash':
-        return _buildCashForm();
+        return _buildCashForm(context);
       default:
-        return const SizedBox();
+        return const SizedBox.shrink();
     }
   }
 
-  Widget _buildCardForm() {
-    return CustomCard(type: CardType.elevated, 
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Card Details',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold,
+  Widget _buildCardForm(BuildContext context) {
+    return Form(
+      key: _formKey,
+      child: SectionLayout(
+        title: 'Card Details',
+        child: Column(
+          children: [
+            AppInput(
+              label: 'Card Number',
+              controller: _cardNumberController,
+              keyboardType: TextInputType.number,
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Please enter card number';
+                }
+                if (value.length < 16) {
+                  return 'Card number must be at least 16 digits';
+                }
+                return null;
+              },
             ),
-          ),
-          const SizedBox(height: 16),
-          
-          // Card number
-          TextFormField(
-            controller: _cardNumberController,
-            keyboardType: TextInputType.number,
-            inputFormatters: [
-              FilteringTextInputFormatter.digitsOnly,
-              _CardNumberFormatter(),
-            ],
-            decoration: InputDecoration(
-              labelText: 'Card Number',
-              hintText: '1234 5678 9012 3456',
-              prefixIcon: const Icon(Icons.credit_card),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          
-          // Expiry and CVV row
-          Row(
-            children: [
-              Expanded(
-                child: TextFormField(
-                  controller: _expiryController,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly,
-                    _ExpiryDateFormatter(),
-                  ],
-                  decoration: InputDecoration(
-                    labelText: 'MM/YY',
-                    hintText: '12/25',
-                    prefixIcon: const Icon(Icons.calendar_today),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: TextFormField(
-                  controller: _cvvController,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly,
-                    LengthLimitingTextInputFormatter(3),
-                  ],
-                  decoration: InputDecoration(
-                    labelText: 'CVV',
-                    hintText: '123',
-                    prefixIcon: const Icon(Icons.lock),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          
-          // Cardholder name
-          TextFormField(
-            controller: _cardHolderController,
-            textCapitalization: TextCapitalization.words,
-            decoration: InputDecoration(
-              labelText: 'Cardholder Name',
-              hintText: 'John Doe',
-              prefixIcon: const Icon(Icons.person),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMobileForm() {
-    return CustomCard(type: CardType.elevated, 
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Mobile Payment',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 16),
-          
-          // Mobile payment providers
-          _buildMobileProvider('CIB Mobile', 'assets/images/cib_logo.png'),
-          _buildMobileProvider('Baridi Mob', 'assets/images/baridi_logo.png'),
-          _buildMobileProvider('Mobilis Money', 'assets/images/mobilis_logo.png'),
-          
-          const SizedBox(height: 16),
-          
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
+            
+            const SizedBox(height: DesignSystem.space16),
+            
+            Row(
               children: [
-                Icon(Icons.info, color: Theme.of(context).colorScheme.primary, size: 20),
-                const SizedBox(width: 8),
                 Expanded(
-                  child: Text(
-                    'You will be redirected to your mobile payment app to complete the transaction.',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
+                  child: AppInput(
+                    label: 'MM/YY',
+                    controller: _expiryController,
+                    keyboardType: TextInputType.number,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Required';
+                      }
+                      return null;
+                    },
+                  ),
+                ),
+                const SizedBox(width: DesignSystem.space16),
+                Expanded(
+                  child: AppInput(
+                    label: 'CVV',
+                    controller: _cvvController,
+                    keyboardType: TextInputType.number,
+                    obscureText: true,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Required';
+                      }
+                      return null;
+                    },
                   ),
                 ),
               ],
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMobileProvider(String name, String logoPath) {
-    return ListTile(
-      leading: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.primary,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Icon(Icons.smartphone, color: Theme.of(context).colorScheme.primary),
-      ),
-      title: Text(name),
-      trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-      onTap: () {
-        // Handle mobile payment provider selection
-      },
-    );
-  }
-
-  Widget _buildWalletForm() {
-    final fareAmount = widget.fareAmount ?? 150;
-    final canPay = _walletBalance >= fareAmount;
-    
-    return CustomCard(type: CardType.elevated, 
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Wallet Payment',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold,
+            
+            const SizedBox(height: DesignSystem.space16),
+            
+            AppInput(
+              label: 'Cardholder Name',
+              controller: _holderNameController,
+              keyboardType: TextInputType.name,
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Please enter cardholder name';
+                }
+                return null;
+              },
             ),
-          ),
-          const SizedBox(height: 16),
-          
-          // Wallet balance display
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Theme.of(context).colorScheme.primary, Theme.of(context).colorScheme.primary.withValues(alpha: 0)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.account_balance_wallet, color: Theme.of(context).colorScheme.primary, size: 32),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Current Balance',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0),
-                        ),
-                      ),
-                      Text(
-                        '$_walletBalance DA',
-                        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.primary,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          
-          const SizedBox(height: 16),
-          
-          if (!canPay) ...[
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.warning, color: Theme.of(context).colorScheme.primary, size: 20),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Insufficient balance. Please top up your wallet or choose another payment method.',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            CustomButton(
-        text: 'Top Up Wallet',
-        onPressed: _showTopUpDialog,
-        type: ButtonType.outline,
-        color: Theme.of(context).colorScheme.primary,
-      ),
           ],
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildCashForm() {
-    return CustomCard(type: CardType.elevated, 
+  Widget _buildDigitalWalletForm(BuildContext context) {
+    return SectionLayout(
+      title: 'Digital Wallet',
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Cash Payment',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold,
+          AppCard(
+            child: ListTile(
+              leading: const Icon(Icons.apple),
+              title: const Text('Apple Pay'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => _selectDigitalWallet('apple_pay'),
             ),
           ),
-          const SizedBox(height: 16),
-          
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Column(
-              children: [
-                Icon(Icons.money, color: Theme.of(context).colorScheme.primary, size: 48),
-                const SizedBox(height: 16),
-                Text(
-                  'Pay the driver directly',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Show this QR code to the driver when boarding the bus. The driver will confirm your payment.',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 16),
-                
-                // QR Code placeholder
-                Container(
-                  width: 120,
-                  height: 120,
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Theme.of(context).colorScheme.primary),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.qr_code, size: 60, color: Theme.of(context).colorScheme.primary),
-                      Text(
-                        'QR Code',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+          const SizedBox(height: DesignSystem.space8),
+          AppCard(
+            child: ListTile(
+              leading: const Icon(Icons.android),
+              title: const Text('Google Pay'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => _selectDigitalWallet('google_pay'),
             ),
           ),
         ],
@@ -616,205 +432,207 @@ class _PaymentScreenState extends State<PaymentScreen> with TickerProviderStateM
     );
   }
 
-  Widget _buildPaymentButton(AppLocalizations localizations, double fareAmount) {
-    final canPay = _selectedPaymentMethod != 'wallet' || _walletBalance >= fareAmount;
-    
-    return CustomButton(
-        text: _isProcessing ? 'Processing...' : 'Pay $fareAmount DA',
-        onPressed: canPay ? _processPayment : null,
-        type: ButtonType.primary,
-        size: ButtonSize.large,
-        isLoading: _isProcessing,
-        isDisabled: !canPay,
-        fullWidth: true,
-        );
-  }
-
-  void _showTopUpDialog() {
-    final amountController = TextEditingController();
-    
-    DialogHelper.showGlassyDialog(
-      context,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            'Top Up Wallet',
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              color: Theme.of(context).colorScheme.primary,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 16),
-          
-          TextField(
-            controller: amountController,
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(
-              labelText: 'Amount (DA)',
-              hintText: '500',
-              prefixIcon: const Icon(Icons.money),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          ),
-          
-          const SizedBox(height: 16),
-          
-          Row(
+  Widget _buildBusPassForm(BuildContext context) {
+    return SectionLayout(
+      title: 'Bus Pass',
+      child: AppCard(
+        child: Padding(
+          padding: const EdgeInsets.all(DesignSystem.space16),
+          child: Column(
             children: [
-              Expanded(
-                child: TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: Text(
-                    'Cancel',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.primary),
-                  ),
+              Icon(
+                Icons.confirmation_number,
+                size: 48,
+                color: context.colors.primary,
+              ),
+              const SizedBox(height: DesignSystem.space16),
+              Text(
+                'Monthly Pass Balance',
+                style: context.textStyles.titleMedium,
+              ),
+              const SizedBox(height: DesignSystem.space8),
+              Text(
+                '\$45.50',
+                style: context.textStyles.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: context.successColor,
                 ),
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    _topUpWallet(double.tryParse(amountController.text) ?? 0);
-                  },
-                  child: const Text('Top Up'),
+              const SizedBox(height: DesignSystem.space8),
+              Text(
+                'Valid until March 31, 2024',
+                style: context.textStyles.bodySmall?.copyWith(
+                  color: context.colors.onSurfaceVariant,
                 ),
               ),
             ],
           ),
-        ],
+        ),
       ),
     );
   }
 
-  Future<void> _topUpWallet(double amount) async {
-    if (amount <= 0) return;
-    
-    setState(() => _isProcessing = true);
-    
-    try {
-      await _paymentService.topUpWallet(amount);
-      setState(() {
-        _walletBalance += amount;
-      });
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Wallet topped up with $amount DA'),
-          backgroundColor: Theme.of(context).colorScheme.primary,
+  Widget _buildCashForm(BuildContext context) {
+    return SectionLayout(
+      title: 'Cash Payment',
+      child: AppCard(
+        child: Padding(
+          padding: const EdgeInsets.all(DesignSystem.space16),
+          child: Column(
+            children: [
+              Icon(
+                Icons.money,
+                size: 48,
+                color: context.colors.primary,
+              ),
+              const SizedBox(height: DesignSystem.space16),
+              Text(
+                'Pay Cash to Driver',
+                style: context.textStyles.titleMedium,
+              ),
+              const SizedBox(height: DesignSystem.space8),
+              Text(
+                'Please have exact change ready',
+                style: context.textStyles.bodyMedium?.copyWith(
+                  color: context.colors.onSurfaceVariant,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: DesignSystem.space16),
+              Container(
+                padding: const EdgeInsets.all(DesignSystem.space12),
+                decoration: BoxDecoration(
+                  color: context.warningColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(DesignSystem.radiusMedium),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.info,
+                      color: context.warningColor,
+                      size: 20,
+                    ),
+                    const SizedBox(width: DesignSystem.space8),
+                    Expanded(
+                      child: Text(
+                        'Show this screen to the driver when boarding',
+                        style: context.textStyles.bodySmall?.copyWith(
+                          color: context.warningColor,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to top up wallet: ${e.toString()}'),
-          backgroundColor: Theme.of(context).colorScheme.primary,
-        ),
-      );
-    } finally {
-      setState(() => _isProcessing = false);
+      ),
+    );
+  }
+
+  Widget _buildPayButton(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: DesignSystem.space16),
+      child: AppButton(
+        text: _getPayButtonText(),
+        onPressed: _isProcessing ? null : _processPayment,
+        isLoading: _isProcessing,
+        width: double.infinity,
+        icon: Icons.payment,
+      ),
+    );
+  }
+
+  String _getPayButtonText() {
+    switch (_selectedPaymentMethod) {
+      case 'card':
+        return 'Pay with Card';
+      case 'digital_wallet':
+        return 'Pay with Wallet';
+      case 'bus_pass':
+        return 'Use Bus Pass';
+      case 'cash':
+        return 'Confirm Cash Payment';
+      default:
+        return 'Pay Now';
     }
   }
 
   Future<void> _processPayment() async {
-    setState(() => _isProcessing = true);
-    
+    if (_selectedPaymentMethod == 'card' && !_formKey.currentState!.validate()) {
+      return;
+    }
+
+    setState(() {
+      _isProcessing = true;
+    });
+
     try {
-      final success = await _paymentService.processPayment(
-        method: _selectedPaymentMethod,
-        amount: widget.fareAmount ?? 150,
-        tripDetails: widget.tripDetails,
-        cardDetails: _selectedPaymentMethod == 'card' ? {
-          'number': _cardNumberController.text,
-          'expiry': _expiryController.text,
-          'cvv': _cvvController.text,
-          'holder': _cardHolderController.text,
-        } : null,
-      );
+      // Simulate payment processing
+      await Future.delayed(const Duration(seconds: 2));
       
-      if (success) {
-        // Show success dialog
-        DialogHelper.showSuccessDialog(
-          context,
-          title: 'Payment Successful',
-          message: 'Your payment has been processed successfully. Your ticket is ready!',
-        ).then((_) {
-          Navigator.pop(context, true);
-        });
-      } else {
-        throw Exception('Payment failed');
+      if (mounted) {
+        _showPaymentSuccess();
       }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Payment failed: ${e.toString()}'),
-          backgroundColor: Theme.of(context).colorScheme.primary,
-        ),
-      );
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Payment failed: $error')),
+        );
+      }
     } finally {
-      setState(() => _isProcessing = false);
+      if (mounted) {
+        setState(() {
+          _isProcessing = false;
+        });
+      }
     }
   }
-}
 
-class _CardNumberFormatter extends TextInputFormatter {
-  @override
-  TextEditingValue formatEditUpdate(
-    TextEditingValue oldValue,
-    TextEditingValue newValue,
-  ) {
-    final text = newValue.text.replaceAll(' ', '');
-    final buffer = StringBuffer();
-    
-    for (int i = 0; i < text.length; i++) {
-      if (i > 0 && i % 4 == 0) {
-        buffer.write(' ');
-      }
-      buffer.write(text[i]);
-    }
-    
-    return TextEditingValue(
-      text: buffer.toString(),
-      selection: TextSelection.collapsed(offset: buffer.length),
+  void _selectDigitalWallet(String walletType) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Selected $walletType')),
     );
   }
-}
 
-class _ExpiryDateFormatter extends TextInputFormatter {
-  @override
-  TextEditingValue formatEditUpdate(
-    TextEditingValue oldValue,
-    TextEditingValue newValue,
-  ) {
-    final text = newValue.text.replaceAll('/', '');
-    final buffer = StringBuffer();
-    
-    for (int i = 0; i < text.length && i < 4; i++) {
-      if (i == 2) {
-        buffer.write('/');
-      }
-      buffer.write(text[i]);
-    }
-    
-    return TextEditingValue(
-      text: buffer.toString(),
-      selection: TextSelection.collapsed(offset: buffer.length),
-    );
-  }
-}
-
-class FullScreenLoading extends StatelessWidget {
-  const FullScreenLoading({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      color: Colors.black.withValues(alpha: 0),
-      child: const Center(
-        child: LoadingIndicator(),
+  void _showPaymentSuccess() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.check_circle,
+              size: 64,
+              color: context.successColor,
+            ),
+            const SizedBox(height: DesignSystem.space16),
+            Text(
+              'Payment Successful!',
+              style: context.textStyles.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: DesignSystem.space8),
+            Text(
+              'Your payment has been processed successfully.',
+              style: context.textStyles.bodyMedium,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: DesignSystem.space24),
+            AppButton(
+              text: 'Continue',
+              onPressed: () {
+                Navigator.of(context).pop(); // Close dialog
+                Navigator.of(context).pop(); // Go back to previous screen
+              },
+              width: double.infinity,
+            ),
+          ],
+        ),
       ),
     );
   }

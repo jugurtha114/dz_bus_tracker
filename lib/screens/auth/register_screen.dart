@@ -2,17 +2,16 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../config/design_system.dart';
 import '../../config/route_config.dart';
-import '../../config/app_theme.dart';
 import '../../providers/auth_provider.dart';
-import '../../widgets/auth/register_form.dart';
-import '../../widgets/common/modern_card.dart';
-import '../../widgets/common/mobile_optimized_background.dart';
-import '../../helpers/error_handler.dart';
+import '../../widgets/widgets.dart';
+import '../../helpers/error_handler.dart' hide ErrorType;
+import '../../helpers/dialog_helper.dart';
 
-
+/// Modern registration screen with optimized UX
 class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({Key? key}) : super(key: key);
+  const RegisterScreen({super.key});
 
   @override
   State<RegisterScreen> createState() => _RegisterScreenState();
@@ -21,48 +20,159 @@ class RegisterScreen extends StatefulWidget {
 class _RegisterScreenState extends State<RegisterScreen> {
   bool _isLoading = false;
 
-  Future<void> _register(Map<String, String> userData) async {
+  @override
+  Widget build(BuildContext context) {
+    return AppPageScaffold(
+      title: 'Create Account',
+      backgroundColor: context.colors.background,
+      child: ResponsivePadding(
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SizedBox(height: DesignSystem.space24),
+              _buildHeader(context),
+              const SizedBox(height: DesignSystem.space32),
+              _buildRegistrationForm(context),
+              const SizedBox(height: DesignSystem.space24),
+              _buildFooter(context),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader(BuildContext context) {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(DesignSystem.space16),
+          decoration: BoxDecoration(
+            color: context.colors.primaryContainer,
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            Icons.person_add,
+            size: 40,
+            color: context.colors.onPrimaryContainer,
+          ),
+        ),
+        const SizedBox(height: DesignSystem.space16),
+        Text(
+          'Join DZ Bus Tracker',
+          style: context.textStyles.headlineMedium?.copyWith(
+            color: context.colors.onBackground,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: DesignSystem.space8),
+        Text(
+          'Create your account to start tracking buses',
+          style: context.textStyles.bodyLarge?.copyWith(
+            color: context.colors.onSurfaceVariant,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRegistrationForm(BuildContext context) {
+    return ResponsiveLayout(
+      mobile: _buildFormContent(context),
+      tablet: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 500),
+          child: _buildFormContent(context),
+        ),
+      ),
+      desktop: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 500),
+          child: AppCard(
+            padding: const EdgeInsets.all(DesignSystem.space32),
+            child: _buildFormContent(context),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFormContent(BuildContext context) {
+    return RegisterForm(
+      onSubmit: _handleRegistration,
+      isLoading: _isLoading,
+      onLogin: _navigateToLogin,
+      showDriverOption: true,
+    );
+  }
+
+  Widget _buildFooter(BuildContext context) {
+    return Column(
+      children: [
+        const Divider(),
+        const SizedBox(height: DesignSystem.space16),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              'Already have an account? ',
+              style: context.textStyles.bodyMedium,
+            ),
+            AppButton.text(
+              text: 'Sign In',
+              onPressed: _isLoading ? null : _navigateToLogin,
+              size: AppButtonSize.small,
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Future<void> _handleRegistration(RegisterFormData data) async {
     setState(() {
       _isLoading = true;
     });
 
     try {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-
+      final authProvider = context.read<AuthProvider>();
       final success = await authProvider.register(
-        email: userData['email']!,
-        password: userData['password']!,
-        confirmPassword: userData['confirm_password']!,
-        firstName: userData['first_name']!,
-        lastName: userData['last_name']!,
-        phoneNumber: userData['phone_number']!,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+        phoneNumber: data.phone,
+        password: data.password,
+        confirmPassword: data.password,
       );
-
+      
       if (success && mounted) {
         // Show success message
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Registration successful! Please login.'),
-            backgroundColor: Theme.of(context).colorScheme.primary,
-          ),
-        );
-
-        // Navigate to login screen
-        AppRouter.navigateToReplacement(context, AppRoutes.login);
-      } else if (mounted) {
-        // Show error message
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(authProvider.error ?? 'Registration failed. Please try again.'),
-            backgroundColor: Theme.of(context).colorScheme.primary,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ErrorHandler.showErrorSnackBar(
+        await DialogHelper.showSuccessDialog(
           context,
-          message: ErrorHandler.handleError(e),
+          title: 'Account Created Successfully',
+          message: data.isDriver 
+              ? 'Your driver application has been submitted for review. You will receive an email once approved.'
+              : 'Welcome to DZ Bus Tracker! You can now start tracking buses.',
+        );
+        
+        // Navigate based on account type
+        if (data.isDriver) {
+          // Driver needs approval, go to pending screen
+          Navigator.of(context).pushReplacementNamed(AppRoutes.driverHome);
+        } else {
+          // Passenger can start using the app immediately
+          Navigator.of(context).pushReplacementNamed(AppRoutes.passengerHome);
+        }
+      }
+    } catch (error) {
+      if (mounted) {
+        ErrorDialog.show(
+          context,
+          title: 'Registration Failed',
+          message: ErrorHandler.getErrorMessage(error),
+          type: ErrorType.validation,
         );
       }
     } finally {
@@ -74,130 +184,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return MobileOptimizedBackground(
-      imagePath: 'images/backgrounds/auth_bg.jpg',
-      blurIntensity: 1.5,
-      opacity: 0.3,
-      gradientColors: [
-        Colors.black.withValues(alpha: 0.4),
-        AppTheme.primary.withValues(alpha: 0.2),
-        AppTheme.secondary.withValues(alpha: 0.15),
-      ],
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        body: Stack(
-          children: [
-
-          // Content
-          SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Back button
-                  Align(
-                    alignment: Alignment.topLeft,
-                    child: ModernCard(
-                      type: ModernCardType.glass,
-                      width: 48,
-                      height: 48,
-                      padding: EdgeInsets.zero,
-                      child: IconButton(
-                        icon: const Icon(
-                          Icons.arrow_back_rounded,
-                          color: Colors.white,
-                        ),
-                        onPressed: () => Navigator.of(context).pop(),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Title
-                  Text(
-                    'Create Account',
-                    style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 32,
-                      shadows: [
-                        Shadow(
-                          color: Colors.black.withValues(alpha: 0.3),
-                          offset: const Offset(0, 2),
-                          blurRadius: 4,
-                        ),
-                      ],
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Subtitle
-                  Text(
-                    'Sign up to get started',
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: Colors.white.withValues(alpha: 0.8),
-                      fontSize: 16,
-                      shadows: [
-                        Shadow(
-                          color: Colors.black.withValues(alpha: 0.2),
-                          offset: const Offset(0, 1),
-                          blurRadius: 2,
-                        ),
-                      ],
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Registration form in a glass container
-                  ModernCard(
-                    type: ModernCardType.glass,
-                    padding: const EdgeInsets.all(32),
-                    margin: const EdgeInsets.symmetric(horizontal: 8),
-                    child: RegisterForm(
-                      onSubmit: _register,
-                      isLoading: _isLoading,
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Login link
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        'Already have an account? ',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Colors.white.withValues(alpha: 0.8),
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        child: Text(
-                          'Login',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-          ],
-        ),
-      ),
-    );
+  void _navigateToLogin() {
+    Navigator.of(context).pushReplacementNamed(AppRoutes.login);
   }
 }

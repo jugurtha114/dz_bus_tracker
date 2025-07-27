@@ -12,7 +12,8 @@ class LocationService {
   LocationService._();
 
   StreamSubscription<Position>? _positionStreamSubscription;
-  final StreamController<Position> _locationController = StreamController<Position>.broadcast();
+  final StreamController<Position> _locationController =
+      StreamController<Position>.broadcast();
 
   Stream<Position> get locationStream => _locationController.stream;
   bool get isTracking => _positionStreamSubscription != null;
@@ -36,7 +37,9 @@ class LocationService {
         rethrow;
       }
 
-      throw LocationException('Failed to get current location: ${e.toString()}');
+      throw LocationException(
+        'Failed to get current location: ${e.toString()}',
+      );
     }
   }
 
@@ -57,29 +60,32 @@ class LocationService {
       await stopLocationUpdates();
 
       // Set up new subscription
-      _positionStreamSubscription = Geolocator.getPositionStream(
-        locationSettings: AndroidSettings(
-          accuracy: accuracy,
-          distanceFilter: distanceFilter,
-          intervalDuration: Duration(seconds: intervalInSeconds),
-        ),
-      ).listen(
+      _positionStreamSubscription =
+          Geolocator.getPositionStream(
+            locationSettings: AndroidSettings(
+              accuracy: accuracy,
+              distanceFilter: distanceFilter,
+              intervalDuration: Duration(seconds: intervalInSeconds),
+            ),
+          ).listen(
             (Position position) {
-          _locationController.add(position);
-        },
-        onError: (error) {
-          debugPrint('Location stream error: $error');
-          _locationController.addError(
-            LocationException('Location stream error: ${error.toString()}'),
+              _locationController.add(position);
+            },
+            onError: (error) {
+              debugPrint('Location stream error: $error');
+              _locationController.addError(
+                LocationException('Location stream error: ${error.toString()}'),
+              );
+            },
           );
-        },
-      );
     } catch (e) {
       if (e is LocationException) {
         rethrow;
       }
 
-      throw LocationException('Failed to start location updates: ${e.toString()}');
+      throw LocationException(
+        'Failed to start location updates: ${e.toString()}',
+      );
     }
   }
 
@@ -115,7 +121,8 @@ class LocationService {
       throw LocationException('Location permission is permanently denied');
     }
 
-    return permission == LocationPermission.whileInUse || permission == LocationPermission.always;
+    return permission == LocationPermission.whileInUse ||
+        permission == LocationPermission.always;
   }
 
   // Check if location services are enabled

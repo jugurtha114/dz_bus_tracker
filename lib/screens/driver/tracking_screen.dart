@@ -11,13 +11,8 @@ import '../../providers/tracking_provider.dart';
 import '../../providers/location_provider.dart';
 import '../../providers/bus_provider.dart';
 import '../../providers/driver_provider.dart';
-import '../../widgets/common/app_bar.dart';
-import '../../widgets/common/glassy_container.dart';
-import '../../widgets/common/custom_card.dart';
-import '../../widgets/common/loading_indicator.dart';
-import '../../widgets/common/custom_button.dart';
-import '../../widgets/map/map_widget.dart';
-import '../../widgets/driver/passenger_counter.dart';
+import '../../widgets/widgets.dart';
+import '../../widgets/features/driver/passenger_counter.dart';
 import '../../helpers/error_handler.dart';
 import '../../helpers/dialog_helper.dart';
 
@@ -550,32 +545,37 @@ class _TrackingScreenState extends State<TrackingScreen> {
     final trackingProvider = Provider.of<TrackingProvider>(context);
     final busProvider = Provider.of<BusProvider>(context);
 
-    return Scaffold(
-      appBar: DzAppBar(
-        title: 'Active Tracking',
-        actions: [
-          // Trip info button
-          IconButton(
-            icon: const Icon(Icons.info_outline),
-            onPressed: _showTripInfo,
-            tooltip: 'Trip Info',
-          ),
-        ],
-      ),
+    return PageLayout(
+      title: 'Active Tracking',
+      showAppBar: true,
+      appBarActions: [
+        // Trip info button
+        IconButton(
+          icon: const Icon(Icons.info_outline),
+          onPressed: _showTripInfo,
+          tooltip: 'Trip Info',
+        ),
+      ],
       body: Stack(
         children: [
           // Map
-          MapWidget(
-            initialPosition: locationProvider.currentLocation != null
-                ? LatLng(
-              locationProvider.latitude,
-              locationProvider.longitude,
-            )
-                : null,
+          GoogleMap(
             onMapCreated: _onMapCreated,
+            onCameraMove: _onCameraMove,
+            initialCameraPosition: CameraPosition(
+              target: locationProvider.currentLocation != null
+                  ? LatLng(
+                      locationProvider.latitude,
+                      locationProvider.longitude,
+                    )
+                  : const LatLng(36.7538, 3.0588), // Default to Algiers
+              zoom: AppConfig.defaultZoomLevel,
+            ),
             markers: _buildMarkers(locationProvider),
             polylines: _buildPolylines(),
-            onCameraMove: _onCameraMove,
+            myLocationEnabled: true,
+            myLocationButtonEnabled: false,
+            zoomControlsEnabled: false,
           ),
 
           // Location and anomaly buttons
@@ -616,9 +616,9 @@ class _TrackingScreenState extends State<TrackingScreen> {
             bottom: 0,
             left: 0,
             right: 0,
-            child: CustomCard(type: CardType.elevated, 
+            child: AppCard(
               borderRadius: BorderRadius.circular(24),
-              backgroundColor: Theme.of(context).colorScheme.surface,
+              color: Theme.of(context).colorScheme.surface,
               margin: const EdgeInsets.only(bottom: 16, left: 16, right: 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -668,15 +668,15 @@ class _TrackingScreenState extends State<TrackingScreen> {
                     onCountChanged: _updatePassengerCount,
                     isEnabled: trackingProvider.isTracking,
                     initialCount: _passengerCount,
+                    maxCapacity: busProvider.selectedBus?.capacity ?? 50,
                   ),
 
                   const SizedBox(height: 16),
 
                   // End trip button
-                  CustomButton(
-        text: 'End Trip',
-        onPressed: (
-      ) {
+                  AppButton(
+                    text: 'End Trip',
+                    onPressed: () {
                       // Confirm end trip
                       DialogHelper.showConfirmDialog(
                         context,
@@ -699,8 +699,6 @@ class _TrackingScreenState extends State<TrackingScreen> {
                         }
                       });
                     },
-                    type: ButtonType.outline,
-                    color: Theme.of(context).colorScheme.primary,
                   ),
                 ],
               ),

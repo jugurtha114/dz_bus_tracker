@@ -70,12 +70,16 @@ class Line {
       isActive: json['is_active'] as bool? ?? false,
       color: json['color'] as String?,
       frequency: json['frequency'] as int?,
-      stops: (json['stops'] as List<dynamic>?)
-          ?.map((item) => LineStop.fromJson(item as Map<String, dynamic>))
-          .toList() ?? [],
-      schedules: (json['schedules'] as List<dynamic>?)
-          ?.map((item) => Schedule.fromJson(item as Map<String, dynamic>))
-          .toList() ?? [],
+      stops:
+          (json['stops'] as List<dynamic>?)
+              ?.map((item) => LineStop.fromJson(item as Map<String, dynamic>))
+              .toList() ??
+          [],
+      schedules:
+          (json['schedules'] as List<dynamic>?)
+              ?.map((item) => Schedule.fromJson(item as Map<String, dynamic>))
+              .toList() ??
+          [],
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
     );
@@ -99,7 +103,7 @@ class Line {
 
   // Helper getters
   LineStatus get status => isActive ? LineStatus.active : LineStatus.inactive;
-  
+
   Color get lineColor {
     if (color != null && color!.isNotEmpty) {
       try {
@@ -112,27 +116,63 @@ class Line {
   }
 
   String get displayName => '$code - $name';
-  
+
   int get stopCount => stops.length;
-  
+
   bool get hasSchedules => schedules.isNotEmpty;
-  
+
   String? get frequencyText => frequency != null ? '${frequency} min' : null;
-  
-  List<Schedule> get activeSchedules => 
+
+  List<Schedule> get activeSchedules =>
       schedules.where((schedule) => schedule.isActive).toList();
-  
+
+  // UI compatibility getters
+  bool get isFavorite => false; // Mock - should be based on user preferences
+  List<String>? get features => ['WiFi', 'AC']; // Mock - should be actual line features
+
   List<Schedule> getSchedulesForDay(DayOfWeek day) =>
       schedules.where((schedule) => schedule.dayOfWeek == day).toList();
-  
+
   // Helper methods
   bool isOperational() => isActive && hasSchedules;
-  
+
   String getStopOrderText() {
     if (stops.isEmpty) return 'No stops';
     if (stops.length == 1) return '1 stop';
     return '${stops.length} stops';
   }
+
+  /// Additional getters for admin interface
+  int get totalBuses => 5; // Mock data - replace with actual bus count
+  int get activeBuses => 3; // Mock data - replace with actual active bus count  
+  int get dailyTrips => schedules.length * 4; // Mock calculation
+  int get totalStops => stops.length;
+  double get distance => 15.5; // Mock data - replace with actual distance calculation
+  String get estimatedDuration => '45 min'; // Mock data - replace with actual calculation
+
+  /// Get fare (mock property)
+  double get fare => 50.0; // Mock fare in DZD
+
+  /// Get average rating (mock property)
+  double get averageRating => 4.2; // Mock rating out of 5
+
+  /// Additional properties for line details screen
+  String? get serviceDays => 'Daily'; // Mock - should be calculated from schedules
+  String? get firstDeparture => schedules.isNotEmpty ? schedules.first.startTime : null;
+  String? get lastDeparture => schedules.isNotEmpty ? schedules.first.endTime : null;
+  int? get peakFrequency => (frequency != null) ? (frequency! ~/ 2) : null; // Mock calculation
+  String? get startLocation => stops.isNotEmpty ? stops.first.stopName : null;
+  String? get endLocation => stops.isNotEmpty ? stops.last.stopName : null;
+  double? get totalDistance => distance; // Alias for compatibility
+  int? get averageJourneyTime => 45; // Mock - should be calculated
+  int? get averagePassengers => 25; // Mock - should come from analytics
+  double? get onTimePerformance => 85.5; // Mock - should come from performance data
+  double? get customerRating => averageRating; // Alias for compatibility
+
+  /// Additional UI compatibility properties
+  String get number => code; // Alias for line number
+  String get type => 'Regular'; // Mock line type
+  int get stopsCount => stops.length; // Alias
 
   static Color getStatusColor(LineStatus status) {
     switch (status) {
@@ -198,6 +238,11 @@ class LineStop {
     this.longitude,
   });
 
+  // Compatibility getters for UI
+  String get name => stopName ?? 'Stop $order';
+  String get address => 'Line $lineId, Stop $order';
+  String get nextArrival => 'N/A'; // Mock data
+
   factory LineStop.fromJson(Map<String, dynamic> json) {
     return LineStop(
       id: json['id'] as String,
@@ -209,10 +254,10 @@ class LineStop {
           : null,
       averageTimeFromPrevious: json['average_time_from_previous'] as int?,
       stopName: json['stop_name'] as String?,
-      latitude: json['latitude'] != null 
+      latitude: json['latitude'] != null
           ? double.tryParse(json['latitude'].toString())
           : null,
-      longitude: json['longitude'] != null 
+      longitude: json['longitude'] != null
           ? double.tryParse(json['longitude'].toString())
           : null,
     );
@@ -233,13 +278,12 @@ class LineStop {
   }
 
   String get displayName => stopName ?? 'Stop $order';
-  
-  String get timeText => averageTimeFromPrevious != null 
-      ? '${averageTimeFromPrevious} min' 
-      : '';
 
-  String get distanceText => distanceFromPrevious != null 
-      ? '${distanceFromPrevious!.toStringAsFixed(1)} km' 
+  String get timeText =>
+      averageTimeFromPrevious != null ? '${averageTimeFromPrevious} min' : '';
+
+  String get distanceText => distanceFromPrevious != null
+      ? '${distanceFromPrevious!.toStringAsFixed(1)} km'
       : '';
 }
 
@@ -296,33 +340,45 @@ class Schedule {
   }
 
   String get displayTime => '$startTime - $endTime';
-  
+
   String get frequencyText => '${frequencyMinutes} min';
-  
+
   String get dayText => dayOfWeek.name;
   
+  /// Additional properties for UI compatibility
+  String get lineNumber => lineId.substring(lineId.length - 2); // Extract number from ID
+  int get completedTrips => 12; // Mock - should come from analytics
+  int get totalTrips => 15; // Mock - should come from analytics
+  DateTime get date => DateTime.now(); // Mock - should be actual schedule date
+
   bool isCurrentlyActive() {
     if (!isActive) return false;
-    
+
     final now = DateTime.now();
     final currentDayOfWeek = DayOfWeek.fromValue(now.weekday - 1);
-    
+
     if (currentDayOfWeek != dayOfWeek) return false;
-    
+
     try {
       final startParts = startTime.split(':');
       final endParts = endTime.split(':');
-      
+
       final startDateTime = DateTime(
-        now.year, now.month, now.day,
-        int.parse(startParts[0]), int.parse(startParts[1]),
+        now.year,
+        now.month,
+        now.day,
+        int.parse(startParts[0]),
+        int.parse(startParts[1]),
       );
-      
+
       final endDateTime = DateTime(
-        now.year, now.month, now.day,
-        int.parse(endParts[0]), int.parse(endParts[1]),
+        now.year,
+        now.month,
+        now.day,
+        int.parse(endParts[0]),
+        int.parse(endParts[1]),
       );
-      
+
       return now.isAfter(startDateTime) && now.isBefore(endDateTime);
     } catch (e) {
       return false;
@@ -404,9 +460,9 @@ class AddStopToLineRequest {
     return {
       'stop_id': stopId,
       'order': order,
-      if (distanceFromPrevious != null) 
+      if (distanceFromPrevious != null)
         'distance_from_previous': distanceFromPrevious.toString(),
-      if (averageTimeFromPrevious != null) 
+      if (averageTimeFromPrevious != null)
         'average_time_from_previous': averageTimeFromPrevious,
     };
   }
@@ -415,14 +471,10 @@ class AddStopToLineRequest {
 class RemoveStopFromLineRequest {
   final String stopId;
 
-  const RemoveStopFromLineRequest({
-    required this.stopId,
-  });
+  const RemoveStopFromLineRequest({required this.stopId});
 
   Map<String, dynamic> toJson() {
-    return {
-      'stop_id': stopId,
-    };
+    return {'stop_id': stopId};
   }
 }
 
@@ -430,16 +482,10 @@ class UpdateStopOrderRequest {
   final String stopId;
   final int newOrder;
 
-  const UpdateStopOrderRequest({
-    required this.stopId,
-    required this.newOrder,
-  });
+  const UpdateStopOrderRequest({required this.stopId, required this.newOrder});
 
   Map<String, dynamic> toJson() {
-    return {
-      'stop_id': stopId,
-      'new_order': newOrder,
-    };
+    return {'stop_id': stopId, 'new_order': newOrder};
   }
 }
 

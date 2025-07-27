@@ -451,19 +451,19 @@ def main():
         epilog="""
 Examples:
   # Get all client endpoints with complete schemas
-  python api_explorer.py --prefix "/api/v1/clients"
+  python3 api_explorer.py --prefix "/api/v1/clients"
   
   # Get specific endpoint with all related schemas
-  python api_explorer.py --endpoint "/api/v1/clients/stats/"
+  python3api_explorer.py --endpoint "/api/v1/clients/stats/"
   
   # Get complete endpoint analysis
-  python api_explorer.py --analysis "/api/v1/invoices/{id}/"
+  python3 api_explorer.py --analysis "/api/v1/invoices/{id}/"
   
   # Get schema with all dependencies
-  python api_explorer.py --schema "AccessLevelEnum"
+  python3 api_explorer.py --schema "AccessLevelEnum"
   
   # Get endpoint with fully resolved schemas (no $ref)
-  python api_explorer.py --resolved "/api/v1/clients/"
+  python3 api_explorer.py --resolved "/api/v1/clients/"
         """
     )
     

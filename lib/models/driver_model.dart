@@ -34,6 +34,8 @@ enum DriverStatus {
 
   @override
   String toString() => value;
+
+  String toUpperCase() => value.toUpperCase();
 }
 
 /// Rating enumeration for driver ratings
@@ -129,7 +131,9 @@ class Driver {
       yearsOfExperience: json['years_of_experience'] as int? ?? 0,
       isActive: json['is_active'] as bool? ?? true,
       isAvailable: json['is_available'] as bool? ?? false,
-      rating: json['rating'] != null ? double.tryParse(json['rating'].toString()) ?? 0.0 : 0.0,
+      rating: json['rating'] != null
+          ? double.tryParse(json['rating'].toString()) ?? 0.0
+          : 0.0,
       totalRatings: json['total_ratings'] as int? ?? 0,
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
@@ -255,6 +259,50 @@ class Driver {
     }
   }
 
+  /// Get profile image URL (mock property - should be in user details)
+  String? get profileImageUrl {
+    if (userDetails != null && userDetails!.containsKey('profile_image')) {
+      return userDetails!['profile_image'] as String?;
+    }
+    return null; // No default image
+  }
+
+  /// Get driver name (alias for fullName) 
+  String get name => fullName;
+
+  /// Get profile image (alias for profileImageUrl)
+  String? get profileImage => profileImageUrl;
+
+  /// Get total trips (mock property - should come from analytics)
+  int get totalTrips => 150; // Mock - replace with actual trip count
+
+  /// Get experience years (alias for yearsOfExperience)
+  int get experienceYears => yearsOfExperience;
+  
+  /// Additional properties for UI compatibility
+  String get firstName {
+    final parts = fullName.split(' ');
+    return parts.isNotEmpty ? parts.first : '';
+  }
+  
+  String get lastName {
+    final parts = fullName.split(' ');
+    return parts.length > 1 ? parts.skip(1).join(' ') : '';
+  }
+  
+  String get email {
+    if (userDetails != null && userDetails!.containsKey('email')) {
+      return userDetails!['email'] as String? ?? '';
+    }
+    return '';
+  }
+
+  /// Get assigned bus plate number (mock property)
+  String get assignedBusPlate => 'No Bus Assigned'; // Mock - should come from bus assignment
+
+  /// Check if driver is currently on duty (mock property)
+  bool get isOnDuty => isAvailable && status == DriverStatus.approved;
+
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
@@ -319,12 +367,13 @@ class DriverUpdateRequest {
 
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{};
-    
+
     if (phoneNumber != null) json['phone_number'] = phoneNumber;
-    if (yearsOfExperience != null) json['years_of_experience'] = yearsOfExperience;
+    if (yearsOfExperience != null)
+      json['years_of_experience'] = yearsOfExperience;
     if (isActive != null) json['is_active'] = isActive;
     if (isAvailable != null) json['is_available'] = isAvailable;
-    
+
     return json;
   }
 }
@@ -334,10 +383,7 @@ class DriverApprovalRequest {
   final bool approve;
   final String? rejectionReason;
 
-  const DriverApprovalRequest({
-    required this.approve,
-    this.rejectionReason,
-  });
+  const DriverApprovalRequest({required this.approve, this.rejectionReason});
 
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{'approve': approve};
@@ -412,7 +458,7 @@ class DriverRating {
   String get formattedDate {
     final now = DateTime.now();
     final difference = now.difference(createdAt);
-    
+
     if (difference.inDays > 0) {
       return '${difference.inDays} days ago';
     } else if (difference.inHours > 0) {
@@ -435,10 +481,7 @@ class DriverRatingCreateRequest {
   final Rating rating;
   final String? comment;
 
-  const DriverRatingCreateRequest({
-    required this.rating,
-    this.comment,
-  });
+  const DriverRatingCreateRequest({required this.rating, this.comment});
 
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{'rating': rating.value};
@@ -519,15 +562,17 @@ class DriverRatingQueryParameters {
 
   Map<String, dynamic> toQueryParams() {
     final params = <String, dynamic>{};
-    
+
     if (driverId != null) params['driver'] = driverId;
     if (minRating != null) params['rating__gte'] = minRating!.value;
     if (maxRating != null) params['rating__lte'] = maxRating!.value;
-    if (createdAfter != null) params['created_at__gte'] = createdAfter!.toIso8601String();
-    if (createdBefore != null) params['created_at__lte'] = createdBefore!.toIso8601String();
+    if (createdAfter != null)
+      params['created_at__gte'] = createdAfter!.toIso8601String();
+    if (createdBefore != null)
+      params['created_at__lte'] = createdBefore!.toIso8601String();
     if (limit != null) params['limit'] = limit;
     if (offset != null) params['offset'] = offset;
-    
+
     return params;
   }
 

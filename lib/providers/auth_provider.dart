@@ -13,12 +13,9 @@ class AuthProvider with ChangeNotifier {
   final AuthService _authService;
   final UserService _userService;
 
-  AuthProvider({
-    AuthService? authService,
-    UserService? userService,
-  })
-      : _authService = authService ?? AuthService(),
-        _userService = userService ?? UserService();
+  AuthProvider({AuthService? authService, UserService? userService})
+    : _authService = authService ?? AuthService(),
+      _userService = userService ?? UserService();
 
   // Authentication state
   bool _isAuthenticated = false;
@@ -33,11 +30,13 @@ class AuthProvider with ChangeNotifier {
   bool get isAuthenticated => _isAuthenticated;
   bool get isLoading => _isLoading;
   String? get error => _error;
+  bool get hasError => _error != null;
   User? get user => _user;
+  User? get currentUser => _user; // Alias for user
   Profile? get profile => _profile;
   String? get token => _token;
   UserType? get userType => _userType;
-  
+
   // Convenience getters for user data
   String get userDisplayName => _user?.fullName ?? 'Unknown User';
   String get userEmail => _user?.email ?? '';
@@ -72,11 +71,13 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
+  /// Alias for checkAuth - checks for existing authentication
+  Future<void> checkExistingAuth() async {
+    return checkAuth();
+  }
+
   /// Login with improved error handling and type safety
-  Future<bool> login({
-    required String email,
-    required String password,
-  }) async {
+  Future<bool> login({required String email, required String password}) async {
     _setLoading(true);
     _clearError();
 
@@ -194,7 +195,7 @@ class AuthProvider with ChangeNotifier {
 
     try {
       final response = await _authService.logout();
-      
+
       // Always clear local state regardless of API response
       _isAuthenticated = false;
       _user = null;
@@ -202,7 +203,7 @@ class AuthProvider with ChangeNotifier {
       _token = null;
       _userType = null;
       _clearError();
-      
+
       if (!response.success && response.message?.contains('warning') != true) {
         debugPrint('Logout warning: ${response.message}');
       }
@@ -220,16 +221,12 @@ class AuthProvider with ChangeNotifier {
   }
 
   /// Reset password with improved error handling
-  Future<bool> resetPassword({
-    required String email,
-  }) async {
+  Future<bool> resetPassword({required String email}) async {
     _setLoading(true);
     _clearError();
 
     try {
-      final response = await _authService.resetPassword(
-        email: email,
-      );
+      final response = await _authService.resetPassword(email: email);
 
       if (response.success) {
         return true;
@@ -348,5 +345,24 @@ class AuthProvider with ChangeNotifier {
   void _clearError() {
     _error = null;
     notifyListeners();
+  }
+
+  /// Confirm password reset with token
+  Future<bool> confirmPasswordReset({
+    required String token,
+    required String newPassword,
+  }) async {
+    _setLoading(true);
+    _clearError();
+    try {
+      // For now, simulate success - replace with actual API call
+      await Future.delayed(const Duration(seconds: 1));
+      return true;
+    } catch (e) {
+      _setError('Failed to reset password: ${e.toString()}');
+      return false;
+    } finally {
+      _setLoading(false);
+    }
   }
 }

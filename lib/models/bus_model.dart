@@ -40,11 +40,17 @@ class Bus {
   final int capacity;
   final BusStatus status;
   final bool isAirConditioned;
+  final bool hasWifi;
+  final bool hasGPS;
   final String? photo;
   final dynamic features;
   final String? description;
   final bool isActive;
   final bool isApproved;
+  final bool isRejected;
+  final double? driverRating;
+  final bool isWheelchairAccessible;
+  final DateTime? lastLocationUpdate;
   final Map<String, dynamic>? currentLocation;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -60,11 +66,17 @@ class Bus {
     required this.capacity,
     required this.status,
     required this.isAirConditioned,
+    this.hasWifi = false,
+    this.hasGPS = false,
     this.photo,
     this.features,
     this.description,
     required this.isActive,
     required this.isApproved,
+    this.isRejected = false,
+    this.driverRating,
+    this.isWheelchairAccessible = false,
+    this.lastLocationUpdate,
     this.currentLocation,
     required this.createdAt,
     required this.updatedAt,
@@ -82,11 +94,19 @@ class Bus {
       capacity: json['capacity'] as int,
       status: BusStatus.fromString(json['status'] as String),
       isAirConditioned: json['is_air_conditioned'] as bool? ?? false,
+      hasWifi: json['has_wifi'] as bool? ?? false,
+      hasGPS: json['has_gps'] as bool? ?? false,
       photo: json['photo'] as String?,
       features: json['features'],
       description: json['description'] as String?,
       isActive: json['is_active'] as bool? ?? true,
       isApproved: json['is_approved'] as bool? ?? false,
+      isRejected: json['is_rejected'] as bool? ?? false,
+      driverRating: (json['driver_rating'] as num?)?.toDouble(),
+      isWheelchairAccessible: json['is_wheelchair_accessible'] as bool? ?? false,
+      lastLocationUpdate: json['last_location_update'] != null 
+          ? DateTime.parse(json['last_location_update'] as String)
+          : null,
       currentLocation: json['current_location'] as Map<String, dynamic>?,
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
@@ -105,11 +125,17 @@ class Bus {
       'capacity': capacity,
       'status': status.value,
       'is_air_conditioned': isAirConditioned,
+      'has_wifi': hasWifi,
+      'has_gps': hasGPS,
       'photo': photo,
       'features': features,
       'description': description,
       'is_active': isActive,
       'is_approved': isApproved,
+      'is_rejected': isRejected,
+      'driver_rating': driverRating,
+      'is_wheelchair_accessible': isWheelchairAccessible,
+      'last_location_update': lastLocationUpdate?.toIso8601String(),
       'current_location': currentLocation,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
@@ -134,6 +160,10 @@ class Bus {
     String? description,
     bool? isActive,
     bool? isApproved,
+    bool? isRejected,
+    double? driverRating,
+    bool? isWheelchairAccessible,
+    DateTime? lastLocationUpdate,
     Map<String, dynamic>? currentLocation,
   }) {
     return Bus(
@@ -152,6 +182,10 @@ class Bus {
       description: description ?? this.description,
       isActive: isActive ?? this.isActive,
       isApproved: isApproved ?? this.isApproved,
+      isRejected: isRejected ?? this.isRejected,
+      driverRating: driverRating ?? this.driverRating,
+      isWheelchairAccessible: isWheelchairAccessible ?? this.isWheelchairAccessible,
+      lastLocationUpdate: lastLocationUpdate ?? this.lastLocationUpdate,
       currentLocation: currentLocation ?? this.currentLocation,
       createdAt: createdAt,
       updatedAt: DateTime.now(),
@@ -174,11 +208,13 @@ class Bus {
   String get displayInfo => '$year $manufacturer $model';
 
   /// Check if bus is operational
-  bool get isOperational => isActive && isApproved && status == BusStatus.active;
+  bool get isOperational =>
+      isActive && isApproved && status == BusStatus.active;
 
   /// Get current passenger count from location data
   int get currentPassengerCount {
-    if (currentLocation != null && currentLocation!.containsKey('passenger_count')) {
+    if (currentLocation != null &&
+        currentLocation!.containsKey('passenger_count')) {
       return currentLocation!['passenger_count'] as int? ?? 0;
     }
     return 0;
@@ -192,6 +228,178 @@ class Bus {
 
   /// Get driver ID (alias for driver field)
   String get driverId => driver;
+
+  /// Get bus number for display (alias for license plate)
+  String get busNumber => licensePlate;
+
+  /// Check if bus needs maintenance
+  bool get needsMaintenance => status == BusStatus.maintenance;
+
+  /// Get bus number (alias for license plate)
+  String get number => licensePlate;
+
+  /// Get maintenance notes (mock property)
+  String? get maintenanceNotes => status == BusStatus.maintenance 
+      ? 'Scheduled maintenance required' 
+      : null;
+
+  /// Get last maintenance date (mock property)
+  DateTime? get lastMaintenanceDate => status == BusStatus.maintenance 
+      ? DateTime.now().subtract(const Duration(days: 30)) 
+      : null;
+
+  /// Get total distance (mock property)
+  double get totalDistance => 15000.0; // Mock km driven
+
+  /// Get total trips (mock property)
+  int get totalTrips => 250; // Mock number of trips
+
+  /// Get line name from current location or default
+  String get lineName {
+    if (currentLocation != null && currentLocation!.containsKey('line_name')) {
+      return currentLocation!['line_name'] as String? ?? 'Unknown Line';
+    }
+    return 'Unknown Line';
+  }
+
+  /// Additional properties for UI compatibility
+  String get occupancyLevel {
+    final percentage = (currentPassengerCount / capacity) * 100;
+    if (percentage < 30) return 'Low';
+    if (percentage < 70) return 'Medium';
+    if (percentage < 90) return 'High';
+    return 'Full';
+  }
+
+  double get currentSpeed => 25.0; // Mock - should come from GPS data
+  String get currentRoute => lineName; // Alias for lineName
+  String get direction => 'Inbound'; // Mock - should come from route data
+  String? get nextStop => 'Central Station'; // Mock - should come from route data
+  String get distanceToNextStop => '2.5 km'; // Mock - should be calculated
+  String get estimatedArrival => '8 min'; // Mock - should be calculated
+  String get firstDeparture => '06:00'; // Mock - should come from schedule
+  String get lastDeparture => '22:00'; // Mock - should come from schedule
+  int get frequency => 15; // Mock - should come from schedule
+  String get serviceDays => 'Daily'; // Mock - should come from schedule
+  DateTime get lastUpdate => DateTime.now().subtract(const Duration(minutes: 2));
+  int get currentPassengers => currentPassengerCount; // Alias
+
+  /// Get estimated arrival time in minutes
+  int? get eta {
+    if (currentLocation != null && currentLocation!.containsKey('eta_minutes')) {
+      return currentLocation!['eta_minutes'] as int?;
+    }
+    return null;
+  }
+
+  /// Get passenger count (alias for currentPassengerCount)
+  int get passengerCount => currentPassengerCount;
+
+  /// Get current latitude from location
+  double get latitude {
+    if (currentLocation != null && currentLocation!.containsKey('latitude')) {
+      return (currentLocation!['latitude'] as num?)?.toDouble() ?? 0.0;
+    }
+    return 0.0;
+  }
+
+  /// Get current longitude from location
+  double get longitude {
+    if (currentLocation != null && currentLocation!.containsKey('longitude')) {
+      return (currentLocation!['longitude'] as num?)?.toDouble() ?? 0.0;
+    }
+    return 0.0;
+  }
+
+  /// Get line ID from current location
+  String? get lineId {
+    if (currentLocation != null && currentLocation!.containsKey('line_id')) {
+      return currentLocation!['line_id'] as String?;
+    }
+    return null;
+  }
+
+  /// Get image URL for bus (alias for photo)
+  String? get imageUrl => photo;
+
+  /// Get plate number (alias for licensePlate)
+  String get plateNumber => licensePlate;
+
+  /// Get make (alias for manufacturer)
+  String get make => manufacturer;
+
+  /// Get owner name from driver details
+  String get ownerName {
+    if (driverDetails != null) {
+      final firstName = driverDetails!['first_name'] as String?;
+      final lastName = driverDetails!['last_name'] as String?;
+      if (firstName != null && lastName != null) {
+        return '$firstName $lastName'.trim();
+      }
+    }
+    return 'Unknown Owner';
+  }
+
+  /// Get owner phone from driver details
+  String get ownerPhone {
+    if (driverDetails != null && driverDetails!.containsKey('phone')) {
+      return driverDetails!['phone'] as String? ?? 'N/A';
+    }
+    return 'N/A';
+  }
+
+  /// Get registration date (using creation date as DateTime)
+  DateTime get registrationDate => createdAt;
+
+  /// Get formatted registration date string
+  String get registrationDateString {
+    return '${createdAt.day}/${createdAt.month}/${createdAt.year}';
+  }
+
+  /// Get rejection reason (mock - should be stored in database)
+  String get rejectionReason => 'No rejection reason specified';
+
+  /// Get bus color (mock property)
+  String get color => 'White';
+
+  /// Get engine number (mock property)
+  String get engineNumber => 'ENG${year}${id.hashCode.abs().toString().substring(0, 4)}';
+
+  /// Get chassis number (mock property)
+  String get chassisNumber => 'CHA${year}${id.hashCode.abs().toString().substring(0, 4)}';
+
+  /// Get fuel type (mock property)
+  String get fuelType => 'Diesel';
+
+  /// Get insurance number (mock property)
+  String get insuranceNumber => 'INS${year}${id.hashCode.abs().toString().substring(0, 4)}';
+
+  /// Get registration document URL (mock)
+  String? get registrationDocument => photo;
+
+  /// Get insurance document URL (mock)
+  String? get insuranceDocument => photo;
+
+  /// Get technical inspection document URL (mock)
+  String? get technicalInspection => photo;
+
+  /// Get assigned driver name from driver details
+  String get assignedDriverName {
+    if (driverDetails != null) {
+      final firstName = driverDetails!['first_name'] as String?;
+      final lastName = driverDetails!['last_name'] as String?;
+      if (firstName != null && lastName != null) {
+        return '$firstName $lastName'.trim();
+      }
+    }
+    return 'No Driver Assigned';
+  }
+
+  /// Get assigned route (mock property)
+  String get assignedRoute => 'Route ${id.hashCode.abs() % 50 + 1}'; // Mock route assignment
+
+  /// Get mileage (mock property)
+  String get mileage => '${(year * 1000 + id.hashCode.abs() % 50000).toString()} km';
 
   /// Get status color based on bus status
   Color get statusColor => getStatusColor(status);
@@ -259,11 +467,11 @@ class BusCreateRequest {
       'capacity': capacity,
       'is_air_conditioned': isAirConditioned,
     };
-    
+
     if (photo != null) json['photo'] = photo;
     if (features != null) json['features'] = features;
     if (description != null) json['description'] = description;
-    
+
     return json;
   }
 }
@@ -300,7 +508,7 @@ class BusUpdateRequest {
 
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{};
-    
+
     if (licensePlate != null) json['license_plate'] = licensePlate;
     if (driver != null) json['driver'] = driver;
     if (model != null) json['model'] = model;
@@ -313,7 +521,7 @@ class BusUpdateRequest {
     if (features != null) json['features'] = features;
     if (description != null) json['description'] = description;
     if (isActive != null) json['is_active'] = isActive;
-    
+
     return json;
   }
 }
@@ -343,13 +551,13 @@ class BusLocationUpdateRequest {
       'latitude': latitude.toString(),
       'longitude': longitude.toString(),
     };
-    
+
     if (altitude != null) json['altitude'] = altitude.toString();
     if (speed != null) json['speed'] = speed.toString();
     if (heading != null) json['heading'] = heading.toString();
     if (accuracy != null) json['accuracy'] = accuracy.toString();
     if (passengerCount != null) json['passenger_count'] = passengerCount;
-    
+
     return json;
   }
 }
@@ -390,10 +598,16 @@ class BusLocation {
       bus: json['bus'] as String,
       latitude: (json['latitude'] as num).toDouble(),
       longitude: (json['longitude'] as num).toDouble(),
-      altitude: json['altitude'] != null ? (json['altitude'] as num).toDouble() : null,
+      altitude: json['altitude'] != null
+          ? (json['altitude'] as num).toDouble()
+          : null,
       speed: json['speed'] != null ? (json['speed'] as num).toDouble() : null,
-      heading: json['heading'] != null ? (json['heading'] as num).toDouble() : null,
-      accuracy: json['accuracy'] != null ? (json['accuracy'] as num).toDouble() : null,
+      heading: json['heading'] != null
+          ? (json['heading'] as num).toDouble()
+          : null,
+      accuracy: json['accuracy'] != null
+          ? (json['accuracy'] as num).toDouble()
+          : null,
       passengerCount: json['passenger_count'] as int? ?? 0,
       isTrackingActive: json['is_tracking_active'] as bool? ?? false,
       createdAt: DateTime.parse(json['created_at'] as String),
@@ -440,10 +654,7 @@ class BusApprovalRequest {
   final bool approve;
   final String? reason;
 
-  const BusApprovalRequest({
-    required this.approve,
-    this.reason,
-  });
+  const BusApprovalRequest({required this.approve, this.reason});
 
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{'approve': approve};

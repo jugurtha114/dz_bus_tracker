@@ -90,9 +90,9 @@ class StorageUtils {
 
   // Get list from local storage
   static Future<List<T>?> getListFromStorage<T>(
-      String key,
-      T Function(Map<String, dynamic>) fromJson,
-      ) async {
+    String key,
+    T Function(Map<String, dynamic>) fromJson,
+  ) async {
     final jsonString = await getFromStorage<String>(key);
     if (jsonString == null) {
       return null;
@@ -100,7 +100,9 @@ class StorageUtils {
 
     try {
       final jsonList = json.decode(jsonString) as List;
-      return jsonList.map((item) => fromJson(item as Map<String, dynamic>)).toList();
+      return jsonList
+          .map((item) => fromJson(item as Map<String, dynamic>))
+          .toList();
     } catch (e) {
       throw CacheException('Failed to parse JSON list: ${e.toString()}');
     }
@@ -128,5 +130,41 @@ class StorageUtils {
   static Future<Set<String>> getAllKeys() async {
     final prefs = await _instance;
     return prefs.getKeys();
+  }
+
+  /// Get string value from storage
+  static Future<String?> getString(String key) async {
+    final prefs = await _instance;
+    return prefs.getString(key);
+  }
+
+  /// Set string value in storage
+  static Future<bool> setString(String key, String value) async {
+    final prefs = await _instance;
+    return await prefs.setString(key, value);
+  }
+
+  /// Get int value from storage
+  static Future<int?> getInt(String key) async {
+    final prefs = await _instance;
+    return prefs.getInt(key);
+  }
+
+  /// Set int value in storage
+  static Future<bool> setInt(String key, int value) async {
+    final prefs = await _instance;
+    return await prefs.setInt(key, value);
+  }
+
+  /// Get bool value from storage
+  static Future<bool?> getBool(String key) async {
+    final prefs = await _instance;
+    return prefs.getBool(key);
+  }
+
+  /// Set bool value in storage
+  static Future<bool> setBool(String key, bool value) async {
+    final prefs = await _instance;
+    return await prefs.setBool(key, value);
   }
 }

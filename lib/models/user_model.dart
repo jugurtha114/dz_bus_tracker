@@ -13,6 +13,24 @@ class User {
   final bool isActive;
   final DateTime dateJoined;
   final Profile? profile;
+  
+  // Additional properties for UI consistency
+  final String? profileImageUrl;
+  final double? rating;
+  final int? totalTrips;
+  final int? totalDistanceDriven;
+  final int? yearsExperience;
+  final DateTime? createdAt;
+  
+  // Admin management properties
+  final DateTime? lastLoginAt;
+  final double? totalSpent;
+  final String? favoriteRoute;
+  
+  // Driver-specific properties
+  final String? licenseNumber;
+  final DateTime? licenseExpiry;
+  final String? assignedBusPlate;
 
   const User({
     required this.id,
@@ -24,6 +42,18 @@ class User {
     required this.isActive,
     required this.dateJoined,
     this.profile,
+    this.profileImageUrl,
+    this.rating,
+    this.totalTrips,
+    this.totalDistanceDriven,
+    this.yearsExperience,
+    this.createdAt,
+    this.lastLoginAt,
+    this.totalSpent,
+    this.favoriteRoute,
+    this.licenseNumber,
+    this.licenseExpiry,
+    this.assignedBusPlate,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -36,7 +66,9 @@ class User {
       userType: UserType.fromString(json['user_type'] as String),
       isActive: json['is_active'] as bool? ?? true,
       dateJoined: DateTime.parse(json['date_joined'] as String),
-      profile: json['profile'] != null ? Profile.fromJson(json['profile'] as Map<String, dynamic>) : null,
+      profile: json['profile'] != null
+          ? Profile.fromJson(json['profile'] as Map<String, dynamic>)
+          : null,
     );
   }
 
@@ -81,6 +113,15 @@ class User {
     if (first.isEmpty && last.isEmpty) return email;
     return '$first $last'.trim();
   }
+
+  // Convenience getter for name (alias for fullName)
+  String? get name => fullName.isNotEmpty ? fullName : null;
+
+  // Convenience getter for profile image
+  String? get profileImage => profileImageUrl;
+  
+  // Convenience getter for role based on userType
+  String get role => userType.value;
 
   @override
   bool operator ==(Object other) {
@@ -162,11 +203,7 @@ class UserUpdateRequest {
   final String? lastName;
   final String? phoneNumber;
 
-  const UserUpdateRequest({
-    this.firstName,
-    this.lastName,
-    this.phoneNumber,
-  });
+  const UserUpdateRequest({this.firstName, this.lastName, this.phoneNumber});
 
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{};

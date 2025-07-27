@@ -1,38 +1,32 @@
 // lib/screens/admin/fleet_management_screen.dart
 
 import 'package:flutter/material.dart';
-import 'package:fl_chart/fl_chart.dart';
-import '../../config/theme_config.dart';
-import '../../core/utils/date_utils.dart';
-import '../../services/fleet_management_service.dart';
-import '../../widgets/common/app_layout.dart';
-import '../../widgets/common/glassy_container.dart';
-import '../../widgets/common/custom_button.dart';
-import '../../widgets/common/custom_card.dart';
-import '../../widgets/common/loading_indicator.dart';
-import '../../localization/app_localizations.dart';
-import '../../helpers/dialog_helper.dart';
+import 'package:provider/provider.dart';
+import '../../config/design_system.dart';
+import '../../providers/admin_provider.dart';
+import '../../widgets/widgets.dart';
+import '../../models/bus_model.dart';
+import '../../models/driver_model.dart';
 
+/// Modern fleet management screen for comprehensive vehicle and driver oversight
 class FleetManagementScreen extends StatefulWidget {
-  const FleetManagementScreen({Key? key}) : super(key: key);
+  const FleetManagementScreen({super.key});
 
   @override
   State<FleetManagementScreen> createState() => _FleetManagementScreenState();
 }
 
-class _FleetManagementScreenState extends State<FleetManagementScreen> 
+class _FleetManagementScreenState extends State<FleetManagementScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  final FleetManagementService _fleetService = FleetManagementService();
-  
   bool _isLoading = true;
-  String _selectedFilter = 'all';
   String _searchQuery = '';
+  String _selectedFilter = 'all';
   
-  List<Map<String, dynamic>> _buses = [];
-  List<Map<String, dynamic>> _drivers = [];
+  List<Bus> _vehicles = [];
+  List<Driver> _drivers = [];
   Map<String, dynamic> _fleetStats = {};
-  List<Map<String, dynamic>> _maintenanceSchedule = [];
+  List<Map<String, dynamic>> _maintenanceRecords = [];
 
   @override
   void initState() {
@@ -41,215 +35,124 @@ class _FleetManagementScreenState extends State<FleetManagementScreen>
     _loadFleetData();
   }
 
+  Future<void> _loadFleetData() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final adminProvider = context.read<AdminProvider>();
+      await adminProvider.loadFleetData();
+      
+      setState(() {
+        _vehicles = adminProvider.fleetVehicles;
+        _drivers = adminProvider.fleetDrivers;
+        _fleetStats = adminProvider.fleetStatistics;
+        _maintenanceRecords = adminProvider.maintenanceRecords;
+      });
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load fleet data: $error')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
   @override
   void dispose() {
     _tabController.dispose();
     super.dispose();
   }
 
-  Future<void> _loadFleetData() async {
-    setState(() => _isLoading = true);
-    
-    try {
-      final results = await Future.wait([
-        _fleetService.getAllBuses(),
-        _fleetService.getAllDrivers(),
-        _fleetService.getFleetStatistics(),
-        _fleetService.getMaintenanceSchedule(),
-      ]);
-      
-      setState(() {
-        _buses = results[0] as List<Map<String, dynamic>>;
-        _drivers = results[1] as List<Map<String, dynamic>>;
-        _fleetStats = results[2] as Map<String, dynamic>;
-        _maintenanceSchedule = results[3] as List<Map<String, dynamic>>;
-      });
-    } catch (e) {
-      // Handle error
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    final localizations = AppLocalizations.of(context)!;
-
-    return AppLayout(
+    return AppPageScaffold(
       title: 'Fleet Management',
       actions: [
         IconButton(
           icon: const Icon(Icons.add),
           onPressed: _showAddVehicleDialog,
         ),
-        PopupMenuButton<String>(
-          onSelected: (value) {
-            setState(() => _selectedFilter = value);
-          },
-          itemBuilder: (context) => [
-            const PopupMenuItem(value: 'all', child: Text('All Vehicles')),
-            const PopupMenuItem(value: 'active', child: Text('Active')),
-            const PopupMenuItem(value: 'maintenance', child: Text('In Maintenance')),
-            const PopupMenuItem(value: 'offline', child: Text('Offline')),
-          ],
+        IconButton(
+          icon: const Icon(Icons.refresh),
+          onPressed: _loadFleetData,
         ),
       ],
-      child: _isLoading
-          ? const Center(child: LoadingIndicator())
-          : RefreshIndicator(
-              onRefresh: _loadFleetData,
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Fleet overview stats
-                    _buildFleetOverview(),
-                    const SizedBox(height: 16),
-                    
-                    // Search bar
-                    _buildSearchBar(),
-                    const SizedBox(height: 16),
-                    
-                    // Tab navigation
-                    _buildTabNavigation(),
-                    const SizedBox(height: 16),
-                    
-                    // Tab content
-                    SizedBox(
-                      child: TabBarView(
-                        controller: _tabController,
-                        children: [
-                          _buildVehiclesTab(),
-                          _buildDriversTab(),
-                          _buildMaintenanceTab(),
-                          _buildAnalyticsTab(),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-    );
-  }
-
-  Widget _buildFleetOverview() {
-    final stats = _fleetStats;
-    
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Fleet Overview',
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 16),
-        
-        Row(
-          children: [
-            Expanded(
-              child: _buildStatCard(
-                'Total Vehicles',
-                '${stats['total_vehicles'] ?? 0}',
-                Icons.directions_bus,
-                Theme.of(context).colorScheme.primary,
-              ),
-            ),
-            Expanded(
-              child: _buildStatCard(
-                'Active',
-                '${stats['active_vehicles'] ?? 0}',
-                Icons.check_circle,
-                Theme.of(context).colorScheme.primary,
-              ),
-            ),
-            Expanded(
-              child: _buildStatCard(
-                'In Service',
-                '${stats['in_service'] ?? 0}',
-                Icons.build,
-                Theme.of(context).colorScheme.primary,
-              ),
-            ),
-            Expanded(
-              child: _buildStatCard(
-                'Offline',
-                '${stats['offline_vehicles'] ?? 0}',
-                Icons.offline_bolt,
-                Theme.of(context).colorScheme.primary,
-              ),
-            ),
-          ],
-        ),
-        
-        const SizedBox(height: 16),
-        
-        Row(
-          children: [
-            Expanded(
-              child: _buildStatCard(
-                'Total Drivers',
-                '${stats['total_drivers'] ?? 0}',
-                Icons.person,
-                Theme.of(context).colorScheme.primary,
-              ),
-            ),
-            Expanded(
-              child: _buildStatCard(
-                'On Duty',
-                '${stats['drivers_on_duty'] ?? 0}',
-                Icons.work,
-                Theme.of(context).colorScheme.primary,
-              ),
-            ),
-            Expanded(
-              child: _buildStatCard(
-                'Utilization',
-                '${stats['fleet_utilization'] ?? 0}%',
-                Icons.analytics,
-                Theme.of(context).colorScheme.primary,
-              ),
-            ),
-            Expanded(
-              child: _buildStatCard(
-                'Efficiency',
-                '${stats['fleet_efficiency'] ?? 0}%',
-                Icons.speed,
-                Theme.of(context).colorScheme.primary,
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
-    return CustomCard(type: CardType.elevated, 
-      margin: const EdgeInsets.symmetric(horizontal: 4),
-      padding: const EdgeInsets.all(16),
       child: Column(
         children: [
-          Icon(icon, color: color, size: 24),
-          const SizedBox(height: 16),
-          Text(
-            value,
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
+          // Fleet Statistics Header
+          _buildFleetStatistics(),
+          
+          // Search Bar
+          _buildSearchBar(),
+          
+          // Tab Bar
+          AppTabBar(
+            controller: _tabController,
+            tabs: const [
+              AppTab(label: 'Vehicles', icon: Icons.directions_bus),
+              AppTab(label: 'Drivers', icon: Icons.person),
+              AppTab(label: 'Maintenance', icon: Icons.build),
+              AppTab(label: 'Analytics', icon: Icons.analytics),
+            ],
           ),
-          Text(
-            title,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(context).colorScheme.primary,
-            ),
-            textAlign: TextAlign.center,
+          
+          // Tab Content
+          Expanded(
+            child: _isLoading
+                ? const LoadingState.fullScreen()
+                : TabBarView(
+                    controller: _tabController,
+                    children: [
+                      _buildVehiclesTab(),
+                      _buildDriversTab(),
+                      _buildMaintenanceTab(),
+                      _buildAnalyticsTab(),
+                    ],
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFleetStatistics() {
+    return Container(
+      padding: const EdgeInsets.all(DesignSystem.space16),
+      child: StatsSection(
+        title: 'Fleet Overview',
+        crossAxisCount: 2,
+        stats: [
+          StatItem(
+            value: '${_fleetStats['total_vehicles'] ?? 0}',
+            label: 'Total\\nVehicles',
+            icon: Icons.directions_bus,
+            color: context.colors.primary,
+          ),
+          StatItem(
+            value: '${_fleetStats['active_vehicles'] ?? 0}',
+            label: 'Active\\nVehicles',
+            icon: Icons.check_circle,
+            color: context.successColor,
+          ),
+          StatItem(
+            value: '${_fleetStats['total_drivers'] ?? 0}',
+            label: 'Total\\nDrivers',
+            icon: Icons.person,
+            color: context.infoColor,
+          ),
+          StatItem(
+            value: '${_fleetStats['fleet_utilization'] ?? 0}%',
+            label: 'Fleet\\nUtilization',
+            icon: Icons.analytics,
+            color: context.warningColor,
           ),
         ],
       ),
@@ -257,108 +160,78 @@ class _FleetManagementScreenState extends State<FleetManagementScreen>
   }
 
   Widget _buildSearchBar() {
-    return TextField(
-      onChanged: (value) {
-        setState(() {
-          _searchQuery = value;
-        });
-      },
-      decoration: InputDecoration(
-        hintText: 'Search vehicles, drivers, or license plates...',
-        prefixIcon: const Icon(Icons.search),
-        suffixIcon: _searchQuery.isNotEmpty
-            ? IconButton(
-                icon: const Icon(Icons.clear),
-                onPressed: () {
-                  setState(() {
-                    _searchQuery = '';
-                  });
-                },
-              )
-            : null,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
-        ),
-        filled: true,
-        fillColor: Theme.of(context).colorScheme.primary,
-      ),
-    );
-  }
-
-  Widget _buildTabNavigation() {
     return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.primary,
-        borderRadius: BorderRadius.circular(25),
-      ),
-      child: TabBar(
-        controller: _tabController,
-        indicatorSize: TabBarIndicatorSize.tab,
-        indicator: BoxDecoration(
-          color: Theme.of(context).colorScheme.primary,
-          borderRadius: BorderRadius.circular(25),
-        ),
-        labelColor: Theme.of(context).colorScheme.primary,
-        unselectedLabelColor: Theme.of(context).colorScheme.primary,
-        labelStyle: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
-        tabs: const [
-          Tab(text: 'Vehicles'),
-          Tab(text: 'Drivers'),
-          Tab(text: 'Maintenance'),
-          Tab(text: 'Analytics'),
+      padding: const EdgeInsets.symmetric(horizontal: DesignSystem.space16),
+      child: Row(
+        children: [
+          Expanded(
+            child: AppInput(
+              hint: 'Search vehicles, drivers, or plates...',
+              prefixIcon: Icon(Icons.search),
+              onChanged: (value) {
+                setState(() {
+                  _searchQuery = value;
+                });
+              },
+            ),
+          ),
+          const SizedBox(width: DesignSystem.space8),
+          AppButton.text(
+            text: 'Filter',
+            onPressed: _showFilterDialog,
+            icon: Icons.filter_list,
+          ),
         ],
       ),
     );
   }
 
   Widget _buildVehiclesTab() {
-    final filteredBuses = _getFilteredBuses();
-    
+    final filteredVehicles = _getFilteredVehicles();
+
     return Column(
       children: [
-        // Vehicle controls
-        Row(
-          children: [
-            Expanded(
-              child: CustomButton(
-        text: 'Add Vehicle',
-        onPressed: _showAddVehicleDialog,
-        icon: Icons.add,
-        type: ButtonType.outline
-      ),
-            ),
-            const SizedBox(width: 8, height: 40),
-            Expanded(
-              child: CustomButton(
-        text: 'Bulk Import',
-        onPressed: _showBulkImportDialog,
-        icon: Icons.upload_file,
-        type: ButtonType.outline
-      ),
-            ),
-          ],
+        // Vehicle Controls
+        Container(
+          padding: const EdgeInsets.all(DesignSystem.space16),
+          child: Row(
+            children: [
+              Expanded(
+                child: AppButton.outlined(
+                  text: 'Add Vehicle',
+                  onPressed: _showAddVehicleDialog,
+                  icon: Icons.add,
+                ),
+              ),
+              const SizedBox(width: DesignSystem.space8),
+              Expanded(
+                child: AppButton.outlined(
+                  text: 'Bulk Import',
+                  onPressed: _showBulkImportDialog,
+                  icon: Icons.upload_file,
+                ),
+              ),
+            ],
+          ),
         ),
-        const SizedBox(height: 16),
         
-        // Vehicle list
+        // Vehicle List
         Expanded(
-          child: filteredBuses.isEmpty
-              ? const Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.directions_bus, size: 64, color: Colors.grey),
-                      SizedBox(),
-                      Text('No vehicles found'),
-                    ],
-                  ),
+          child: filteredVehicles.isEmpty
+              ? const EmptyState(
+                  title: 'No vehicles found',
+                  message: 'No vehicles match your search criteria',
+                  icon: Icons.directions_bus_outlined,
                 )
               : ListView.builder(
-                  itemCount: filteredBuses.length,
+                  padding: const EdgeInsets.symmetric(horizontal: DesignSystem.space16),
+                  itemCount: filteredVehicles.length,
                   itemBuilder: (context, index) {
-                    final bus = filteredBuses[index];
-                    return _buildVehicleCard(bus);
+                    final vehicle = filteredVehicles[index];
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: DesignSystem.space12),
+                      child: _buildVehicleCard(vehicle),
+                    );
                   },
                 ),
         ),
@@ -366,204 +239,179 @@ class _FleetManagementScreenState extends State<FleetManagementScreen>
     );
   }
 
-  Widget _buildVehicleCard(Map<String, dynamic> bus) {
-    final status = bus['status'] ?? 'unknown';
-    Color statusColor;
-    IconData statusIcon;
-    
-    switch (status) {
-      case 'active':
-        statusColor = Theme.of(context).colorScheme.primary;
-        statusIcon = Icons.check_circle;
-        break;
-      case 'maintenance':
-        statusColor = Theme.of(context).colorScheme.primary;
-        statusIcon = Icons.build;
-        break;
-      case 'offline':
-        statusColor = Theme.of(context).colorScheme.primary;
-        statusIcon = Icons.offline_bolt;
-        break;
-      default:
-        statusColor = Theme.of(context).colorScheme.primary;
-        statusIcon = Icons.help;
-    }
+  Widget _buildVehicleCard(Bus vehicle) {
+    final statusColor = _getVehicleStatusColor(vehicle.status.value);
+    final statusIcon = _getVehicleStatusIcon(vehicle.status.value);
 
-    return CustomCard(type: CardType.elevated, 
-      margin: const EdgeInsets.only(bottom: 12),
-      child: InkWell(
-        onTap: () => _showVehicleDetails(bus),
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: statusColor.withValues(alpha: 0),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(statusIcon, color: statusColor, size: 24),
+    return AppCard(
+      onTap: () => _showVehicleDetails(vehicle),
+      child: Padding(
+        padding: const EdgeInsets.all(DesignSystem.space16),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                // Vehicle Image/Icon
+                Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: statusColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(DesignSystem.radiusMedium),
                   ),
-                  const SizedBox(width: 12, height: 40),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Bus ${bus['license_plate'] ?? 'Unknown'}',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          '${bus['make'] ?? 'Unknown'} ${bus['model'] ?? ''}',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
-                        ),
-                      ],
-                    ),
+                  child: Icon(
+                    statusIcon,
+                    color: statusColor,
+                    size: 24,
                   ),
-                  PopupMenuButton<String>(
-                    onSelected: (value) => _handleVehicleAction(value, bus),
-                    itemBuilder: (context) => [
-                      const PopupMenuItem(value: 'edit', child: Text('Edit')),
-                      const PopupMenuItem(value: 'assign', child: Text('Assign Driver')),
-                      const PopupMenuItem(value: 'maintenance', child: Text('Schedule Maintenance')),
-                      const PopupMenuItem(value: 'disable', child: Text('Disable')),
-                      const PopupMenuItem(value: 'delete', child: Text('Delete')),
+                ),
+                
+                const SizedBox(width: DesignSystem.space12),
+                
+                // Vehicle Info
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        vehicle.plateNumber ?? 'Unknown',
+                        style: context.textStyles.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        '${vehicle.make ?? 'Unknown'} ${vehicle.model ?? ''}',
+                        style: context.textStyles.bodyMedium?.copyWith(
+                          color: context.colors.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(height: DesignSystem.space4),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.people,
+                            size: 16,
+                            color: context.colors.onSurfaceVariant,
+                          ),
+                          const SizedBox(width: DesignSystem.space4),
+                          Text(
+                            'Capacity: ${vehicle.capacity ?? 0}',
+                            style: context.textStyles.bodySmall?.copyWith(
+                              color: context.colors.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
-                ],
-              ),
-              
-              const SizedBox(height: 16),
-              
-              // Vehicle details
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildVehicleDetailItem(
-                      'Capacity',
-                      '${bus['capacity'] ?? 0} seats',
-                      Icons.airline_seat_recline_normal,
+                ),
+                
+                // Status and Actions
+                Column(
+                  children: [
+                    StatusBadge(
+                      status: vehicle.status.value.toUpperCase(),
+                      color: _getVehicleBadgeStatusColor(vehicle.status.value),
+                      
                     ),
-                  ),
-                  Expanded(
-                    child: _buildVehicleDetailItem(
-                      'Mileage',
-                      '${bus['mileage'] ?? 0} km',
-                      Icons.speed,
+                    const SizedBox(height: DesignSystem.space8),
+                    PopupMenuButton<String>(
+                      onSelected: (value) => _handleVehicleAction(value, vehicle),
+                      itemBuilder: (context) => [
+                        const PopupMenuItem(value: 'view', child: Text('View Details')),
+                        const PopupMenuItem(value: 'edit', child: Text('Edit')),
+                        const PopupMenuItem(value: 'assign', child: Text('Assign Driver')),
+                        const PopupMenuItem(value: 'maintenance', child: Text('Schedule Maintenance')),
+                        const PopupMenuItem(value: 'disable', child: Text('Disable')),
+                      ],
                     ),
+                  ],
+                ),
+              ],
+            ),
+            
+            const SizedBox(height: DesignSystem.space12),
+            
+            // Vehicle Details Row
+            Row(
+              children: [
+                Expanded(
+                  child: _buildDetailChip(
+                    'Driver',
+                    vehicle.assignedDriverName ?? 'Unassigned',
+                    Icons.person,
                   ),
-                  Expanded(
-                    child: _buildVehicleDetailItem(
-                      'Driver',
-                      bus['driver_name'] ?? 'Unassigned',
-                      Icons.person,
-                    ),
+                ),
+                const SizedBox(width: DesignSystem.space8),
+                Expanded(
+                  child: _buildDetailChip(
+                    'Route',
+                    vehicle.assignedRoute ?? 'Not assigned',
+                    Icons.route,
                   ),
-                ],
-              ),
-              
-              if (bus['line_name'] != null) ...[
-                const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Text(
-                    'Route: ${bus['line_name']}',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.primary,
-                      fontWeight: FontWeight.w500,
-                    ),
+                ),
+                const SizedBox(width: DesignSystem.space8),
+                Expanded(
+                  child: _buildDetailChip(
+                    'Mileage',
+                    '${vehicle.mileage ?? 0} km',
+                    Icons.speed,
                   ),
                 ),
               ],
-            ],
-          ),
+            ),
+          ],
         ),
       ),
-    );
-  }
-
-  Widget _buildVehicleDetailItem(String label, String value, IconData icon) {
-    return Column(
-      children: [
-        Icon(icon, size: 16, color: Theme.of(context).colorScheme.primary),
-        const SizedBox(height: 16),
-        Text(
-          value,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        Text(
-          label,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: Theme.of(context).colorScheme.primary,
-          ),
-        ),
-      ],
     );
   }
 
   Widget _buildDriversTab() {
     final filteredDrivers = _getFilteredDrivers();
-    
+
     return Column(
       children: [
-        // Driver controls
-        Row(
-          children: [
-            Expanded(
-              child: CustomButton(
-        text: 'Add Driver',
-        onPressed: _showAddDriverDialog,
-        icon: Icons.person_add,
-        type: ButtonType.outline
-      ),
-            ),
-            const SizedBox(width: 8, height: 40),
-            Expanded(
-              child: CustomButton(
-        text: 'Assign Routes',
-        onPressed: _showRouteAssignmentDialog,
-        icon: Icons.route,
-        type: ButtonType.outline
-      ),
-            ),
-          ],
+        // Driver Controls
+        Container(
+          padding: const EdgeInsets.all(DesignSystem.space16),
+          child: Row(
+            children: [
+              Expanded(
+                child: AppButton.outlined(
+                  text: 'Add Driver',
+                  onPressed: _showAddDriverDialog,
+                  icon: Icons.person_add,
+                ),
+              ),
+              const SizedBox(width: DesignSystem.space8),
+              Expanded(
+                child: AppButton.outlined(
+                  text: 'Assign Routes',
+                  onPressed: _showRouteAssignmentDialog,
+                  icon: Icons.route,
+                ),
+              ),
+            ],
+          ),
         ),
-        const SizedBox(height: 16),
         
-        // Driver list
+        // Driver List
         Expanded(
           child: filteredDrivers.isEmpty
-              ? const Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.person, size: 64, color: Colors.grey),
-                      SizedBox(),
-                      Text('No drivers found'),
-                    ],
-                  ),
+              ? const EmptyState(
+                  title: 'No drivers found',
+                  message: 'No drivers match your search criteria',
+                  icon: Icons.person_outlined,
                 )
               : ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: DesignSystem.space16),
                   itemCount: filteredDrivers.length,
                   itemBuilder: (context, index) {
                     final driver = filteredDrivers[index];
-                    return _buildDriverCard(driver);
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: DesignSystem.space12),
+                      child: _buildDriverCard(driver),
+                    );
                   },
                 ),
         ),
@@ -571,113 +419,110 @@ class _FleetManagementScreenState extends State<FleetManagementScreen>
     );
   }
 
-  Widget _buildDriverCard(Map<String, dynamic> driver) {
-    final status = driver['status'] ?? 'offline';
-    Color statusColor;
-    
-    switch (status) {
-      case 'online':
-      case 'on_duty':
-        statusColor = Theme.of(context).colorScheme.primary;
-        break;
-      case 'break':
-        statusColor = Theme.of(context).colorScheme.primary;
-        break;
-      case 'offline':
-        statusColor = Theme.of(context).colorScheme.primary;
-        break;
-      default:
-        statusColor = Theme.of(context).colorScheme.primary;
-    }
+  Widget _buildDriverCard(Driver driver) {
+    final statusColor = _getDriverStatusColor(driver.status.value);
 
-    return CustomCard(type: CardType.elevated, 
-      margin: const EdgeInsets.only(bottom: 12),
-      child: InkWell(
-        onTap: () => _showDriverDetails(driver),
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              // Avatar
-              CircleAvatar(
-                radius: 24,
-                backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0),
-                child: Text(
-                  _getInitials(driver['name'] ?? ''),
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.primary,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 16, height: 40),
-              
-              // Driver info
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      driver['name'] ?? 'Unknown Driver',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+    return AppCard(
+      onTap: () => _showDriverDetails(driver),
+      child: Padding(
+        padding: const EdgeInsets.all(DesignSystem.space16),
+        child: Row(
+          children: [
+            // Driver Avatar
+            CircleAvatar(
+              radius: 25,
+              backgroundColor: context.colors.primaryContainer,
+              backgroundImage: driver.profileImageUrl != null
+                  ? NetworkImage(driver.profileImageUrl!)
+                  : null,
+              child: driver.profileImageUrl == null
+                  ? Text(
+                      _getInitials(driver.name ?? ''),
+                      style: context.textStyles.titleMedium?.copyWith(
+                        color: context.colors.onPrimaryContainer,
                         fontWeight: FontWeight.bold,
                       ),
-                    ),
-                    Text(
-                      'License: ${driver['license_number'] ?? 'N/A'}',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                    ),
-                    if (driver['assigned_bus'] != null)
-                      Text(
-                        'Bus: ${driver['assigned_bus']}',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              
-              // Status and rating
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
+                    )
+                  : null,
+            ),
+            
+            const SizedBox(width: DesignSystem.space12),
+            
+            // Driver Info
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: statusColor,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      status.toUpperCase(),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w500,
-                      ),
+                  Text(
+                    driver.name ?? 'Unknown Driver',
+                    style: context.textStyles.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  Text(
+                    'License: ${driver.licenseNumber ?? 'N/A'}',
+                    style: context.textStyles.bodyMedium?.copyWith(
+                      color: context.colors.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: DesignSystem.space4),
                   Row(
-                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.star, size: 14, color: Theme.of(context).colorScheme.primary),
-                      const SizedBox(width: 2, height: 40),
+                      Icon(
+                        Icons.star,
+                        size: 16,
+                        color: context.warningColor,
+                      ),
+                      const SizedBox(width: DesignSystem.space4),
                       Text(
-                        '${driver['rating'] ?? 0}',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          fontWeight: FontWeight.w500,
+                        '${driver.rating?.toStringAsFixed(1) ?? '0.0'}',
+                        style: context.textStyles.bodySmall?.copyWith(
+                          color: context.colors.onSurfaceVariant,
                         ),
                       ),
+                      if (driver.assignedBusPlate != null) ...[
+                        const SizedBox(width: DesignSystem.space16),
+                        Icon(
+                          Icons.directions_bus,
+                          size: 16,
+                          color: context.colors.onSurfaceVariant,
+                        ),
+                        const SizedBox(width: DesignSystem.space4),
+                        Text(
+                          driver.assignedBusPlate!,
+                          style: context.textStyles.bodySmall?.copyWith(
+                            color: context.colors.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ],
               ),
-            ],
-          ),
+            ),
+            
+            // Status and Actions
+            Column(
+              children: [
+                StatusBadge(
+                  status: driver.status.value.toUpperCase(),
+                  color: _getDriverBadgeStatusColor(driver.status.value),
+                  
+                ),
+                const SizedBox(height: DesignSystem.space8),
+                PopupMenuButton<String>(
+                  onSelected: (value) => _handleDriverAction(value, driver),
+                  itemBuilder: (context) => [
+                    const PopupMenuItem(value: 'view', child: Text('View Profile')),
+                    const PopupMenuItem(value: 'edit', child: Text('Edit')),
+                    const PopupMenuItem(value: 'assign_bus', child: Text('Assign Bus')),
+                    const PopupMenuItem(value: 'assign_route', child: Text('Assign Route')),
+                    const PopupMenuItem(value: 'suspend', child: Text('Suspend')),
+                  ],
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
@@ -686,48 +531,47 @@ class _FleetManagementScreenState extends State<FleetManagementScreen>
   Widget _buildMaintenanceTab() {
     return Column(
       children: [
-        // Maintenance controls
-        Row(
-          children: [
-            Expanded(
-              child: CustomButton(
-        text: 'Schedule Maintenance',
-        onPressed: _showScheduleMaintenanceDialog,
-        icon: Icons.schedule,
-        type: ButtonType.outline
-      ),
-            ),
-            const SizedBox(width: 8, height: 40),
-            Expanded(
-              child: CustomButton(
-        text: 'Maintenance Log',
-        onPressed: _showMaintenanceLogDialog,
-        icon: Icons.history,
-        type: ButtonType.outline
-      ),
-            ),
-          ],
+        // Maintenance Controls
+        Container(
+          padding: const EdgeInsets.all(DesignSystem.space16),
+          child: Row(
+            children: [
+              Expanded(
+                child: AppButton.outlined(
+                  text: 'Schedule Maintenance',
+                  onPressed: _showScheduleMaintenanceDialog,
+                  icon: Icons.schedule,
+                ),
+              ),
+              const SizedBox(width: DesignSystem.space8),
+              Expanded(
+                child: AppButton.outlined(
+                  text: 'View Log',
+                  onPressed: _showMaintenanceLogDialog,
+                  icon: Icons.history,
+                ),
+              ),
+            ],
+          ),
         ),
-        const SizedBox(height: 16),
         
-        // Maintenance schedule
+        // Maintenance Records
         Expanded(
-          child: _maintenanceSchedule.isEmpty
-              ? const Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.build, size: 64, color: Colors.grey),
-                      SizedBox(),
-                      Text('No maintenance scheduled'),
-                    ],
-                  ),
+          child: _maintenanceRecords.isEmpty
+              ? const EmptyState(
+                  title: 'No maintenance records',
+                  message: 'No maintenance activities scheduled or completed',
+                  icon: Icons.build_outlined,
                 )
               : ListView.builder(
-                  itemCount: _maintenanceSchedule.length,
+                  padding: const EdgeInsets.symmetric(horizontal: DesignSystem.space16),
+                  itemCount: _maintenanceRecords.length,
                   itemBuilder: (context, index) {
-                    final maintenance = _maintenanceSchedule[index];
-                    return _buildMaintenanceCard(maintenance);
+                    final maintenance = _maintenanceRecords[index];
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: DesignSystem.space12),
+                      child: _buildMaintenanceCard(maintenance),
+                    );
                   },
                 ),
         ),
@@ -737,76 +581,58 @@ class _FleetManagementScreenState extends State<FleetManagementScreen>
 
   Widget _buildMaintenanceCard(Map<String, dynamic> maintenance) {
     final priority = maintenance['priority'] ?? 'medium';
-    Color priorityColor;
-    
-    switch (priority) {
-      case 'high':
-        priorityColor = Theme.of(context).colorScheme.primary;
-        break;
-      case 'medium':
-        priorityColor = Theme.of(context).colorScheme.primary;
-        break;
-      case 'low':
-        priorityColor = Theme.of(context).colorScheme.primary;
-        break;
-      default:
-        priorityColor = Theme.of(context).colorScheme.primary;
-    }
+    final priorityColor = _getMaintenancePriorityColor(priority);
 
-    return CustomCard(type: CardType.elevated, 
-      margin: const EdgeInsets.only(bottom: 12),
+    return AppCard(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(DesignSystem.space16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                Icon(Icons.build, color: priorityColor, size: 20),
-                const SizedBox(width: 8, height: 40),
+                Icon(
+                  Icons.build,
+                  color: priorityColor,
+                  size: 20,
+                ),
+                const SizedBox(width: DesignSystem.space8),
                 Expanded(
                   child: Text(
                     maintenance['type'] ?? 'Maintenance',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    style: context.textStyles.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: priorityColor.withValues(alpha: 0),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    priority.toUpperCase(),
-                    style: TextStyle(
-                      color: priorityColor,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
+                StatusBadge(
+                  status: priority.toUpperCase(),
+                  color: _getMaintenanceBadgeStatusColor(priority),
+                  
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            
+            const SizedBox(height: DesignSystem.space8),
+            
             Text(
-              'Vehicle: ${maintenance['vehicle_id'] ?? 'Unknown'}',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.primary,
+              'Vehicle: ${maintenance['vehicle_plate'] ?? 'Unknown'}',
+              style: context.textStyles.bodyMedium?.copyWith(
+                color: context.colors.onSurfaceVariant,
               ),
             ),
             Text(
-              'Scheduled: ${DzDateUtils.formatDate(DateTime.tryParse(maintenance['scheduled_date'] ?? '') ?? DateTime.now())}',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.primary,
+              'Scheduled: ${_formatMaintenanceDate(maintenance['scheduled_date'])}',
+              style: context.textStyles.bodyMedium?.copyWith(
+                color: context.colors.onSurfaceVariant,
               ),
             ),
+            
             if (maintenance['description'] != null) ...[
-              const SizedBox(height: 16),
+              const SizedBox(height: DesignSystem.space8),
               Text(
                 maintenance['description'],
-                style: Theme.of(context).textTheme.bodySmall,
+                style: context.textStyles.bodyMedium,
               ),
             ],
           ],
@@ -817,69 +643,160 @@ class _FleetManagementScreenState extends State<FleetManagementScreen>
 
   Widget _buildAnalyticsTab() {
     return SingleChildScrollView(
+      padding: const EdgeInsets.all(DesignSystem.space16),
       child: Column(
         children: [
-          // Fleet efficiency chart
-          CustomCard(type: CardType.elevated, 
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Fleet Efficiency Trends',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+          // Fleet Performance Metrics
+          SectionLayout(
+            title: 'Fleet Performance',
+            child: StatsSection(
+              crossAxisCount: 2,
+              stats: [
+                StatItem(
+                  value: '${_fleetStats['avg_efficiency'] ?? 0}%',
+                  label: 'Average\\nEfficiency',
+                  icon: Icons.speed,
+                  color: context.successColor,
                 ),
-                const SizedBox(height: 16),
-                
-                SizedBox(
-                  child: LineChart(
-                    LineChartData(
-                      gridData: FlGridData(show: false),
-                      titlesData: FlTitlesData(show: false),
-                      borderData: FlBorderData(show: false),
-                      lineBarsData: [
-                        LineChartBarData(
-                          spots: _generateEfficiencyData(),
-                          isCurved: true,
-                          color: Theme.of(context).colorScheme.primary,
-                          barWidth: 3,
-                          dotData: FlDotData(show: false),
-                          belowBarData: BarAreaData(
-                            show: true,
-                            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                StatItem(
+                  value: '${_fleetStats['uptime_percentage'] ?? 0}%',
+                  label: 'Fleet\\nUptime',
+                  icon: Icons.access_time,
+                  color: context.infoColor,
+                ),
+                StatItem(
+                  value: '${_fleetStats['maintenance_cost'] ?? 0}',
+                  label: 'Monthly\\nMaintenance',
+                  icon: Icons.attach_money,
+                  color: context.warningColor,
+                ),
+                StatItem(
+                  value: '${_fleetStats['fuel_efficiency'] ?? 0}',
+                  label: 'Fuel\\nEfficiency',
+                  icon: Icons.local_gas_station,
+                  color: context.colors.primary,
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 16),
           
-          // Vehicle utilization
-          CustomCard(type: CardType.elevated, 
+          const SizedBox(height: DesignSystem.space16),
+          
+          // Vehicle Status Distribution
+          SectionLayout(
+            title: 'Vehicle Status Distribution',
+            child: AppCard(
+              child: Container(
+                height: 200,
+                padding: const EdgeInsets.all(DesignSystem.space16),
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.pie_chart,
+                        size: 48,
+                        color: context.colors.primary,
+                      ),
+                      const SizedBox(height: DesignSystem.space8),
+                      Text(
+                        'Fleet Distribution Chart',
+                        style: context.textStyles.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        'Vehicle status breakdown visualization',
+                        style: context.textStyles.bodyMedium?.copyWith(
+                          color: context.colors.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          
+          const SizedBox(height: DesignSystem.space16),
+          
+          // Utilization Trends
+          SectionLayout(
+            title: 'Utilization Trends',
+            child: AppCard(
+              child: Container(
+                height: 200,
+                padding: const EdgeInsets.all(DesignSystem.space16),
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.trending_up,
+                        size: 48,
+                        color: context.colors.primary,
+                      ),
+                      const SizedBox(height: DesignSystem.space8),
+                      Text(
+                        'Utilization Trends',
+                        style: context.textStyles.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        'Fleet utilization over time',
+                        style: context.textStyles.bodyMedium?.copyWith(
+                          color: context.colors.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailChip(String label, String value, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: DesignSystem.space8,
+        vertical: DesignSystem.space4,
+      ),
+      decoration: BoxDecoration(
+        color: context.colors.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(DesignSystem.radiusSmall),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: 14,
+            color: context.colors.onSurfaceVariant,
+          ),
+          const SizedBox(width: DesignSystem.space4),
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Vehicle Utilization',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
+                  label,
+                  style: context.textStyles.bodySmall?.copyWith(
+                    color: context.colors.onSurfaceVariant,
+                    fontSize: 10,
                   ),
                 ),
-                const SizedBox(height: 16),
-                
-                SizedBox(
-                  child: PieChart(
-                    PieChartData(
-                      sections: _generateUtilizationData(),
-                      sectionsSpace: 2,
-                      centerSpaceRadius: 40,
-                    ),
+                Text(
+                  value,
+                  style: context.textStyles.bodySmall?.copyWith(
+                    fontWeight: FontWeight.w500,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
@@ -889,32 +806,33 @@ class _FleetManagementScreenState extends State<FleetManagementScreen>
     );
   }
 
-  List<Map<String, dynamic>> _getFilteredBuses() {
-    var filtered = _buses;
-    
-    if (_selectedFilter != 'all') {
-      filtered = filtered.where((bus) => bus['status'] == _selectedFilter).toList();
-    }
-    
-    if (_searchQuery.isNotEmpty) {
-      filtered = filtered.where((bus) {
+  // Helper methods
+  List<Bus> _getFilteredVehicles() {
+    var filtered = _vehicles.where((vehicle) {
+      if (_selectedFilter != 'all' && vehicle.status != _selectedFilter) {
+        return false;
+      }
+      
+      if (_searchQuery.isNotEmpty) {
         final query = _searchQuery.toLowerCase();
-        return (bus['license_plate']?.toLowerCase().contains(query) ?? false) ||
-               (bus['make']?.toLowerCase().contains(query) ?? false) ||
-               (bus['model']?.toLowerCase().contains(query) ?? false);
-      }).toList();
-    }
+        return (vehicle.plateNumber?.toLowerCase().contains(query) ?? false) ||
+               (vehicle.make?.toLowerCase().contains(query) ?? false) ||
+               (vehicle.model?.toLowerCase().contains(query) ?? false);
+      }
+      
+      return true;
+    }).toList();
     
     return filtered;
   }
 
-  List<Map<String, dynamic>> _getFilteredDrivers() {
+  List<Driver> _getFilteredDrivers() {
     if (_searchQuery.isEmpty) return _drivers;
     
+    final query = _searchQuery.toLowerCase();
     return _drivers.where((driver) {
-      final query = _searchQuery.toLowerCase();
-      return (driver['name']?.toLowerCase().contains(query) ?? false) ||
-             (driver['license_number']?.toLowerCase().contains(query) ?? false);
+      return (driver.name?.toLowerCase().contains(query) ?? false) ||
+             (driver.licenseNumber?.toLowerCase().contains(query) ?? false);
     }).toList();
   }
 
@@ -925,113 +843,203 @@ class _FleetManagementScreenState extends State<FleetManagementScreen>
     return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
   }
 
-  List<FlSpot> _generateEfficiencyData() {
-    return [
-      const FlSpot(0, 75),
-      const FlSpot(1, 78),
-      const FlSpot(2, 82),
-      const FlSpot(3, 79),
-      const FlSpot(4, 85),
-      const FlSpot(5, 88),
-      const FlSpot(6, 87),
-    ];
+  Color _getVehicleStatusColor(String? status) {
+    switch (status?.toLowerCase()) {
+      case 'active':
+        return context.successColor;
+      case 'maintenance':
+        return context.warningColor;
+      case 'offline':
+        return context.colors.error;
+      default:
+        return context.colors.primary;
+    }
   }
 
-  List<PieChartSectionData> _generateUtilizationData() {
-    return [
-      PieChartSectionData(
-        value: 65,
-        color: Theme.of(context).colorScheme.primary,
-        title: 'Active\n65%',
-        radius: 60,
-        titleStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
+  IconData _getVehicleStatusIcon(String? status) {
+    switch (status?.toLowerCase()) {
+      case 'active':
+        return Icons.check_circle;
+      case 'maintenance':
+        return Icons.build;
+      case 'offline':
+        return Icons.offline_bolt;
+      default:
+        return Icons.directions_bus;
+    }
+  }
+
+  Color _getVehicleBadgeStatusColor(String? status) {
+    switch (status?.toLowerCase()) {
+      case 'active':
+        return DesignSystem.busActive;
+      case 'maintenance':
+        return DesignSystem.warning;
+      case 'offline':
+        return DesignSystem.error;
+      default:
+        return DesignSystem.busInactive;
+    }
+  }
+
+  Color _getDriverStatusColor(String? status) {
+    switch (status?.toLowerCase()) {
+      case 'online':
+      case 'on_duty':
+        return context.successColor;
+      case 'break':
+        return context.warningColor;
+      case 'offline':
+        return context.colors.error;
+      default:
+        return context.colors.primary;
+    }
+  }
+
+  Color _getDriverBadgeStatusColor(String? status) {
+    switch (status?.toLowerCase()) {
+      case 'online':
+      case 'on_duty':
+        return DesignSystem.busActive;
+      case 'break':
+        return DesignSystem.warning;
+      case 'offline':
+        return DesignSystem.error;
+      default:
+        return DesignSystem.busInactive;
+    }
+  }
+
+  Color _getMaintenancePriorityColor(String priority) {
+    switch (priority.toLowerCase()) {
+      case 'high':
+        return context.colors.error;
+      case 'medium':
+        return context.warningColor;
+      case 'low':
+        return context.infoColor;
+      default:
+        return context.colors.primary;
+    }
+  }
+
+  Color _getMaintenanceBadgeStatusColor(String priority) {
+    switch (priority.toLowerCase()) {
+      case 'high':
+        return DesignSystem.error;
+      case 'medium':
+        return DesignSystem.warning;
+      case 'low':
+        return DesignSystem.info;
+      default:
+        return DesignSystem.busInactive;
+    }
+  }
+
+  String _formatMaintenanceDate(dynamic date) {
+    if (date == null) return 'Not scheduled';
+    try {
+      final dateTime = date is String ? DateTime.parse(date) : date as DateTime;
+      final now = DateTime.now();
+      final difference = dateTime.difference(now);
+      
+      if (difference.inDays == 0) return 'Today';
+      if (difference.inDays == 1) return 'Tomorrow';
+      if (difference.inDays > 0) return 'In ${difference.inDays} days';
+      if (difference.inDays == -1) return 'Yesterday';
+      return '${difference.inDays.abs()} days ago';
+    } catch (e) {
+      return 'Invalid date';
+    }
+  }
+
+  // Dialog methods
+  void _showFilterDialog() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(DesignSystem.space16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Filter Options',
+              style: context.textStyles.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: DesignSystem.space16),
+            // Filter options would be implemented here
+            AppButton(
+              text: 'Apply Filters',
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        ),
       ),
-      PieChartSectionData(
-        value: 20,
-        color: Theme.of(context).colorScheme.primary,
-        title: 'Maintenance\n20%',
-        radius: 50,
-        titleStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
-      ),
-      PieChartSectionData(
-        value: 15,
-        color: Theme.of(context).colorScheme.primary,
-        title: 'Offline\n15%',
-        radius: 50,
-        titleStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
-      ),
-    ];
+    );
   }
 
   void _showAddVehicleDialog() {
-    DialogHelper.showInfoDialog(
-      context,
-      title: 'Add Vehicle',
-      message: 'Vehicle addition form would be implemented here.',
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Add vehicle form coming soon')),
     );
   }
 
   void _showBulkImportDialog() {
-    DialogHelper.showInfoDialog(
-      context,
-      title: 'Bulk Import',
-      message: 'Bulk import functionality would be implemented here.',
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Bulk import feature coming soon')),
     );
   }
 
-  void _showVehicleDetails(Map<String, dynamic> bus) {
-    DialogHelper.showInfoDialog(
-      context,
-      title: 'Vehicle Details',
-      message: 'Detailed vehicle information for ${bus['license_plate']} would be shown here.',
+  void _showVehicleDetails(Bus vehicle) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Vehicle details for ${vehicle.plateNumber}')),
     );
   }
 
   void _showAddDriverDialog() {
-    DialogHelper.showInfoDialog(
-      context,
-      title: 'Add Driver',
-      message: 'Driver registration form would be implemented here.',
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Add driver form coming soon')),
     );
   }
 
   void _showRouteAssignmentDialog() {
-    DialogHelper.showInfoDialog(
-      context,
-      title: 'Route Assignment',
-      message: 'Route assignment interface would be implemented here.',
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Route assignment feature coming soon')),
     );
   }
 
-  void _showDriverDetails(Map<String, dynamic> driver) {
-    DialogHelper.showInfoDialog(
-      context,
-      title: 'Driver Details',
-      message: 'Detailed driver information for ${driver['name']} would be shown here.',
+  void _showDriverDetails(Driver driver) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Driver details for ${driver.name}')),
     );
   }
 
   void _showScheduleMaintenanceDialog() {
-    DialogHelper.showInfoDialog(
-      context,
-      title: 'Schedule Maintenance',
-      message: 'Maintenance scheduling form would be implemented here.',
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Schedule maintenance form coming soon')),
     );
   }
 
   void _showMaintenanceLogDialog() {
-    DialogHelper.showInfoDialog(
-      context,
-      title: 'Maintenance Log',
-      message: 'Maintenance history and logs would be shown here.',
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Maintenance log viewer coming soon')),
     );
   }
 
-  void _handleVehicleAction(String action, Map<String, dynamic> bus) {
-    DialogHelper.showInfoDialog(
-      context,
-      title: 'Vehicle Action',
-      message: 'Action "$action" for vehicle ${bus['license_plate']} would be implemented here.',
+  void _handleVehicleAction(String action, Bus vehicle) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('$action action for ${vehicle.plateNumber}')),
+    );
+  }
+
+  void _handleDriverAction(String action, Driver driver) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('$action action for ${driver.name}')),
     );
   }
 }

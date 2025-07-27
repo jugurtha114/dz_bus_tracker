@@ -18,10 +18,7 @@ class AuthTokenResponse {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'access': accessToken,
-      'refresh': refreshToken,
-    };
+    return {'access': accessToken, 'refresh': refreshToken};
   }
 }
 
@@ -30,16 +27,10 @@ class LoginRequest {
   final String email;
   final String password;
 
-  const LoginRequest({
-    required this.email,
-    required this.password,
-  });
+  const LoginRequest({required this.email, required this.password});
 
   Map<String, dynamic> toJson() {
-    return {
-      'email': email,
-      'password': password,
-    };
+    return {'email': email, 'password': password};
   }
 }
 
@@ -130,19 +121,11 @@ class AuthResponse<T> {
   });
 
   factory AuthResponse.success(T data, {String? message}) {
-    return AuthResponse<T>(
-      success: true,
-      data: data,
-      message: message,
-    );
+    return AuthResponse<T>(success: true, data: data, message: message);
   }
 
   factory AuthResponse.failure(String message, {Map<String, dynamic>? errors}) {
-    return AuthResponse<T>(
-      success: false,
-      message: message,
-      errors: errors,
-    );
+    return AuthResponse<T>(success: false, message: message, errors: errors);
   }
 }
 

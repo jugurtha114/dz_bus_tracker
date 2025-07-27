@@ -6,13 +6,13 @@ import '../config/theme_config.dart';
 class DialogHelper {
   // Show confirmation dialog
   static Future<bool> showConfirmDialog(
-      BuildContext context, {
-        required String title,
-        required String message,
-        String confirmText = 'Confirm',
-        String cancelText = 'Cancel',
-        bool barrierDismissible = true,
-      }) async {
+    BuildContext context, {
+    required String title,
+    required String message,
+    String confirmText = 'Confirm',
+    String cancelText = 'Cancel',
+    bool barrierDismissible = true,
+  }) async {
     final result = await showDialog<bool>(
       context: context,
       barrierDismissible: barrierDismissible,
@@ -35,13 +35,32 @@ class DialogHelper {
     return result ?? false;
   }
 
+  // Alias for backward compatibility
+  static Future<bool> showConfirmation(
+    BuildContext context, {
+    required String title,
+    required String message,
+    String confirmText = 'Confirm',
+    String cancelText = 'Cancel',
+    bool barrierDismissible = true,
+  }) async {
+    return await showConfirmDialog(
+      context,
+      title: title,
+      message: message,
+      confirmText: confirmText,
+      cancelText: cancelText,
+      barrierDismissible: barrierDismissible,
+    );
+  }
+
   // Show information dialog
   static Future<void> showInfoDialog(
-      BuildContext context, {
-        required String title,
-        required String message,
-        String buttonText = 'OK',
-      }) async {
+    BuildContext context, {
+    required String title,
+    required String message,
+    String buttonText = 'OK',
+  }) async {
     return showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -59,14 +78,14 @@ class DialogHelper {
 
   // Show loading dialog
   static Future<void> showLoadingDialog(
-      BuildContext context, {
-        String message = 'Loading...',
-      }) async {
+    BuildContext context, {
+    String message = 'Loading...',
+  }) async {
     return showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => WillPopScope(
-        onWillPop: () async => false,
+      builder: (context) => PopScope(
+        canPop: false,
         child: AlertDialog(
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -83,17 +102,21 @@ class DialogHelper {
 
   // Show success dialog
   static Future<void> showSuccessDialog(
-      BuildContext context, {
-        required String title,
-        required String message,
-        String buttonText = 'OK',
-      }) async {
+    BuildContext context, {
+    required String title,
+    required String message,
+    String buttonText = 'OK',
+  }) async {
     return showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: Row(
           children: [
-            Icon(Icons.check_circle, color: Theme.of(context).colorScheme.primary, size: 24),
+            Icon(
+              Icons.check_circle,
+              color: Theme.of(context).colorScheme.primary,
+              size: 24,
+            ),
             const SizedBox(width: 8, height: 40),
             Text(title),
           ],
@@ -114,11 +137,11 @@ class DialogHelper {
 
   // Show custom dialog with glassy effect
   static Future<T?> showGlassyDialog<T>(
-      BuildContext context, {
-        required Widget child,
-        bool barrierDismissible = true,
-        Color barrierColor = Colors.black54,
-      }) async {
+    BuildContext context, {
+    required Widget child,
+    bool barrierDismissible = true,
+    Color barrierColor = Colors.black54,
+  }) async {
     return showDialog<T>(
       context: context,
       barrierDismissible: barrierDismissible,
@@ -137,13 +160,13 @@ class DialogHelper {
 
   // Show bottom sheet
   static Future<T?> showAppBottomSheet<T>(
-      BuildContext context, {
-        required Widget child,
-        bool isScrollControlled = true,
-        bool isDismissible = true,
-        bool enableDrag = true,
-        Color? backgroundColor,
-      }) async {
+    BuildContext context, {
+    required Widget child,
+    bool isScrollControlled = true,
+    bool isDismissible = true,
+    bool enableDrag = true,
+    Color? backgroundColor,
+  }) async {
     return showModalBottomSheet<T>(
       context: context,
       isScrollControlled: isScrollControlled,
@@ -167,7 +190,7 @@ class DialogHelper {
             children: [
               Container(
                 width: 40,
-        
+
                 margin: const EdgeInsets.only(top: 8, bottom: 16),
                 decoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.primary,
@@ -184,12 +207,12 @@ class DialogHelper {
 
   // Show glassy bottom sheet
   static Future<T?> showGlassyBottomSheet<T>(
-      BuildContext context, {
-        required Widget child,
-        bool isScrollControlled = true,
-        bool isDismissible = true,
-        bool enableDrag = true,
-      }) async {
+    BuildContext context, {
+    required Widget child,
+    bool isScrollControlled = true,
+    bool isDismissible = true,
+    bool enableDrag = true,
+  }) async {
     return showModalBottomSheet<T>(
       context: context,
       isScrollControlled: isScrollControlled,
@@ -212,7 +235,7 @@ class DialogHelper {
             children: [
               Container(
                 width: 40,
-        
+
                 margin: const EdgeInsets.only(top: 8, bottom: 16),
                 decoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.primary,

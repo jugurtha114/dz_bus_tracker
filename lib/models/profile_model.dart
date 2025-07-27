@@ -30,9 +30,12 @@ class Profile {
       avatar: json['avatar'] as String?,
       bio: json['bio'] as String?,
       language: Language.fromString(json['language'] as String? ?? 'fr'),
-      pushNotificationsEnabled: json['push_notifications_enabled'] as bool? ?? true,
-      emailNotificationsEnabled: json['email_notifications_enabled'] as bool? ?? true,
-      smsNotificationsEnabled: json['sms_notifications_enabled'] as bool? ?? false,
+      pushNotificationsEnabled:
+          json['push_notifications_enabled'] as bool? ?? true,
+      emailNotificationsEnabled:
+          json['email_notifications_enabled'] as bool? ?? true,
+      smsNotificationsEnabled:
+          json['sms_notifications_enabled'] as bool? ?? false,
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
     );
@@ -65,9 +68,12 @@ class Profile {
       avatar: avatar ?? this.avatar,
       bio: bio ?? this.bio,
       language: language ?? this.language,
-      pushNotificationsEnabled: pushNotificationsEnabled ?? this.pushNotificationsEnabled,
-      emailNotificationsEnabled: emailNotificationsEnabled ?? this.emailNotificationsEnabled,
-      smsNotificationsEnabled: smsNotificationsEnabled ?? this.smsNotificationsEnabled,
+      pushNotificationsEnabled:
+          pushNotificationsEnabled ?? this.pushNotificationsEnabled,
+      emailNotificationsEnabled:
+          emailNotificationsEnabled ?? this.emailNotificationsEnabled,
+      smsNotificationsEnabled:
+          smsNotificationsEnabled ?? this.smsNotificationsEnabled,
       createdAt: createdAt,
       updatedAt: DateTime.now(),
     );
@@ -148,9 +154,12 @@ class ProfileRequest {
     if (avatar != null) json['avatar'] = avatar;
     if (bio != null) json['bio'] = bio;
     if (language != null) json['language'] = language!.value;
-    if (pushNotificationsEnabled != null) json['push_notifications_enabled'] = pushNotificationsEnabled;
-    if (emailNotificationsEnabled != null) json['email_notifications_enabled'] = emailNotificationsEnabled;
-    if (smsNotificationsEnabled != null) json['sms_notifications_enabled'] = smsNotificationsEnabled;
+    if (pushNotificationsEnabled != null)
+      json['push_notifications_enabled'] = pushNotificationsEnabled;
+    if (emailNotificationsEnabled != null)
+      json['email_notifications_enabled'] = emailNotificationsEnabled;
+    if (smsNotificationsEnabled != null)
+      json['sms_notifications_enabled'] = smsNotificationsEnabled;
     return json;
   }
 }
@@ -169,9 +178,12 @@ class NotificationPreferencesRequest {
 
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{};
-    if (pushNotificationsEnabled != null) json['push_notifications_enabled'] = pushNotificationsEnabled;
-    if (emailNotificationsEnabled != null) json['email_notifications_enabled'] = emailNotificationsEnabled;
-    if (smsNotificationsEnabled != null) json['sms_notifications_enabled'] = smsNotificationsEnabled;
+    if (pushNotificationsEnabled != null)
+      json['push_notifications_enabled'] = pushNotificationsEnabled;
+    if (emailNotificationsEnabled != null)
+      json['email_notifications_enabled'] = emailNotificationsEnabled;
+    if (smsNotificationsEnabled != null)
+      json['sms_notifications_enabled'] = smsNotificationsEnabled;
     return json;
   }
 }

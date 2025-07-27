@@ -17,13 +17,7 @@ import '../../providers/passenger_provider.dart';
 import '../../providers/notification_provider.dart';
 import '../../providers/line_provider.dart';
 import '../../models/api_response_models.dart';
-import '../../widgets/common/app_layout.dart';
-import '../../widgets/common/modern_card.dart';
-import '../../widgets/common/modern_button.dart' hide IconButton;
-import '../../widgets/common/loading_indicator.dart';
-import '../../widgets/map/map_widget.dart';
-import '../../widgets/passenger/nearby_buses_list.dart';
-import '../../widgets/passenger/search_bar_widget.dart';
+import '../../widgets/widgets.dart';
 
 class PassengerHomeScreen extends StatefulWidget {
   const PassengerHomeScreen({Key? key}) : super(key: key);
@@ -174,11 +168,10 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
     final notificationProvider = Provider.of<NotificationProvider>(context);
     final lineProvider = Provider.of<LineProvider>(context);
 
-    return AppLayout(
+    return PageLayout(
       title: 'DZ Bus Tracker',
-      currentIndex: 0,
-      backgroundColor: AppTheme.neutral50,
-      actions: [
+      showAppBar: true,
+      appBarActions: [
         // Map/List toggle
         Container(
           margin: const EdgeInsets.only(right: 8),
@@ -258,8 +251,8 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
         ),
       ],
       floatingActionButton: _buildFloatingActionButton(),
-      child: _isLoading
-          ? const Center(child: LoadingIndicator())
+      body: _isLoading
+          ? const Center(child: LoadingState())
           : RefreshIndicator(
               onRefresh: _initialize,
               color: AppTheme.primary,
@@ -526,10 +519,16 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen>
       padding: EdgeInsets.zero,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(20),
-        child: MapWidget(
+        child: GoogleMap(
           onMapCreated: _onMapCreated,
+          initialCameraPosition: CameraPosition(
+            target: const LatLng(36.7538, 3.0588),
+            zoom: AppConfig.defaultZoomLevel,
+          ),
+          markers: const <Marker>{},
           myLocationEnabled: true,
           myLocationButtonEnabled: true,
+          zoomControlsEnabled: false,
         ),
       ),
     );

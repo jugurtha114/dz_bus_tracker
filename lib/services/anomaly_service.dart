@@ -91,12 +91,13 @@ class AnomalyService extends BaseService {
   }) async {
     try {
       final body = <String, dynamic>{};
-      
+
       if (status != null) body['status'] = status;
       if (assignedTo != null) body['assigned_to'] = assignedTo;
       if (resolutionNotes != null) body['resolution_notes'] = resolutionNotes;
       if (estimatedDelay != null) body['estimated_delay'] = estimatedDelay;
-      if (affectedPassengers != null) body['affected_passengers'] = affectedPassengers;
+      if (affectedPassengers != null)
+        body['affected_passengers'] = affectedPassengers;
 
       final response = await apiClient.patch(
         ApiEndpoints.buildUrl('$_baseEndpoint/$anomalyId/'),
@@ -160,10 +161,12 @@ class AnomalyService extends BaseService {
   }) async {
     try {
       final queryParams = <String, String>{};
-      
+
       if (period != null) queryParams['period'] = period;
-      if (startDate != null) queryParams['start_date'] = startDate.toIso8601String().split('T')[0];
-      if (endDate != null) queryParams['end_date'] = endDate.toIso8601String().split('T')[0];
+      if (startDate != null)
+        queryParams['start_date'] = startDate.toIso8601String().split('T')[0];
+      if (endDate != null)
+        queryParams['end_date'] = endDate.toIso8601String().split('T')[0];
 
       final response = await apiClient.get(
         ApiEndpoints.buildUrl('$_baseEndpoint/statistics/'),
@@ -205,7 +208,9 @@ class AnomalyService extends BaseService {
   }
 
   // Get anomalies by severity
-  Future<List<Map<String, dynamic>>> getAnomaliesBySeverity(String severity) async {
+  Future<List<Map<String, dynamic>>> getAnomaliesBySeverity(
+    String severity,
+  ) async {
     try {
       final response = await apiClient.get(
         ApiEndpoints.buildUrl('$_baseEndpoint/'),
@@ -230,7 +235,9 @@ class AnomalyService extends BaseService {
   }
 
   // Get recent anomalies
-  Future<List<Map<String, dynamic>>> getRecentAnomalies({int limit = 10}) async {
+  Future<List<Map<String, dynamic>>> getRecentAnomalies({
+    int limit = 10,
+  }) async {
     try {
       final response = await apiClient.get(
         ApiEndpoints.buildUrl('$_baseEndpoint/recent/'),
@@ -247,7 +254,7 @@ class AnomalyService extends BaseService {
     if (error is ApiException) {
       return error;
     }
-    
+
     return ApiException(
       'An error occurred while processing anomaly data',
       statusCode: 500,

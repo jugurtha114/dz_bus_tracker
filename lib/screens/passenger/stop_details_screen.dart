@@ -11,13 +11,8 @@ import '../../providers/line_provider.dart';
 import '../../models/line_model.dart';
 import '../../models/api_response_models.dart';
 import '../../providers/passenger_provider.dart';
-import '../../widgets/common/app_bar.dart';
-import '../../widgets/common/glassy_container.dart';
-import '../../widgets/common/loading_indicator.dart';
-import '../../widgets/common/custom_button.dart';
-import '../../widgets/map/map_widget.dart';
+import '../../widgets/widgets.dart';
 import '../../helpers/error_handler.dart';
-import '../../widgets/common/custom_card.dart';
 
 class StopDetailsScreen extends StatefulWidget {
   const StopDetailsScreen({Key? key}) : super(key: key);
@@ -57,7 +52,7 @@ class _StopDetailsScreenState extends State<StopDetailsScreen> {
 
     try {
       // Load lines that pass through this stop
-      final stopId = stopProvider.selectedStop!['id'];
+      final stopId = stopProvider.selectedStop!.id;
       final lineProvider = Provider.of<LineProvider>(context, listen: false);
       await lineProvider.fetchLines(queryParams: LineQueryParameters(stopId: stopId));
 
@@ -189,7 +184,7 @@ class _StopDetailsScreenState extends State<StopDetailsScreen> {
 
     try {
       final success = await passengerProvider.reportWaitingPassengers(
-        stopId: stopProvider.selectedStop!['id'],
+        stopId: stopProvider.selectedStop!.id,
         count: count,
         lineId: lineId,
       );
@@ -231,44 +226,37 @@ class _StopDetailsScreenState extends State<StopDetailsScreen> {
 
     if (stop == null) {
       // Return early if no stop is selected
-      return Scaffold(
-        appBar: const DzAppBar(
-          title: 'Stop Details',
-        ),
+      return PageLayout(
+        title: 'Stop Details',
+        showAppBar: true,
         body: const Center(
-          child: Text('No stop selected'),
+          child: Text('Stop not found'),
         ),
       );
     }
 
     // Extract stop details
-    final name = stop['name'] ?? 'Unknown Stop';
-    final address = stop['address'] ?? '';
-    final description = stop['description'] ?? '';
-    double? latitude = 0;
-    double? longitude = 0;
+    final name = stop.name ?? 'Unknown Stop';
+    final address = stop.address ?? '';
+    final description = stop.address ?? '';
+    final latitude = stop.latitude;
+    final longitude = stop.longitude;
 
-    if (stop['latitude'] != null) {
-      latitude = double.tryParse(stop['latitude'].toString()) ?? 0;
-    }
-
-    if (stop['longitude'] != null) {
-      longitude = double.tryParse(stop['longitude'].toString()) ?? 0;
-    }
-
-    return Scaffold(
-      appBar: DzAppBar(
-        title: 'Stop Details',
-      ),
+    return PageLayout(
+      title: 'Stop Details',
+      showAppBar: true,
       body: Stack(
         children: [
           // Map with stop marker
-          MapWidget(
-            initialPosition: LatLng(latitude, longitude),
+          GoogleMap(
             onMapCreated: _onMapCreated,
+            initialCameraPosition: CameraPosition(
+              target: LatLng(latitude, longitude),
+              zoom: AppConfig.defaultZoomLevel,
+            ),
             markers: {
               Marker(
-                markerId: MarkerId('stop_${stop['id']}'),
+                markerId: MarkerId(stop.id),
                 position: LatLng(latitude, longitude),
                 infoWindow: InfoWindow(
                   title: name,
@@ -283,11 +271,9 @@ class _StopDetailsScreenState extends State<StopDetailsScreen> {
             bottom: 0,
             left: 0,
             right: 0,
-            child: CustomCard(type: CardType.elevated, 
+            child: AppCard(
               borderRadius: BorderRadius.circular(24),
-              backgroundColor: Theme.of(context).colorScheme.surface,
-              borderColor: Colors.white.withOpacity(0.1),
-              borderWidth: 1,
+              color: Theme.of(context).colorScheme.surface,
               margin: const EdgeInsets.only(bottom: 16, left: 16, right: 16),
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -347,9 +333,9 @@ class _StopDetailsScreenState extends State<StopDetailsScreen> {
                     Center(
                       child: Padding(
                         padding: const EdgeInsets.all(8),
-                        child: LoadingIndicator(
+                        child: InlineLoading(
                           color: Theme.of(context).colorScheme.primary,
-                          size: 24,
+                          size: LoadingSize.medium,
                         ),
                       ),
                     )
@@ -412,12 +398,11 @@ class _StopDetailsScreenState extends State<StopDetailsScreen> {
                   const SizedBox(height: 16),
 
                   // Report waiting passengers button
-                  CustomButton(
-        text: 'Report Waiting Passengers',
-        onPressed: _reportWaitingPassengers,
-        icon: Icons.people,
-        color: Theme.of(context).colorScheme.primary
-      ),
+                  AppButton(
+                    text: 'Report Waiting Passengers',
+                    onPressed: _reportWaitingPassengers,
+                    icon: Icons.people,
+                  ),
                 ],
               ),
             ),

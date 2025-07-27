@@ -4,12 +4,9 @@ import 'package:flutter/material.dart';
 import '../../config/theme_config.dart';
 import '../../core/utils/date_utils.dart';
 import '../../services/trip_service.dart';
-import '../../widgets/common/app_layout.dart';
-import '../../widgets/common/glassy_container.dart';
-import '../../widgets/common/loading_indicator.dart';
+import '../../widgets/widgets.dart';
 import '../../localization/app_localizations.dart';
 import '../../helpers/dialog_helper.dart';
-import '../../widgets/common/custom_card.dart';
 
 class TripHistoryScreen extends StatefulWidget {
   const TripHistoryScreen({Key? key}) : super(key: key);
@@ -206,9 +203,10 @@ class _TripHistoryScreenState extends State<TripHistoryScreen> with SingleTicker
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context)!;
 
-    return AppLayout(
+    return PageLayout(
+      showAppBar: true,
       title: 'Trip History',
-      child: Column(
+      body: Column(
         children: [
           // Search and filters
           _buildSearchSection(),
@@ -245,7 +243,7 @@ class _TripHistoryScreenState extends State<TripHistoryScreen> with SingleTicker
           // Tab content
           Expanded(
             child: _isLoading
-                ? const Center(child: LoadingIndicator())
+                ? const LoadingState.fullScreen(message: 'Loading trip history...')
                 : TabBarView(
                     controller: _tabController,
                     children: [
@@ -334,7 +332,7 @@ class _TripHistoryScreenState extends State<TripHistoryScreen> with SingleTicker
   }
 
   Widget _buildStatItem(String title, String value, IconData icon, Color color) {
-    return CustomCard(type: CardType.elevated, 
+    return AppCard( 
       padding: const EdgeInsets.all(12),
       margin: const EdgeInsets.symmetric(horizontal: 4),
       child: Column(
@@ -436,7 +434,7 @@ class _TripHistoryScreenState extends State<TripHistoryScreen> with SingleTicker
         statusIcon = Icons.help;
     }
 
-    return CustomCard(type: CardType.elevated, 
+    return AppCard( 
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
         onTap: () => _showTripDetails(trip),

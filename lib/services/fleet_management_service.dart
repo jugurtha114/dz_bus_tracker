@@ -40,7 +40,9 @@ class FleetManagementService {
 
   Future<List<Map<String, dynamic>>> getMaintenanceSchedule() async {
     try {
-      final response = await _apiClient.get('/admin/fleet/maintenance/schedule');
+      final response = await _apiClient.get(
+        '/admin/fleet/maintenance/schedule',
+      );
       return List<Map<String, dynamic>>.from(response['schedule']);
     } catch (e) {
       await Future.delayed(const Duration(milliseconds: 400));
@@ -70,7 +72,10 @@ class FleetManagementService {
 
   Future<bool> addBus(Map<String, dynamic> busData) async {
     try {
-      final response = await _apiClient.post('/admin/fleet/buses', body: busData);
+      final response = await _apiClient.post(
+        '/admin/fleet/buses',
+        body: busData,
+      );
       return response != null;
     } catch (e) {
       await Future.delayed(const Duration(seconds: 1));
@@ -80,7 +85,10 @@ class FleetManagementService {
 
   Future<bool> updateBus(String busId, Map<String, dynamic> busData) async {
     try {
-      final response = await _apiClient.put('/admin/fleet/buses/$busId', body: busData);
+      final response = await _apiClient.put(
+        '/admin/fleet/buses/$busId',
+        body: busData,
+      );
       return response != null;
     } catch (e) {
       await Future.delayed(const Duration(milliseconds: 800));
@@ -100,7 +108,10 @@ class FleetManagementService {
 
   Future<bool> addDriver(Map<String, dynamic> driverData) async {
     try {
-      final response = await _apiClient.post('/admin/fleet/drivers', body: driverData);
+      final response = await _apiClient.post(
+        '/admin/fleet/drivers',
+        body: driverData,
+      );
       return response != null;
     } catch (e) {
       await Future.delayed(const Duration(seconds: 1));
@@ -108,9 +119,15 @@ class FleetManagementService {
     }
   }
 
-  Future<bool> updateDriver(String driverId, Map<String, dynamic> driverData) async {
+  Future<bool> updateDriver(
+    String driverId,
+    Map<String, dynamic> driverData,
+  ) async {
     try {
-      final response = await _apiClient.put('/admin/fleet/drivers/$driverId', body: driverData);
+      final response = await _apiClient.put(
+        '/admin/fleet/drivers/$driverId',
+        body: driverData,
+      );
       return response != null;
     } catch (e) {
       await Future.delayed(const Duration(milliseconds: 800));
@@ -120,9 +137,10 @@ class FleetManagementService {
 
   Future<bool> assignDriverToBus(String driverId, String busId) async {
     try {
-      final response = await _apiClient.post('/admin/fleet/assignments', body: {
-        'driver_id': driverId,
-        'bus_id': busId});
+      final response = await _apiClient.post(
+        '/admin/fleet/assignments',
+        body: {'driver_id': driverId, 'bus_id': busId},
+      );
       return response != null;
     } catch (e) {
       await Future.delayed(const Duration(milliseconds: 600));
@@ -132,7 +150,10 @@ class FleetManagementService {
 
   Future<bool> scheduleMaintenance(Map<String, dynamic> maintenanceData) async {
     try {
-      final response = await _apiClient.post('/admin/fleet/maintenance/schedule', body: maintenanceData);
+      final response = await _apiClient.post(
+        '/admin/fleet/maintenance/schedule',
+        body: maintenanceData,
+      );
       return response != null;
     } catch (e) {
       await Future.delayed(const Duration(milliseconds: 800));
@@ -142,7 +163,9 @@ class FleetManagementService {
 
   Future<List<Map<String, dynamic>>> getMaintenanceHistory(String busId) async {
     try {
-      final response = await _apiClient.get('/admin/fleet/buses/$busId/maintenance/history');
+      final response = await _apiClient.get(
+        '/admin/fleet/buses/$busId/maintenance/history',
+      );
       return List<Map<String, dynamic>>.from(response['history']);
     } catch (e) {
       await Future.delayed(const Duration(milliseconds: 500));
@@ -161,8 +184,11 @@ class FleetManagementService {
         if (startDate != null) 'start_date': startDate,
         if (endDate != null) 'end_date': endDate,
       };
-      
-      final response = await _apiClient.get('/admin/fleet/analytics', queryParameters: queryParams);
+
+      final response = await _apiClient.get(
+        '/admin/fleet/analytics',
+        queryParameters: queryParams,
+      );
       return response;
     } catch (e) {
       await Future.delayed(const Duration(milliseconds: 700));
@@ -172,8 +198,10 @@ class FleetManagementService {
 
   Future<List<Map<String, dynamic>>> getVehiclesByStatus(String status) async {
     try {
-      final response = await _apiClient.get('/admin/fleet/buses', queryParameters: {
-        'status': status});
+      final response = await _apiClient.get(
+        '/admin/fleet/buses',
+        queryParameters: {'status': status},
+      );
       return List<Map<String, dynamic>>.from(response['buses']);
     } catch (e) {
       await Future.delayed(const Duration(milliseconds: 400));
@@ -183,8 +211,10 @@ class FleetManagementService {
 
   Future<bool> bulkImportVehicles(List<Map<String, dynamic>> vehicles) async {
     try {
-      final response = await _apiClient.post('/admin/fleet/buses/bulk-import', body: {
-        'vehicles': vehicles});
+      final response = await _apiClient.post(
+        '/admin/fleet/buses/bulk-import',
+        body: {'vehicles': vehicles},
+      );
       return response != null;
     } catch (e) {
       await Future.delayed(const Duration(seconds: 2));
@@ -194,14 +224,17 @@ class FleetManagementService {
 
   Future<Map<String, dynamic>> exportFleetData({String format = 'csv'}) async {
     try {
-      final response = await _apiClient.get('/admin/fleet/export', queryParameters: {
-        'format': format});
+      final response = await _apiClient.get(
+        '/admin/fleet/export',
+        queryParameters: {'format': format},
+      );
       return response;
     } catch (e) {
       await Future.delayed(const Duration(seconds: 1));
       return {
         'download_url': 'mock_export_url',
-        'filename': 'fleet_data_${DateTime.now().millisecondsSinceEpoch}.$format',
+        'filename':
+            'fleet_data_${DateTime.now().millisecondsSinceEpoch}.$format',
       };
     }
   }
@@ -406,7 +439,8 @@ class FleetManagementService {
         'id': 'maint_001',
         'vehicle_id': 'DZ-002-CD',
         'type': 'Engine Overhaul',
-        'description': 'Complete engine inspection and overhaul due to high mileage',
+        'description':
+            'Complete engine inspection and overhaul due to high mileage',
         'scheduled_date': '2024-07-25T09:00:00Z',
         'priority': 'high',
         'estimated_duration': '3 days',
@@ -439,7 +473,8 @@ class FleetManagementService {
         'id': 'maint_004',
         'vehicle_id': 'DZ-004-GH',
         'type': 'Transmission Repair',
-        'description': 'Transmission showing signs of wear, needs inspection and possible repair',
+        'description':
+            'Transmission showing signs of wear, needs inspection and possible repair',
         'scheduled_date': '2024-07-30T10:00:00Z',
         'priority': 'high',
         'estimated_duration': '2 days',
@@ -505,11 +540,7 @@ class FleetManagementService {
         {'date': '2024-07-15', 'efficiency': 78},
         {'date': '2024-07-22', 'efficiency': 87},
       ],
-      'utilization_breakdown': {
-        'active': 65,
-        'maintenance': 20,
-        'offline': 15,
-      },
+      'utilization_breakdown': {'active': 65, 'maintenance': 20, 'offline': 15},
       'fuel_consumption': {
         'this_month': 15000,
         'last_month': 16200,

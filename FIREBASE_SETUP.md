@@ -95,7 +95,7 @@ Add to `ios/Runner/Info.plist`:
 
 ## Step 8: Backend Integration
 
-Ensure your backend API at `http://0.0:8007` supports:
+Ensure your backend API at `http://0.0.0.0:8007` supports:
 
 1. **Device Token Registration**: `POST /api/v1/notifications/device-tokens/`
 2. **Send Notifications**: Your backend should use Firebase Admin SDK to send push notifications

@@ -14,12 +14,8 @@ import '../../models/line_model.dart';
 import '../../providers/line_provider.dart';
 import '../../providers/passenger_provider.dart';
 import '../../providers/location_provider.dart';
-import '../../widgets/common/app_layout.dart';
-import '../../widgets/common/custom_text_field.dart';
-import '../../widgets/common/glassy_container.dart';
-import '../../widgets/common/custom_card.dart';
-import '../../widgets/common/loading_indicator.dart';
-import '../../widgets/passenger/line_list_item.dart';
+import '../../widgets/widgets.dart';
+import '../../widgets/features/passenger/line_list_item.dart';
 import '../../services/navigation_service.dart';
 import '../../helpers/error_handler.dart';
 
@@ -242,10 +238,10 @@ class _LineSearchScreenState extends State<LineSearchScreen>
   Widget build(BuildContext context) {
     final lineProvider = Provider.of<LineProvider>(context);
 
-    return AppLayout(
+    return PageLayout(
+      showAppBar: true,
       title: 'Search Lines',
-      currentIndex: 1, // Search tab
-      actions: [
+      appBarActions: [
         IconButton(
           icon: const Icon(Icons.map),
           onPressed: () {
@@ -255,7 +251,7 @@ class _LineSearchScreenState extends State<LineSearchScreen>
           tooltip: 'Map View',
         ),
       ],
-      child: Column(
+      body: Column(
         children: [
           // Search Section
           Container(
@@ -273,9 +269,9 @@ class _LineSearchScreenState extends State<LineSearchScreen>
             child: Column(
               children: [
                 // Search Bar
-                CustomTextField(
+                AppInput(
                   label: '',
-                  hintText: 'Search lines by name, code, or destination...',
+                  hint: 'Search lines by name, code, or destination...',
                   controller: _searchController,
                   focusNode: _searchFocusNode,
                   onChanged: (value) {
@@ -293,8 +289,6 @@ class _LineSearchScreenState extends State<LineSearchScreen>
                         )
                       : null,
                   textInputAction: TextInputAction.search,
-                  showBorder: true,
-                  borderColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0),
                 ),
 
                 const SizedBox(height: 16),
@@ -319,7 +313,7 @@ class _LineSearchScreenState extends State<LineSearchScreen>
           // Content Section
           Expanded(
             child: _isLoading
-                ? const Center(child: LoadingIndicator())
+                ? const LoadingState.fullScreen(message: 'Searching lines...')
                 : _isSearching
                 ? _buildSearchResults()
                 : _buildTabContent(),
@@ -379,11 +373,8 @@ class _LineSearchScreenState extends State<LineSearchScreen>
               child: Padding(
                 padding: const EdgeInsets.only(bottom: 8),
                 child: LineListItem(
-                  line: line,
+                  line: Line.fromJson(line),
                   onTap: () => _onLineSelected(Line.fromJson(line)),
-                  isFavorite: _favoriteLines.contains(line['id']),
-                  onFavoriteToggle: () => _toggleFavorite(line['id']),
-                  showDistance: true, showStops: true,
                 ),
               ),
             ),
@@ -459,16 +450,11 @@ class _LineSearchScreenState extends State<LineSearchScreen>
             child: FadeInAnimation(
               child: Padding(
                 padding: const EdgeInsets.only(bottom: 8),
-                child: CustomCard(type: CardType.elevated, 
-                  backgroundColor: Theme.of(context).colorScheme.surface,
+                child: AppCard(
+                  color: Theme.of(context).colorScheme.surface,
                   child: LineListItem(
-                    line: line,
+                    line: Line.fromJson(line),
                     onTap: () => _onLineSelected(Line.fromJson(line)),
-                    isFavorite: _favoriteLines.contains(line['id']),
-                    onFavoriteToggle: () => _toggleFavorite(line['id']),
-                    showBadge: true,
-                    badgeText: 'Popular',
-                    badgeColor: Theme.of(context).colorScheme.primary, showStops: true,
                   ),
                 ),
               ),
@@ -580,8 +566,8 @@ class _LineSearchScreenState extends State<LineSearchScreen>
         // Quick stats
         Container(
           margin: const EdgeInsets.all(16),
-          child: CustomCard(type: CardType.elevated, 
-            backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
+          child: AppCard(
+            color: Theme.of(context).colorScheme.surfaceVariant,
             child: Row(
               children: [
                 Expanded(
@@ -637,11 +623,8 @@ class _LineSearchScreenState extends State<LineSearchScreen>
                     child: Padding(
                       padding: const EdgeInsets.only(bottom: 8),
                       child: LineListItem(
-                        line: line.toJson(),
+                        line: line,
                         onTap: () => _onLineSelected(line),
-                        isFavorite: _favoriteLines.contains(line.id),
-                        onFavoriteToggle: () => _toggleFavorite(line.id),
-                        showStatus: true, showStops: true,
                       ),
                     ),
                   ),

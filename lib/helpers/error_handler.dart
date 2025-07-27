@@ -3,6 +3,19 @@
 import 'package:flutter/material.dart';
 import '../core/exceptions/app_exceptions.dart';
 
+/// Error type enumeration for categorizing different types of errors
+enum ErrorType {
+  unknown,
+  network,
+  server,
+  validation,
+  authentication,
+  permission,
+  notFound,
+  timeout,
+  general,
+}
+
 class ErrorHandler {
   // Handle error and return appropriate message
   static String handleError(dynamic error) {
@@ -25,14 +38,19 @@ class ErrorHandler {
     }
   }
 
+  // Alias for handleError for backward compatibility
+  static String getErrorMessage(dynamic error) {
+    return handleError(error);
+  }
+
   // Show error dialog
   static Future<void> showErrorDialog(
-      BuildContext context, {
-        required String title,
-        required String message,
-        String buttonText = 'OK',
-        VoidCallback? onPressed,
-      }) async {
+    BuildContext context, {
+    required String title,
+    required String message,
+    String buttonText = 'OK',
+    VoidCallback? onPressed,
+  }) async {
     return showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -55,10 +73,10 @@ class ErrorHandler {
 
   // Show error snackbar
   static void showErrorSnackBar(
-      BuildContext context, {
-        required String message,
-        Duration duration = const Duration(seconds: 3),
-      }) {
+    BuildContext context, {
+    required String message,
+    Duration duration = const Duration(seconds: 3),
+  }) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),

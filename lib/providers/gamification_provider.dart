@@ -11,7 +11,7 @@ class GamificationProvider extends ChangeNotifier {
   final GamificationService _gamificationService;
 
   GamificationProvider({GamificationService? gamificationService})
-      : _gamificationService = gamificationService ?? GamificationService();
+    : _gamificationService = gamificationService ?? GamificationService();
 
   // State variables
   bool _isLoading = false;
@@ -112,12 +112,48 @@ class GamificationProvider extends ChangeNotifier {
 
   // Helper getters
   bool get hasError => _error != null;
+  
+  // Trip-related getters for UI compatibility
+  Map<String, dynamic> get tripStatistics => {
+    'totalTrips': 25,
+    'totalDistance': 150.5,
+    'totalTime': 540, 
+    'favoriteRoute': 'City Center - Airport',
+    'averageRating': 4.3,
+    'timeSaved': 45.5, // Mock time saved in hours
+    'carbonFootprintSaved': 32.8, // Mock CO2 saved in kg
+    'nextMilestone': {
+      'name': '50 Trips Milestone',
+      'progress': 0.5, // 50% progress
+      'required': 50,
+      'current': 25,
+    },
+  };
+  
+  Map<String, dynamic> get tripAnalytics => {
+    'weeklyTrips': [5, 8, 6, 12, 9, 7, 4],
+    'monthlyDistance': [45.2, 38.7, 52.1, 41.9],
+    'routeFrequency': {
+      'route_1': 12,
+      'route_2': 8,
+      'route_3': 5,
+    },
+    'timeDistribution': {
+      'morning': 40,
+      'afternoon': 35,
+      'evening': 25,
+    },
+  };
+  
+  List<Achievement> get tripAchievements => _achievements.where((a) => 
+    a.category == 'travel' || a.category == 'trips').toList();
   bool get hasProfile => _userProfile != null;
   int get totalPoints => _userProfile?.totalPoints ?? 0;
   int get currentLevel => _userProfile?.currentLevel ?? 1;
   int get currentStreak => _userProfile?.currentStreak ?? 0;
   int get unlockedAchievementsCount => _unlockedAchievements.length;
-  int get activeChallengesCount => _myChallenges.where((c) => c.isActive && !c.isCompleted).length;
+  int get activeChallengesCount =>
+      _myChallenges.where((c) => c.isActive && !c.isCompleted).length;
   int get availableRewardsCount => _affordableRewards.length;
 
   // Achievement management methods
@@ -131,7 +167,9 @@ class GamificationProvider extends ChangeNotifier {
       _setLoading(true);
       _clearError();
 
-      final response = await _gamificationService.getAchievements(queryParams: queryParams);
+      final response = await _gamificationService.getAchievements(
+        queryParams: queryParams,
+      );
 
       if (response.isSuccess && response.data != null) {
         if (append) {
@@ -156,7 +194,9 @@ class GamificationProvider extends ChangeNotifier {
       _setLoading(true);
       _clearError();
 
-      final response = await _gamificationService.getAchievementById(achievementId);
+      final response = await _gamificationService.getAchievementById(
+        achievementId,
+      );
 
       if (response.isSuccess && response.data != null) {
         _selectedAchievement = response.data!;
@@ -243,7 +283,9 @@ class GamificationProvider extends ChangeNotifier {
       _setLoading(true);
       _clearError();
 
-      final response = await _gamificationService.getChallenges(queryParams: queryParams);
+      final response = await _gamificationService.getChallenges(
+        queryParams: queryParams,
+      );
 
       if (response.isSuccess && response.data != null) {
         if (append) {
@@ -292,7 +334,7 @@ class GamificationProvider extends ChangeNotifier {
 
       if (response.isSuccess && response.data != null) {
         final joinedChallenge = response.data!;
-        
+
         // Update in challenges list
         final index = _challenges.indexWhere((c) => c.id == challengeId);
         if (index != -1) {
@@ -362,7 +404,9 @@ class GamificationProvider extends ChangeNotifier {
       _setLoading(true);
       _clearError();
 
-      final response = await _gamificationService.getRewards(queryParams: queryParams);
+      final response = await _gamificationService.getRewards(
+        queryParams: queryParams,
+      );
 
       if (response.isSuccess && response.data != null) {
         if (append) {
@@ -412,10 +456,10 @@ class GamificationProvider extends ChangeNotifier {
       if (response.isSuccess) {
         // Refresh user profile to update points
         await loadUserProfile();
-        
+
         // Refresh rewards to update availability
         await loadRewards();
-        
+
         // Refresh my rewards
         await loadMyRewards();
 
@@ -486,7 +530,9 @@ class GamificationProvider extends ChangeNotifier {
   /// Load all-time leaderboard
   Future<void> loadAllTimeLeaderboard({int? limit}) async {
     try {
-      final response = await _gamificationService.getAllTimeLeaderboard(limit: limit);
+      final response = await _gamificationService.getAllTimeLeaderboard(
+        limit: limit,
+      );
 
       if (response.isSuccess && response.data != null) {
         _allTimeLeaderboard = response.data!;
@@ -500,7 +546,9 @@ class GamificationProvider extends ChangeNotifier {
   /// Load daily leaderboard
   Future<void> loadDailyLeaderboard({int? limit}) async {
     try {
-      final response = await _gamificationService.getDailyLeaderboard(limit: limit);
+      final response = await _gamificationService.getDailyLeaderboard(
+        limit: limit,
+      );
 
       if (response.isSuccess && response.data != null) {
         _dailyLeaderboard = response.data!;
@@ -514,7 +562,9 @@ class GamificationProvider extends ChangeNotifier {
   /// Load weekly leaderboard
   Future<void> loadWeeklyLeaderboard({int? limit}) async {
     try {
-      final response = await _gamificationService.getWeeklyLeaderboard(limit: limit);
+      final response = await _gamificationService.getWeeklyLeaderboard(
+        limit: limit,
+      );
 
       if (response.isSuccess && response.data != null) {
         _weeklyLeaderboard = response.data!;
@@ -528,7 +578,9 @@ class GamificationProvider extends ChangeNotifier {
   /// Load monthly leaderboard
   Future<void> loadMonthlyLeaderboard({int? limit}) async {
     try {
-      final response = await _gamificationService.getMonthlyLeaderboard(limit: limit);
+      final response = await _gamificationService.getMonthlyLeaderboard(
+        limit: limit,
+      );
 
       if (response.isSuccess && response.data != null) {
         _monthlyLeaderboard = response.data!;
@@ -607,10 +659,10 @@ class GamificationProvider extends ChangeNotifier {
       if (response.isSuccess) {
         // Refresh user profile to update points and stats
         await loadUserProfile();
-        
+
         // Refresh recent transactions
         await loadLatestTransactions();
-        
+
         // Refresh achievement progress
         await loadAchievementProgress();
 
@@ -648,7 +700,9 @@ class GamificationProvider extends ChangeNotifier {
       _setLoading(true);
       _clearError();
 
-      final response = await _gamificationService.getTransactions(queryParams: queryParams);
+      final response = await _gamificationService.getTransactions(
+        queryParams: queryParams,
+      );
 
       if (response.isSuccess && response.data != null) {
         if (append) {
@@ -670,7 +724,9 @@ class GamificationProvider extends ChangeNotifier {
   /// Load latest transactions
   Future<void> loadLatestTransactions({int limit = 10}) async {
     try {
-      final response = await _gamificationService.getLatestTransactions(limit: limit);
+      final response = await _gamificationService.getLatestTransactions(
+        limit: limit,
+      );
 
       if (response.isSuccess && response.data != null) {
         _latestTransactions = response.data!;
@@ -730,20 +786,20 @@ class GamificationProvider extends ChangeNotifier {
     try {
       // Refresh user profile
       await loadUserProfile();
-      
+
       // Refresh leaderboards
       await loadDailyLeaderboard(limit: 10);
       await loadMyRank();
-      
+
       // Refresh latest transactions
       await loadLatestTransactions();
-      
+
       // Refresh recent achievements
       await loadRecentAchievements();
-      
+
       // Refresh joinable challenges
       await loadJoinableChallenges();
-      
+
       // Refresh affordable rewards
       await loadAffordableRewards();
     } catch (e) {
@@ -776,7 +832,6 @@ class GamificationProvider extends ChangeNotifier {
         loadJoinableChallenges(),
         loadRecentAchievements(),
       ]);
-
     } catch (e) {
       _setError('Failed to load dashboard data: ${e.toString()}');
     } finally {
@@ -892,6 +947,30 @@ class GamificationProvider extends ChangeNotifier {
     _totalCount = response.count;
     _hasNextPage = response.hasNextPage;
     _hasPreviousPage = response.hasPreviousPage;
+  }
+
+  // Compatibility methods for enhanced driver screens
+  Future<void> loadDriverProfile() async {
+    // For now, this delegates to loading user profile
+    // In the future, this could load driver-specific gamification data
+    await loadUserProfile();
+  }
+  
+  // Alias for enhanced screens
+  UserProfile? get driverProfile => _userProfile;
+
+  /// Load trip statistics for gamification
+  Future<void> loadTripStatistics() async {
+    _setLoading(true);
+    try {
+      // Mock implementation - replace with actual trip statistics loading
+      await Future.delayed(const Duration(seconds: 1));
+      _clearError();
+    } catch (e) {
+      _setError(e.toString());
+    } finally {
+      _setLoading(false);
+    }
   }
 
   @override

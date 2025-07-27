@@ -52,7 +52,7 @@ class ResponsiveUtils {
   }) {
     final deviceType = getDeviceType(context);
     final defaultMobile = mobile ?? const EdgeInsets.all(16);
-    
+
     switch (deviceType) {
       case DeviceType.mobile:
         return defaultMobile;
@@ -63,7 +63,8 @@ class ResponsiveUtils {
     }
   }
 
-  static int getResponsiveColumns(BuildContext context, {
+  static int getResponsiveColumns(
+    BuildContext context, {
     int mobile = 1,
     int? tablet,
     int? desktop,
@@ -88,7 +89,7 @@ class ResponsiveUtils {
   }) {
     final screenWidth = MediaQuery.of(context).size.width;
     final deviceType = getDeviceType(context);
-    
+
     double ratio;
     switch (deviceType) {
       case DeviceType.mobile:
@@ -101,22 +102,22 @@ class ResponsiveUtils {
         ratio = desktopRatio ?? tabletRatio ?? mobileRatio * 0;
         break;
     }
-    
+
     final calculatedWidth = screenWidth * ratio;
-    return maxWidth != null 
-        ? calculatedWidth.clamp(0, maxWidth) 
+    return maxWidth != null
+        ? calculatedWidth.clamp(0, maxWidth)
         : calculatedWidth;
   }
 
   static CrossAxisAlignment getResponsiveAlignment(BuildContext context) {
-    return isMobile(context) 
-        ? CrossAxisAlignment.stretch 
+    return isMobile(context)
+        ? CrossAxisAlignment.stretch
         : CrossAxisAlignment.center;
   }
 
   static MainAxisAlignment getResponsiveMainAlignment(BuildContext context) {
-    return isMobile(context) 
-        ? MainAxisAlignment.start 
+    return isMobile(context)
+        ? MainAxisAlignment.start
         : MainAxisAlignment.center;
   }
 }
@@ -132,12 +133,13 @@ class ResponsiveWidget extends StatelessWidget {
     super.key,
     required this.mobile,
     this.tablet,
-    this.desktop});
+    this.desktop,
+  });
 
   @override
   Widget build(BuildContext context) {
     final deviceType = ResponsiveUtils.getDeviceType(context);
-    
+
     switch (deviceType) {
       case DeviceType.mobile:
         return mobile;
@@ -164,7 +166,8 @@ class ResponsiveContainer extends StatelessWidget {
     this.tabletPadding,
     this.desktopPadding,
     this.maxWidth,
-    this.alignment = Alignment.center});
+    this.alignment = Alignment.center,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -213,7 +216,8 @@ class ResponsiveGrid extends StatelessWidget {
     this.mainAxisSpacing = 8,
     this.crossAxisSpacing = 8,
     this.childAspectRatio = 1,
-    this.padding});
+    this.padding,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -255,7 +259,8 @@ class ResponsiveRow extends StatelessWidget {
     this.mainAxisAlignment = MainAxisAlignment.start,
     this.crossAxisAlignment = CrossAxisAlignment.center,
     this.mainAxisSize = MainAxisSize.max,
-    this.wrapOnMobile = true});
+    this.wrapOnMobile = true,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -290,7 +295,8 @@ class ResponsiveColumn extends StatelessWidget {
     this.mainAxisAlignment = MainAxisAlignment.start,
     this.crossAxisAlignment = CrossAxisAlignment.center,
     this.mainAxisSize = MainAxisSize.max,
-    this.expandOnDesktop = false});
+    this.expandOnDesktop = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -324,12 +330,13 @@ class ResponsiveText extends StatelessWidget {
     this.desktopStyle,
     this.textAlign,
     this.maxLines,
-    this.overflow});
+    this.overflow,
+  });
 
   @override
   Widget build(BuildContext context) {
     final deviceType = ResponsiveUtils.getDeviceType(context);
-    
+
     TextStyle? style;
     switch (deviceType) {
       case DeviceType.mobile:

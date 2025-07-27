@@ -6,8 +6,7 @@ import 'package:intl/intl.dart';
 import '../../config/theme_config.dart';
 import '../../providers/driver_provider.dart';
 import '../../models/driver_model.dart';
-import '../../widgets/common/app_bar.dart';
-import '../../widgets/common/loading_indicator.dart';
+import '../../widgets/widgets.dart';
 import '../../helpers/error_handler.dart';
 
 class RatingScreen extends StatefulWidget {
@@ -56,14 +55,11 @@ class _RatingScreenState extends State<RatingScreen> {
     final ratings = driverProvider.ratings;
     final driverRating = driverProvider.rating;
 
-    return Scaffold(
-      appBar: const DzAppBar(
-        title: 'My Ratings',
-      ),
+    return PageLayout(
+      title: 'My Ratings',
+      showAppBar: true,
       body: _isLoading
-          ? const Center(
-        child: LoadingIndicator(),
-      )
+          ? const LoadingState.fullScreen(message: 'Loading ratings...')
           : Column(
         children: [
           // Rating summary

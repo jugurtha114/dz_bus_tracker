@@ -1,33 +1,31 @@
 // lib/screens/admin/user_management_screen.dart
 
 import 'package:flutter/material.dart';
-import '../../config/theme_config.dart';
-import '../../core/utils/date_utils.dart';
-import '../../services/user_service.dart';
-import '../../widgets/common/app_layout.dart';
-import '../../widgets/common/glassy_container.dart';
-import '../../widgets/common/loading_indicator.dart';
-import '../../localization/app_localizations.dart';
-import '../../helpers/dialog_helper.dart';
-import '../../widgets/common/custom_card.dart';
+import 'package:provider/provider.dart';
+import '../../config/design_system.dart';
+import '../../providers/admin_provider.dart';
+import '../../widgets/widgets.dart';
+import '../../models/user_model.dart';
 
+/// Comprehensive user management screen for admins to manage all system users
 class UserManagementScreen extends StatefulWidget {
-  const UserManagementScreen({Key? key}) : super(key: key);
+  const UserManagementScreen({super.key});
 
   @override
   State<UserManagementScreen> createState() => _UserManagementScreenState();
 }
 
-class _UserManagementScreenState extends State<UserManagementScreen> with SingleTickerProviderStateMixin {
+class _UserManagementScreenState extends State<UserManagementScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  final UserService _userService = UserService();
   bool _isLoading = true;
   String _searchQuery = '';
+  String _selectedFilter = 'all';
   
-  List<Map<String, dynamic>> _allUsers = [];
-  List<Map<String, dynamic>> _passengers = [];
-  List<Map<String, dynamic>> _drivers = [];
-  List<Map<String, dynamic>> _admins = [];
+  List<User> _allUsers = [];
+  List<User> _passengers = [];
+  List<User> _drivers = [];
+  List<User> _admins = [];
 
   @override
   void initState() {
@@ -36,124 +34,91 @@ class _UserManagementScreenState extends State<UserManagementScreen> with Single
     _loadUsers();
   }
 
+  Future<void> _loadUsers() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final adminProvider = context.read<AdminProvider>();
+      await adminProvider.loadAllUsers();
+      
+      setState(() {
+        _allUsers = adminProvider.allUsers;
+        _passengers = adminProvider.passengerUsers;
+        _drivers = adminProvider.driverUsers;
+        _admins = adminProvider.adminUsers;
+      });
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load users: $error')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
   @override
   void dispose() {
     _tabController.dispose();
     super.dispose();
   }
 
-  Future<void> _loadUsers() async {
-    setState(() => _isLoading = true);
-    
-    try {
-      // Simulate loading users from API
-      await Future.delayed(const Duration(seconds: 1));
-      
-      _allUsers = [
-        {
-          'id': '1',
-          'email': 'ahmed.ben@email.com',
-          'first_name': 'Ahmed',
-          'last_name': 'Ben Ali',
-          'user_type': 'passenger',
-          'is_active': true,
-          'date_joined': '2024-01-15T10:30:00Z',
-          'phone_number': '+213 555 123 456',
-        },
-        {
-          'id': '2',
-          'email': 'fatima.driver@email.com',
-          'first_name': 'Fatima',
-          'last_name': 'Zohra',
-          'user_type': 'driver',
-          'is_active': true,
-          'date_joined': '2024-02-20T14:15:00Z',
-          'phone_number': '+213 555 789 012',
-        },
-        {
-          'id': '3',
-          'email': 'admin@dzbus.com',
-          'first_name': 'System',
-          'last_name': 'Admin',
-          'user_type': 'admin',
-          'is_active': true,
-          'date_joined': '2024-01-01T00:00:00Z',
-          'phone_number': '+213 555 000 000',
-        },
-        // Add more sample data...
-      ];
-
-      _categorizeUsers();
-    } catch (e) {
-      // Handle error
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
-  }
-
-  void _categorizeUsers() {
-    _passengers = _allUsers.where((u) => u['user_type'] == 'passenger').toList();
-    _drivers = _allUsers.where((u) => u['user_type'] == 'driver').toList();
-    _admins = _allUsers.where((u) => u['user_type'] == 'admin').toList();
-  }
-
-  List<Map<String, dynamic>> _getFilteredUsers(List<Map<String, dynamic>> users) {
-    if (_searchQuery.isEmpty) return users;
-    
-    return users.where((user) {
-      final fullName = '${user['first_name']} ${user['last_name']}'.toLowerCase();
-      final email = user['email'].toLowerCase();
-      final query = _searchQuery.toLowerCase();
-      
-      return fullName.contains(query) || email.contains(query);
-    }).toList();
-  }
-
   @override
   Widget build(BuildContext context) {
-    final localizations = AppLocalizations.of(context)!;
-
-    return AppLayout(
+    return AppPageScaffold(
       title: 'User Management',
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.person_add),
+          onPressed: _showAddUserDialog,
+        ),
+        IconButton(
+          icon: const Icon(Icons.refresh),
+          onPressed: _loadUsers,
+        ),
+      ],
       child: Column(
         children: [
-          // Search and filters
-          _buildSearchSection(),
+          // User Statistics Header
+          _buildUserStatistics(),
           
-          // Stats overview
-          _buildStatsOverview(),
+          // Search and Filter Bar
+          _buildSearchAndFilter(),
           
-          // Tab bar
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 16),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: TabBar(
-              controller: _tabController,
-              indicatorSize: TabBarIndicatorSize.tab,
-              indicator: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary,
-                borderRadius: BorderRadius.circular(12),
+          // Tab Bar
+          AppTabBar(
+            controller: _tabController,
+            tabs: [
+              AppTab(
+                label: 'All (${_allUsers.length})',
+                icon: Icons.people,
               ),
-              labelColor: Theme.of(context).colorScheme.primary,
-              unselectedLabelColor: Theme.of(context).colorScheme.primary,
-              tabs: [
-                _buildTabWithBadge('All', _allUsers.length),
-                _buildTabWithBadge('Passengers', _passengers.length),
-                _buildTabWithBadge('Drivers', _drivers.length),
-                _buildTabWithBadge('Admins', _admins.length),
-              ],
-            ),
+              AppTab(
+                label: 'Passengers (${_passengers.length})',
+                icon: Icons.person,
+              ),
+              AppTab(
+                label: 'Drivers (${_drivers.length})',
+                icon: Icons.drive_eta,
+              ),
+              AppTab(
+                label: 'Admins (${_admins.length})',
+                icon: Icons.admin_panel_settings,
+              ),
+            ],
           ),
           
-          // Tab content
+          // Tab Content
           Expanded(
             child: _isLoading
-                ? const Center(child: LoadingIndicator())
+                ? const LoadingState.fullScreen()
                 : TabBarView(
                     controller: _tabController,
                     children: [
@@ -169,307 +134,328 @@ class _UserManagementScreenState extends State<UserManagementScreen> with Single
     );
   }
 
-  Widget _buildSearchSection() {
+  Widget _buildUserStatistics() {
+    final activeUsers = _allUsers.where((u) => u.isActive).length;
+    final inactiveUsers = _allUsers.length - activeUsers;
+
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(DesignSystem.space16),
+      child: StatsSection(
+        title: 'User Overview',
+        crossAxisCount: 2,
+        stats: [
+          StatItem(
+            value: '${_allUsers.length}',
+            label: 'Total\\nUsers',
+            icon: Icons.people,
+            color: context.colors.primary,
+          ),
+          StatItem(
+            value: '$activeUsers',
+            label: 'Active\\nUsers',
+            icon: Icons.check_circle,
+            color: context.successColor,
+          ),
+          StatItem(
+            value: '$inactiveUsers',
+            label: 'Inactive\\nUsers',
+            icon: Icons.block,
+            ),
+          StatItem(
+            value: '${_drivers.length}',
+            label: 'Active\\nDrivers',
+            icon: Icons.drive_eta,
+            color: context.infoColor,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSearchAndFilter() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: DesignSystem.space16),
       child: Row(
         children: [
           Expanded(
-            child: TextField(
+            child: AppInput(
+              hint: 'Search users by name or email...',
+              prefixIcon: Icon(Icons.search),
               onChanged: (value) {
                 setState(() {
                   _searchQuery = value;
                 });
               },
-              decoration: InputDecoration(
-                hintText: 'Search users...',
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-                filled: true,
-                fillColor: Theme.of(context).colorScheme.primary,
-              ),
             ),
           ),
-          const SizedBox(width: 12, height: 40),
-          Container(
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: IconButton(
-              icon: const Icon(Icons.add, color: Colors.white),
-              onPressed: _showAddUserDialog,
-            ),
+          const SizedBox(width: DesignSystem.space8),
+          AppButton.text(
+            text: 'Filter',
+            onPressed: _showFilterDialog,
+            icon: Icons.filter_list,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildStatsOverview() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        children: [
-          Expanded(
-            child: _buildStatItem(
-              'Total Users',
-              '${_allUsers.length}',
-              Icons.people,
-              Theme.of(context).colorScheme.primary,
-            ),
-          ),
-          Expanded(
-            child: _buildStatItem(
-              'Active',
-              '${_allUsers.where((u) => u['is_active'] == true).length}',
-              Icons.check_circle,
-              Theme.of(context).colorScheme.primary,
-            ),
-          ),
-          Expanded(
-            child: _buildStatItem(
-              'Inactive',
-              '${_allUsers.where((u) => u['is_active'] == false).length}',
-              Icons.block,
-              Theme.of(context).colorScheme.primary,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatItem(String title, String value, IconData icon, Color color) {
-    return CustomCard(type: CardType.elevated, 
-      padding: const EdgeInsets.all(12),
-      margin: const EdgeInsets.symmetric(horizontal: 4),
-      child: Column(
-        children: [
-          Icon(icon, color: color, size: 24),
-          const SizedBox(height: 16),
-          Text(
-            value,
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
-          ),
-          Text(
-            title,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(context).colorScheme.primary,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTabWithBadge(String label, int count) {
-    return Tab(
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(label),
-          const SizedBox(width: 8, height: 40),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Text(
-              '$count',
-              style: const TextStyle(fontSize: 10),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildUsersList(List<Map<String, dynamic>> users) {
+  Widget _buildUsersList(List<User> users) {
     if (users.isEmpty) {
-      return const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.people_outline, size: 64, color: Colors.grey),
-            SizedBox(),
-            Text('No users found'),
-          ],
-        ),
+      return EmptyState(
+        title: 'No users found',
+        message: _searchQuery.isNotEmpty 
+            ? 'No users match your search criteria'
+            : 'No users in this category',
+        icon: Icons.people_outlined,
       );
     }
 
     return RefreshIndicator(
       onRefresh: _loadUsers,
       child: ListView.builder(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(DesignSystem.space16),
         itemCount: users.length,
         itemBuilder: (context, index) {
           final user = users[index];
-          return _buildUserCard(user);
+          return Padding(
+            padding: const EdgeInsets.only(bottom: DesignSystem.space12),
+            child: _buildUserCard(user),
+          );
         },
       ),
     );
   }
 
-  Widget _buildUserCard(Map<String, dynamic> user) {
-    final isActive = user['is_active'] == true;
-    final userType = user['user_type'] ?? 'passenger';
-    final joinDate = DateTime.tryParse(user['date_joined'] ?? '');
+  Widget _buildUserCard(User user) {
+    final userTypeColor = _getUserTypeColor(user.userType);
+    final userTypeIcon = _getUserTypeIcon(user.userType);
 
-    Color typeColor;
-    IconData typeIcon;
-    
-    switch (userType) {
-      case 'driver':
-        typeColor = Theme.of(context).colorScheme.primary;
-        typeIcon = Icons.drive_eta;
-        break;
-      case 'admin':
-        typeColor = Theme.of(context).colorScheme.primary;
-        typeIcon = Icons.admin_panel_settings;
-        break;
-      default:
-        typeColor = Theme.of(context).colorScheme.primary;
-        typeIcon = Icons.person;
-    }
-
-    return CustomCard(type: CardType.elevated, 
-      margin: const EdgeInsets.only(bottom: 12),
-      child: InkWell(
-        onTap: () => _showUserDetails(user),
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              // Avatar
-              CircleAvatar(
-                radius: 24,
-                backgroundColor: typeColor.withValues(alpha: 0),
-                child: Icon(typeIcon, color: typeColor),
-              ),
-              const SizedBox(width: 16, height: 40),
-              
-              // User info
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            '${user['first_name']} ${user['last_name']}'.trim(),
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
+    return AppCard(
+      onTap: () => _showUserDetails(user),
+      child: Padding(
+        padding: const EdgeInsets.all(DesignSystem.space16),
+        child: Row(
+          children: [
+            // User Avatar
+            CircleAvatar(
+              radius: 25,
+              backgroundColor: userTypeColor.withValues(alpha: 0.1),
+              backgroundImage: user.profileImageUrl != null
+                  ? NetworkImage(user.profileImageUrl!)
+                  : null,
+              child: user.profileImageUrl == null
+                  ? Icon(
+                      userTypeIcon,
+                      color: userTypeColor,
+                      size: 24,
+                    )
+                  : null,
+            ),
+            
+            const SizedBox(width: DesignSystem.space12),
+            
+            // User Info
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          user.name ?? 'Unknown User',
+                          style: context.textStyles.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: isActive ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.primary,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            isActive ? 'Active' : 'Inactive',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      user['email'] ?? '',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.primary,
                       ),
+                      StatusBadge(
+                        status: user.isActive ? 'ACTIVE' : 'INACTIVE',
+                        color: user.isActive ? DesignSystem.success : DesignSystem.error,
+                      ),
+                    ],
+                  ),
+                  
+                  const SizedBox(height: DesignSystem.space4),
+                  
+                  Text(
+                    user.email ?? 'No email',
+                    style: context.textStyles.bodyMedium?.copyWith(
+                      color: context.colors.onSurfaceVariant,
                     ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Icon(Icons.access_time, size: 14, color: Theme.of(context).colorScheme.primary),
-                        const SizedBox(width: 4, height: 40),
-                        Text(
-                          joinDate != null 
-                              ? 'Joined ${DzDateUtils.formatDate(joinDate)}'
-                              : 'Join date unknown',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
+                  ),
+                  
+                  const SizedBox(height: DesignSystem.space4),
+                  
+                  Row(
+                    children: [
+                      Icon(
+                        userTypeIcon,
+                        size: 16,
+                        color: userTypeColor,
+                      ),
+                      const SizedBox(width: DesignSystem.space4),
+                      Text(
+                        _getUserTypeLabel(user.userType),
+                        style: context.textStyles.bodySmall?.copyWith(
+                          color: userTypeColor,
+                          fontWeight: FontWeight.w500,
                         ),
-                      ],
-                    ),
-                  ],
-                ),
+                      ),
+                      const SizedBox(width: DesignSystem.space16),
+                      Icon(
+                        Icons.calendar_today,
+                        size: 16,
+                        color: context.colors.onSurfaceVariant,
+                      ),
+                      const SizedBox(width: DesignSystem.space4),
+                      Text(
+                        'Joined ${_formatJoinDate(user.createdAt)}',
+                        style: context.textStyles.bodySmall?.copyWith(
+                          color: context.colors.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-              
-              // Actions
-              PopupMenuButton<String>(
-                onSelected: (value) => _handleUserAction(value, user),
-                itemBuilder: (context) => [
+            ),
+            
+            // Actions Menu
+            PopupMenuButton<String>(
+              onSelected: (value) => _handleUserAction(value, user),
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: 'view',
+                  child: Row(
+                    children: [
+                      Icon(Icons.visibility),
+                      SizedBox(width: 8),
+                      Text('View Details'),
+                    ],
+                  ),
+                ),
+                const PopupMenuItem(
+                  value: 'edit',
+                  child: Row(
+                    children: [
+                      Icon(Icons.edit),
+                      SizedBox(width: 8),
+                      Text('Edit User'),
+                    ],
+                  ),
+                ),
+                PopupMenuItem(
+                  value: user.isActive ? 'deactivate' : 'activate',
+                  child: Row(
+                    children: [
+                      Icon(user.isActive ? Icons.block : Icons.check_circle),
+                      const SizedBox(width: 8),
+                      Text(user.isActive ? 'Deactivate' : 'Activate'),
+                    ],
+                  ),
+                ),
+                if (user.userType == UserType.driver) ...[
                   const PopupMenuItem(
-                    value: 'view',
+                    value: 'view_performance',
                     child: Row(
                       children: [
-                        Icon(Icons.visibility),
+                        Icon(Icons.analytics),
                         SizedBox(width: 8),
-                        Text('View Details'),
+                        Text('View Performance'),
                       ],
                     ),
                   ),
                   const PopupMenuItem(
-                    value: 'edit',
+                    value: 'assign_bus',
                     child: Row(
                       children: [
-                        Icon(Icons.edit),
+                        Icon(Icons.directions_bus),
                         SizedBox(width: 8),
-                        Text('Edit User'),
-                      ],
-                    ),
-                  ),
-                  PopupMenuItem(
-                    value: isActive ? 'deactivate' : 'activate',
-                    child: Row(
-                      children: [
-                        Icon(isActive ? Icons.block : Icons.check_circle),
-                        const SizedBox(width: 8, height: 40),
-                        Text(isActive ? 'Deactivate' : 'Activate'),
-                      ],
-                    ),
-                  ),
-                  const PopupMenuItem(
-                    value: 'delete',
-                    child: Row(
-                      children: [
-                        Icon(Icons.delete, color: Colors.red),
-                        SizedBox(width: 8),
-                        Text('Delete User', style: TextStyle(color: Colors.red)),
+                        Text('Assign Bus'),
                       ],
                     ),
                   ),
                 ],
-              ),
-            ],
-          ),
+                const PopupMenuItem(
+                  value: 'delete',
+                  child: Row(
+                    children: [
+                      Icon(Icons.delete, color: Colors.red),
+                      SizedBox(width: 8),
+                      Text('Delete User', style: TextStyle(color: Colors.red)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
   }
 
-  void _handleUserAction(String action, Map<String, dynamic> user) {
+  // Helper methods
+  List<User> _getFilteredUsers(List<User> users) {
+    if (_searchQuery.isEmpty) return users;
+    
+    final query = _searchQuery.toLowerCase();
+    return users.where((user) {
+      final name = user.name?.toLowerCase() ?? '';
+      final email = user.email?.toLowerCase() ?? '';
+      return name.contains(query) || email.contains(query);
+    }).toList();
+  }
+
+  Color _getUserTypeColor(UserType? userType) {
+    switch (userType) {
+      case UserType.driver:
+        return context.successColor;
+      case UserType.admin:
+        return context.colors.error;
+      case UserType.passenger:
+      default:
+        return context.colors.primary;
+    }
+  }
+
+  IconData _getUserTypeIcon(UserType? userType) {
+    switch (userType) {
+      case UserType.driver:
+        return Icons.drive_eta;
+      case UserType.admin:
+        return Icons.admin_panel_settings;
+      case UserType.passenger:
+      default:
+        return Icons.person;
+    }
+  }
+
+  String _getUserTypeLabel(UserType? userType) {
+    switch (userType) {
+      case UserType.driver:
+        return 'Driver';
+      case UserType.admin:
+        return 'Admin';
+      case UserType.passenger:
+      default:
+        return 'Passenger';
+    }
+  }
+
+  String _formatJoinDate(DateTime? date) {
+    if (date == null) return 'Unknown';
+    final now = DateTime.now();
+    final difference = now.difference(date);
+    
+    if (difference.inDays == 0) return 'today';
+    if (difference.inDays < 30) return '${difference.inDays}d ago';
+    if (difference.inDays < 365) return '${(difference.inDays / 30).round()}m ago';
+    return '${(difference.inDays / 365).round()}y ago';
+  }
+
+  // Action handlers
+  void _handleUserAction(String action, User user) {
     switch (action) {
       case 'view':
         _showUserDetails(user);
@@ -481,61 +467,51 @@ class _UserManagementScreenState extends State<UserManagementScreen> with Single
       case 'deactivate':
         _toggleUserStatus(user);
         break;
+      case 'view_performance':
+        _viewDriverPerformance(user);
+        break;
+      case 'assign_bus':
+        _assignBusToDriver(user);
+        break;
       case 'delete':
         _deleteUser(user);
         break;
     }
   }
 
-  void _showUserDetails(Map<String, dynamic> user) {
+  void _showUserDetails(User user) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
       builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0,
-        minChildSize: 0,
-        maxChildSize: 0,
+        initialChildSize: 0.8,
+        maxChildSize: 0.9,
+        minChildSize: 0.5,
         builder: (context, scrollController) => Container(
-          decoration: BoxDecoration(
-            color: Theme.of(context).scaffoldBackgroundColor,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-          ),
+          padding: const EdgeInsets.all(DesignSystem.space16),
           child: Column(
             children: [
-              Container(
-                margin: const EdgeInsets.only(top: 8),
-                width: 40,
-        
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primary,
-                  borderRadius: BorderRadius.circular(2),
+              Text(
+                'User Details',
+                style: context.textStyles.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
                 ),
               ),
+              const SizedBox(height: DesignSystem.space16),
               Expanded(
-                child: ListView(
+                child: SingleChildScrollView(
                   controller: scrollController,
-                  padding: const EdgeInsets.all(24),
-                  children: [
-                    Text(
-                      'User Details',
-                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    
-                    _buildDetailRow('Name', '${user['first_name']} ${user['last_name']}'),
-                    _buildDetailRow('Email', user['email'] ?? ''),
-                    _buildDetailRow('Phone', user['phone_number'] ?? 'Not provided'),
-                    _buildDetailRow('User Type', user['user_type'] ?? ''),
-                    _buildDetailRow('Status', user['is_active'] == true ? 'Active' : 'Inactive'),
-                    _buildDetailRow('Join Date', 
-                      DateTime.tryParse(user['date_joined'] ?? '') != null
-                          ? DzDateUtils.formatDateTime(DateTime.parse(user['date_joined']))
-                          : 'Unknown'
-                    ),
-                  ],
+                  child: Column(
+                    children: [
+                      _buildUserDetailsSection(user),
+                      const SizedBox(height: DesignSystem.space16),
+                      _buildUserStatsSection(user),
+                      if (user.userType == UserType.driver) ...[
+                        const SizedBox(height: DesignSystem.space16),
+                        _buildDriverSpecificSection(user),
+                      ],
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -545,26 +521,95 @@ class _UserManagementScreenState extends State<UserManagementScreen> with Single
     );
   }
 
+  Widget _buildUserDetailsSection(User user) {
+    return SectionLayout(
+      title: 'Personal Information',
+      child: AppCard(
+        child: Padding(
+          padding: const EdgeInsets.all(DesignSystem.space16),
+          child: Column(
+            children: [
+              _buildDetailRow('Full Name', user.name ?? 'Not provided'),
+              _buildDetailRow('Email', user.email ?? 'Not provided'),
+              _buildDetailRow('Phone', user.phoneNumber ?? 'Not provided'),
+              _buildDetailRow('User Type', _getUserTypeLabel(user.userType)),
+              _buildDetailRow('Status', user.isActive ? 'Active' : 'Inactive'),
+              _buildDetailRow('Joined', _formatJoinDate(user.createdAt)),
+              _buildDetailRow('Last Login', user.lastLoginAt != null 
+                  ? _formatJoinDate(user.lastLoginAt) 
+                  : 'Never'),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildUserStatsSection(User user) {
+    return SectionLayout(
+      title: 'User Statistics',
+      child: AppCard(
+        child: Padding(
+          padding: const EdgeInsets.all(DesignSystem.space16),
+          child: Column(
+            children: [
+              _buildDetailRow('Total Trips', '${user.totalTrips ?? 0}'),
+              _buildDetailRow('Rating', user.rating != null 
+                  ? '${user.rating!.toStringAsFixed(1)} ⭐'
+                  : 'Not rated'),
+              if (user.userType == UserType.passenger) ...[
+                _buildDetailRow('Total Spent', '\$${user.totalSpent?.toStringAsFixed(2) ?? '0.00'}'),
+                _buildDetailRow('Favorite Route', user.favoriteRoute ?? 'None'),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDriverSpecificSection(User user) {
+    return SectionLayout(
+      title: 'Driver Information',
+      child: AppCard(
+        child: Padding(
+          padding: const EdgeInsets.all(DesignSystem.space16),
+          child: Column(
+            children: [
+              _buildDetailRow('License Number', user.licenseNumber ?? 'Not provided'),
+              _buildDetailRow('License Expiry', user.licenseExpiry != null 
+                  ? _formatJoinDate(user.licenseExpiry) 
+                  : 'Not provided'),
+              _buildDetailRow('Assigned Bus', user.assignedBusPlate ?? 'Not assigned'),
+              _buildDetailRow('Years Experience', '${user.yearsExperience ?? 0} years'),
+              _buildDetailRow('Total Distance', '${user.totalDistanceDriven ?? 0} km'),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildDetailRow(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: DesignSystem.space4),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 100,
+            width: 120,
             child: Text(
               label,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              style: context.textStyles.bodyMedium?.copyWith(
                 fontWeight: FontWeight.w500,
-                color: Theme.of(context).colorScheme.primary,
+                color: context.colors.onSurfaceVariant,
               ),
             ),
           ),
           Expanded(
             child: Text(
               value,
-              style: Theme.of(context).textTheme.bodyLarge,
+              style: context.textStyles.bodyMedium,
             ),
           ),
         ],
@@ -572,64 +617,147 @@ class _UserManagementScreenState extends State<UserManagementScreen> with Single
     );
   }
 
+  // Dialog methods
+  void _showFilterDialog() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(DesignSystem.space16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Filter Users',
+              style: context.textStyles.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: DesignSystem.space16),
+            // Filter options would be implemented here
+            AppButton(
+              text: 'Apply Filters',
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _showAddUserDialog() {
-    // TODO: Implement add user dialog
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Add user functionality - to be implemented')),
+      const SnackBar(content: Text('Add user form coming soon')),
     );
   }
 
-  void _showEditUserDialog(Map<String, dynamic> user) {
-    // TODO: Implement edit user dialog
+  void _showEditUserDialog(User user) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Edit user functionality - to be implemented')),
+      SnackBar(content: Text('Edit user form for ${user.name} coming soon')),
     );
   }
 
-  void _toggleUserStatus(Map<String, dynamic> user) {
-    final isActive = user['is_active'] == true;
-    
-    DialogHelper.showConfirmDialog(
-      context,
-      title: isActive ? 'Deactivate User' : 'Activate User',
-      message: 'Are you sure you want to ${isActive ? 'deactivate' : 'activate'} this user?',
-      confirmText: isActive ? 'Deactivate' : 'Activate',
-      cancelText: 'Cancel',
-    ).then((confirmed) {
-      if (confirmed) {
-        setState(() {
-          user['is_active'] = !isActive;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('User ${isActive ? 'deactivated' : 'activated'} successfully'),
-            backgroundColor: Theme.of(context).colorScheme.primary,
+  void _toggleUserStatus(User user) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(user.isActive ? 'Deactivate User' : 'Activate User'),
+        content: Text(
+          'Are you sure you want to ${user.isActive ? 'deactivate' : 'activate'} ${user.name}?'
+        ),
+        actions: [
+          AppButton.text(
+            text: 'Cancel',
+            onPressed: () => Navigator.of(context).pop(),
           ),
-        );
-      }
-    });
+          AppButton(
+            text: user.isActive ? 'Deactivate' : 'Activate',
+            onPressed: () {
+              Navigator.of(context).pop();
+              _processUserStatusToggle(user);
+            },
+          ),
+        ],
+      ),
+    );
   }
 
-  void _deleteUser(Map<String, dynamic> user) {
-    DialogHelper.showConfirmDialog(
-      context,
-      title: 'Delete User',
-      message: 'Are you sure you want to delete this user? This action cannot be undone.',
-      confirmText: 'Delete',
-      cancelText: 'Cancel',
-    ).then((confirmed) {
-      if (confirmed) {
-        setState(() {
-          _allUsers.remove(user);
-          _categorizeUsers();
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('User deleted successfully'),
-            backgroundColor: Colors.red,
+  Future<void> _processUserStatusToggle(User user) async {
+    try {
+      final adminProvider = context.read<AdminProvider>();
+      await adminProvider.toggleUserStatus(user.id!);
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('User ${user.isActive ? 'deactivated' : 'activated'} successfully'),
+          backgroundColor: context.successColor,
+        ),
+      );
+      
+      _loadUsers();
+    } catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to update user status: $error')),
+      );
+    }
+  }
+
+  void _viewDriverPerformance(User user) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Driver performance for ${user.name} coming soon')),
+    );
+  }
+
+  void _assignBusToDriver(User user) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Bus assignment for ${user.name} coming soon')),
+    );
+  }
+
+  void _deleteUser(User user) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete User'),
+        content: Text(
+          'Are you sure you want to delete ${user.name}? This action cannot be undone.'
+        ),
+        actions: [
+          AppButton.text(
+            text: 'Cancel',
+            onPressed: () => Navigator.of(context).pop(),
           ),
-        );
-      }
-    });
+          AppButton(
+            text: 'Delete',
+            onPressed: () {
+              Navigator.of(context).pop();
+              _processUserDeletion(user);
+            },
+            ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _processUserDeletion(User user) async {
+    try {
+      final adminProvider = context.read<AdminProvider>();
+      await adminProvider.deleteUser(user.id!);
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${user.name} deleted successfully'),
+          backgroundColor: context.colors.error,
+        ),
+      );
+      
+      _loadUsers();
+    } catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to delete user: $error')),
+      );
+    }
   }
 }

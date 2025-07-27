@@ -8,10 +8,7 @@ import '../../providers/driver_provider.dart';
 import '../../providers/line_provider.dart';
 import '../../models/tracking_model.dart';
 import '../../services/navigation_service.dart';
-import '../../widgets/common/app_layout.dart';
-import '../../widgets/common/glassy_container.dart';
-import '../../widgets/common/custom_card.dart';
-import '../../widgets/common/loading_indicator.dart';
+import '../../widgets/widgets.dart';
 import '../../localization/app_localizations.dart';
 
 class SchedulesScreen extends StatefulWidget {
@@ -61,10 +58,11 @@ class _SchedulesScreenState extends State<SchedulesScreen> {
     final driverProvider = Provider.of<DriverProvider>(context);
     final lineProvider = Provider.of<LineProvider>(context);
 
-    return AppLayout(
+    return PageLayout(
       title: localizations.translate('schedules'),
-      child: _isLoading
-          ? const Center(child: LoadingIndicator())
+      showAppBar: true,
+      body: _isLoading
+          ? const LoadingState.fullScreen(message: 'Loading schedules...')
           : SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -139,7 +137,7 @@ class _SchedulesScreenState extends State<SchedulesScreen> {
         .where((s) => s['day_of_week'].toString() == _selectedDay)
         .toList();
 
-    return CustomCard(type: CardType.elevated, 
+    return AppCard( 
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -231,7 +229,7 @@ class _SchedulesScreenState extends State<SchedulesScreen> {
         .take(5)
         .toList();
 
-    return CustomCard(type: CardType.elevated, 
+    return AppCard( 
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -325,7 +323,7 @@ class _SchedulesScreenState extends State<SchedulesScreen> {
     // TODO: Get line schedules from line provider
     final lineSchedules = <Map<String, dynamic>>[];
 
-    return CustomCard(type: CardType.elevated, 
+    return AppCard( 
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

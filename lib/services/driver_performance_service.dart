@@ -8,13 +8,15 @@ import '../core/network/api_client.dart';
 class DriverPerformanceService {
   final ApiClient _apiClient = ApiClient();
 
-  Future<Map<String, dynamic>> getPerformanceData({String period = 'week'}) async {
+  Future<Map<String, dynamic>> getPerformanceData({
+    String period = 'week',
+  }) async {
     try {
       final response = await _apiClient.get(
         '/driver/performance',
         queryParameters: {'period': period},
       );
-      
+
       return response;
     } catch (e) {
       // Return mock data for now
@@ -23,13 +25,15 @@ class DriverPerformanceService {
     }
   }
 
-  Future<Map<String, dynamic>> getDrivingBehaviorData({String period = 'week'}) async {
+  Future<Map<String, dynamic>> getDrivingBehaviorData({
+    String period = 'week',
+  }) async {
     try {
       final response = await _apiClient.get(
         '/driver/performance/driving-behavior',
         queryParameters: {'period': period},
       );
-      
+
       return response;
     } catch (e) {
       await Future.delayed(const Duration(milliseconds: 600));
@@ -37,13 +41,15 @@ class DriverPerformanceService {
     }
   }
 
-  Future<Map<String, dynamic>> getFuelEfficiencyData({String period = 'week'}) async {
+  Future<Map<String, dynamic>> getFuelEfficiencyData({
+    String period = 'week',
+  }) async {
     try {
       final response = await _apiClient.get(
         '/driver/performance/fuel-efficiency',
         queryParameters: {'period': period},
       );
-      
+
       return response;
     } catch (e) {
       await Future.delayed(const Duration(milliseconds: 600));
@@ -51,13 +57,15 @@ class DriverPerformanceService {
     }
   }
 
-  Future<Map<String, dynamic>> getSafetyScoreData({String period = 'week'}) async {
+  Future<Map<String, dynamic>> getSafetyScoreData({
+    String period = 'week',
+  }) async {
     try {
       final response = await _apiClient.get(
         '/driver/performance/safety-score',
         queryParameters: {'period': period},
       );
-      
+
       return response;
     } catch (e) {
       await Future.delayed(const Duration(milliseconds: 600));
@@ -65,13 +73,15 @@ class DriverPerformanceService {
     }
   }
 
-  Future<List<Map<String, dynamic>>> getPerformanceTrends({String period = 'month'}) async {
+  Future<List<Map<String, dynamic>>> getPerformanceTrends({
+    String period = 'month',
+  }) async {
     try {
       final response = await _apiClient.get(
         '/driver/performance/trends',
         queryParameters: {'period': period},
       );
-      
+
       return List<Map<String, dynamic>>.from(response['trends']);
     } catch (e) {
       await Future.delayed(const Duration(milliseconds: 600));
@@ -99,13 +109,15 @@ class DriverPerformanceService {
     }
   }
 
-  Future<Map<String, dynamic>> getSpeedAnalysis({String period = 'week'}) async {
+  Future<Map<String, dynamic>> getSpeedAnalysis({
+    String period = 'week',
+  }) async {
     try {
       final response = await _apiClient.get(
         '/driver/performance/speed-analysis',
         queryParameters: {'period': period},
       );
-      
+
       return response;
     } catch (e) {
       await Future.delayed(const Duration(milliseconds: 500));
@@ -115,10 +127,11 @@ class DriverPerformanceService {
 
   Future<bool> submitFeedback(String feedback, {int? rating}) async {
     try {
-      final response = await _apiClient.post('/driver/performance/feedback', body: {
-        'feedback': feedback,
-        'rating': rating});
-      
+      final response = await _apiClient.post(
+        '/driver/performance/feedback',
+        body: {'feedback': feedback, 'rating': rating},
+      );
+
       return response != null;
     } catch (e) {
       await Future.delayed(const Duration(milliseconds: 500));
@@ -164,7 +177,8 @@ class DriverPerformanceService {
           },
           {
             'title': 'Hard Braking',
-            'description': 'Hard braking event detected at City Center intersection',
+            'description':
+                'Hard braking event detected at City Center intersection',
             'severity': 'medium',
             'timestamp': '2024-07-22T09:15:00Z',
           },
@@ -173,7 +187,8 @@ class DriverPerformanceService {
       'achievements': [
         {
           'title': 'Eco Driver',
-          'description': 'Achieved excellent fuel efficiency for 7 consecutive days',
+          'description':
+              'Achieved excellent fuel efficiency for 7 consecutive days',
           'earned_at': '2024-07-22T00:00:00Z',
           'badge_type': 'eco',
         },
@@ -247,10 +262,30 @@ class DriverPerformanceService {
 
   List<Map<String, dynamic>> _getMockTrendsData() {
     return [
-      {'date': '2024-07-01', 'score': 80, 'fuel_efficiency': 13, 'safety_score': 92},
-      {'date': '2024-07-08', 'score': 82, 'fuel_efficiency': 12, 'safety_score': 94},
-      {'date': '2024-07-15', 'score': 78, 'fuel_efficiency': 13, 'safety_score': 89},
-      {'date': '2024-07-22', 'score': 85, 'fuel_efficiency': 12, 'safety_score': 95},
+      {
+        'date': '2024-07-01',
+        'score': 80,
+        'fuel_efficiency': 13,
+        'safety_score': 92,
+      },
+      {
+        'date': '2024-07-08',
+        'score': 82,
+        'fuel_efficiency': 12,
+        'safety_score': 94,
+      },
+      {
+        'date': '2024-07-15',
+        'score': 78,
+        'fuel_efficiency': 13,
+        'safety_score': 89,
+      },
+      {
+        'date': '2024-07-22',
+        'score': 85,
+        'fuel_efficiency': 12,
+        'safety_score': 95,
+      },
     ];
   }
 
@@ -258,7 +293,8 @@ class DriverPerformanceService {
     return [
       {
         'title': 'Fuel Efficiency Master',
-        'description': 'Maintained fuel efficiency below 12 L/100km for 2 weeks',
+        'description':
+            'Maintained fuel efficiency below 12 L/100km for 2 weeks',
         'earned_at': '2024-07-22T00:00:00Z',
         'badge_type': 'efficiency',
         'points': 100,
@@ -283,12 +319,14 @@ class DriverPerformanceService {
   List<Map<String, dynamic>> _getMockSuggestions() {
     return [
       {
-        'text': 'Try to maintain a steady speed between 40-50 km/h for optimal fuel efficiency',
+        'text':
+            'Try to maintain a steady speed between 40-50 km/h for optimal fuel efficiency',
         'category': 'fuel_efficiency',
         'priority': 'high',
       },
       {
-        'text': 'Consider using engine braking on downhill sections to reduce wear on brake pads',
+        'text':
+            'Consider using engine braking on downhill sections to reduce wear on brake pads',
         'category': 'vehicle_maintenance',
         'priority': 'medium',
       },
@@ -298,7 +336,8 @@ class DriverPerformanceService {
         'priority': 'medium',
       },
       {
-        'text': 'Use air conditioning efficiently - consider opening windows at lower speeds',
+        'text':
+            'Use air conditioning efficiently - consider opening windows at lower speeds',
         'category': 'fuel_efficiency',
         'priority': 'low',
       },
@@ -310,12 +349,7 @@ class DriverPerformanceService {
       'average_speed': 42,
       'max_speed': 68,
       'speed_violations': 2,
-      'time_in_speed_ranges': {
-        '0-30': 0,
-        '30-50': 0,
-        '50-70': 0,
-        '70+': 0,
-      },
+      'time_in_speed_ranges': {'0-30': 0, '30-50': 0, '50-70': 0, '70+': 0},
       'hourly_speed_data': [
         {'hour': 6, 'avg_speed': 35},
         {'hour': 7, 'avg_speed': 28},

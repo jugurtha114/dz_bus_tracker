@@ -9,7 +9,8 @@ import '../models/api_response_models.dart';
 class GamificationService {
   final ApiClient _apiClient;
 
-  GamificationService({ApiClient? apiClient}) : _apiClient = apiClient ?? ApiClient();
+  GamificationService({ApiClient? apiClient})
+    : _apiClient = apiClient ?? ApiClient();
 
   // Achievement management methods
 
@@ -33,35 +34,46 @@ class GamificationService {
       if (e is ApiException) {
         return ApiResponse.error(message: e.message);
       }
-      return ApiResponse.error(message: 'Failed to get achievements: ${e.toString()}');
+      return ApiResponse.error(
+        message: 'Failed to get achievements: ${e.toString()}',
+      );
     }
   }
 
   /// Get achievement by ID
-  Future<ApiResponse<Achievement>> getAchievementById(String achievementId) async {
+  Future<ApiResponse<Achievement>> getAchievementById(
+    String achievementId,
+  ) async {
     try {
-      final response = await _apiClient.get(ApiEndpoints.buildUrl(ApiEndpoints.achievementById(achievementId)));
+      final response = await _apiClient.get(
+        ApiEndpoints.buildUrl(ApiEndpoints.achievementById(achievementId)),
+      );
       final achievement = Achievement.fromJson(response);
       return ApiResponse.success(data: achievement);
     } catch (e) {
       if (e is ApiException) {
         return ApiResponse.error(message: e.message);
       }
-      return ApiResponse.error(message: 'Failed to get achievement details: ${e.toString()}');
+      return ApiResponse.error(
+        message: 'Failed to get achievement details: ${e.toString()}',
+      );
     }
   }
 
   /// Get user's achievement progress
   Future<ApiResponse<List<Achievement>>> getAchievementProgress() async {
     try {
-      final response = await _apiClient.get(ApiEndpoints.buildUrl(ApiEndpoints.achievementProgress));
-      
+      final response = await _apiClient.get(
+        ApiEndpoints.buildUrl(ApiEndpoints.achievementProgress),
+      );
+
       List<Achievement> achievements = [];
       if (response is List) {
         achievements = response
             .map((item) => Achievement.fromJson(item as Map<String, dynamic>))
             .toList();
-      } else if (response is Map<String, dynamic> && response.containsKey('results')) {
+      } else if (response is Map<String, dynamic> &&
+          response.containsKey('results')) {
         final results = response['results'] as List<dynamic>;
         achievements = results
             .map((item) => Achievement.fromJson(item as Map<String, dynamic>))
@@ -73,21 +85,26 @@ class GamificationService {
       if (e is ApiException) {
         return ApiResponse.error(message: e.message);
       }
-      return ApiResponse.error(message: 'Failed to get achievement progress: ${e.toString()}');
+      return ApiResponse.error(
+        message: 'Failed to get achievement progress: ${e.toString()}',
+      );
     }
   }
 
   /// Get unlocked achievements
   Future<ApiResponse<List<Achievement>>> getUnlockedAchievements() async {
     try {
-      final response = await _apiClient.get(ApiEndpoints.buildUrl(ApiEndpoints.unlockedAchievements));
-      
+      final response = await _apiClient.get(
+        ApiEndpoints.buildUrl(ApiEndpoints.unlockedAchievements),
+      );
+
       List<Achievement> achievements = [];
       if (response is List) {
         achievements = response
             .map((item) => Achievement.fromJson(item as Map<String, dynamic>))
             .toList();
-      } else if (response is Map<String, dynamic> && response.containsKey('results')) {
+      } else if (response is Map<String, dynamic> &&
+          response.containsKey('results')) {
         final results = response['results'] as List<dynamic>;
         achievements = results
             .map((item) => Achievement.fromJson(item as Map<String, dynamic>))
@@ -99,7 +116,9 @@ class GamificationService {
       if (e is ApiException) {
         return ApiResponse.error(message: e.message);
       }
-      return ApiResponse.error(message: 'Failed to get unlocked achievements: ${e.toString()}');
+      return ApiResponse.error(
+        message: 'Failed to get unlocked achievements: ${e.toString()}',
+      );
     }
   }
 
@@ -125,21 +144,27 @@ class GamificationService {
       if (e is ApiException) {
         return ApiResponse.error(message: e.message);
       }
-      return ApiResponse.error(message: 'Failed to get challenges: ${e.toString()}');
+      return ApiResponse.error(
+        message: 'Failed to get challenges: ${e.toString()}',
+      );
     }
   }
 
   /// Get challenge by ID
   Future<ApiResponse<Challenge>> getChallengeById(String challengeId) async {
     try {
-      final response = await _apiClient.get(ApiEndpoints.buildUrl(ApiEndpoints.challengeById(challengeId)));
+      final response = await _apiClient.get(
+        ApiEndpoints.buildUrl(ApiEndpoints.challengeById(challengeId)),
+      );
       final challenge = Challenge.fromJson(response);
       return ApiResponse.success(data: challenge);
     } catch (e) {
       if (e is ApiException) {
         return ApiResponse.error(message: e.message);
       }
-      return ApiResponse.error(message: 'Failed to get challenge details: ${e.toString()}');
+      return ApiResponse.error(
+        message: 'Failed to get challenge details: ${e.toString()}',
+      );
     }
   }
 
@@ -157,21 +182,26 @@ class GamificationService {
       if (e is ApiException) {
         return ApiResponse.error(message: e.message);
       }
-      return ApiResponse.error(message: 'Failed to join challenge: ${e.toString()}');
+      return ApiResponse.error(
+        message: 'Failed to join challenge: ${e.toString()}',
+      );
     }
   }
 
   /// Get user's challenges
   Future<ApiResponse<List<Challenge>>> getMyChallenges() async {
     try {
-      final response = await _apiClient.get(ApiEndpoints.buildUrl(ApiEndpoints.myChallenges));
-      
+      final response = await _apiClient.get(
+        ApiEndpoints.buildUrl(ApiEndpoints.myChallenges),
+      );
+
       List<Challenge> challenges = [];
       if (response is List) {
         challenges = response
             .map((item) => Challenge.fromJson(item as Map<String, dynamic>))
             .toList();
-      } else if (response is Map<String, dynamic> && response.containsKey('results')) {
+      } else if (response is Map<String, dynamic> &&
+          response.containsKey('results')) {
         final results = response['results'] as List<dynamic>;
         challenges = results
             .map((item) => Challenge.fromJson(item as Map<String, dynamic>))
@@ -183,7 +213,9 @@ class GamificationService {
       if (e is ApiException) {
         return ApiResponse.error(message: e.message);
       }
-      return ApiResponse.error(message: 'Failed to get my challenges: ${e.toString()}');
+      return ApiResponse.error(
+        message: 'Failed to get my challenges: ${e.toString()}',
+      );
     }
   }
 
@@ -209,26 +241,34 @@ class GamificationService {
       if (e is ApiException) {
         return ApiResponse.error(message: e.message);
       }
-      return ApiResponse.error(message: 'Failed to get rewards: ${e.toString()}');
+      return ApiResponse.error(
+        message: 'Failed to get rewards: ${e.toString()}',
+      );
     }
   }
 
   /// Get reward by ID
   Future<ApiResponse<Reward>> getRewardById(String rewardId) async {
     try {
-      final response = await _apiClient.get(ApiEndpoints.buildUrl(ApiEndpoints.rewardById(rewardId)));
+      final response = await _apiClient.get(
+        ApiEndpoints.buildUrl(ApiEndpoints.rewardById(rewardId)),
+      );
       final reward = Reward.fromJson(response);
       return ApiResponse.success(data: reward);
     } catch (e) {
       if (e is ApiException) {
         return ApiResponse.error(message: e.message);
       }
-      return ApiResponse.error(message: 'Failed to get reward details: ${e.toString()}');
+      return ApiResponse.error(
+        message: 'Failed to get reward details: ${e.toString()}',
+      );
     }
   }
 
   /// Redeem a reward
-  Future<ApiResponse<Map<String, dynamic>>> redeemReward(String rewardId) async {
+  Future<ApiResponse<Map<String, dynamic>>> redeemReward(
+    String rewardId,
+  ) async {
     try {
       final response = await _apiClient.post(
         ApiEndpoints.buildUrl(ApiEndpoints.redeemReward(rewardId)),
@@ -240,21 +280,26 @@ class GamificationService {
       if (e is ApiException) {
         return ApiResponse.error(message: e.message);
       }
-      return ApiResponse.error(message: 'Failed to redeem reward: ${e.toString()}');
+      return ApiResponse.error(
+        message: 'Failed to redeem reward: ${e.toString()}',
+      );
     }
   }
 
   /// Get user's redeemed rewards
   Future<ApiResponse<List<Reward>>> getMyRewards() async {
     try {
-      final response = await _apiClient.get(ApiEndpoints.buildUrl(ApiEndpoints.myRewards));
-      
+      final response = await _apiClient.get(
+        ApiEndpoints.buildUrl(ApiEndpoints.myRewards),
+      );
+
       List<Reward> rewards = [];
       if (response is List) {
         rewards = response
             .map((item) => Reward.fromJson(item as Map<String, dynamic>))
             .toList();
-      } else if (response is Map<String, dynamic> && response.containsKey('results')) {
+      } else if (response is Map<String, dynamic> &&
+          response.containsKey('results')) {
         final results = response['results'] as List<dynamic>;
         rewards = results
             .map((item) => Reward.fromJson(item as Map<String, dynamic>))
@@ -266,14 +311,18 @@ class GamificationService {
       if (e is ApiException) {
         return ApiResponse.error(message: e.message);
       }
-      return ApiResponse.error(message: 'Failed to get my rewards: ${e.toString()}');
+      return ApiResponse.error(
+        message: 'Failed to get my rewards: ${e.toString()}',
+      );
     }
   }
 
   // Leaderboard methods
 
   /// Get all-time leaderboard
-  Future<ApiResponse<List<LeaderboardEntry>>> getAllTimeLeaderboard({int? limit}) async {
+  Future<ApiResponse<List<LeaderboardEntry>>> getAllTimeLeaderboard({
+    int? limit,
+  }) async {
     try {
       final queryParams = <String, dynamic>{};
       if (limit != null) queryParams['limit'] = limit;
@@ -286,12 +335,17 @@ class GamificationService {
       List<LeaderboardEntry> entries = [];
       if (response is List) {
         entries = response
-            .map((item) => LeaderboardEntry.fromJson(item as Map<String, dynamic>))
+            .map(
+              (item) => LeaderboardEntry.fromJson(item as Map<String, dynamic>),
+            )
             .toList();
-      } else if (response is Map<String, dynamic> && response.containsKey('results')) {
+      } else if (response is Map<String, dynamic> &&
+          response.containsKey('results')) {
         final results = response['results'] as List<dynamic>;
         entries = results
-            .map((item) => LeaderboardEntry.fromJson(item as Map<String, dynamic>))
+            .map(
+              (item) => LeaderboardEntry.fromJson(item as Map<String, dynamic>),
+            )
             .toList();
       }
 
@@ -300,12 +354,16 @@ class GamificationService {
       if (e is ApiException) {
         return ApiResponse.error(message: e.message);
       }
-      return ApiResponse.error(message: 'Failed to get all-time leaderboard: ${e.toString()}');
+      return ApiResponse.error(
+        message: 'Failed to get all-time leaderboard: ${e.toString()}',
+      );
     }
   }
 
   /// Get daily leaderboard
-  Future<ApiResponse<List<LeaderboardEntry>>> getDailyLeaderboard({int? limit}) async {
+  Future<ApiResponse<List<LeaderboardEntry>>> getDailyLeaderboard({
+    int? limit,
+  }) async {
     try {
       final queryParams = <String, dynamic>{};
       if (limit != null) queryParams['limit'] = limit;
@@ -318,12 +376,17 @@ class GamificationService {
       List<LeaderboardEntry> entries = [];
       if (response is List) {
         entries = response
-            .map((item) => LeaderboardEntry.fromJson(item as Map<String, dynamic>))
+            .map(
+              (item) => LeaderboardEntry.fromJson(item as Map<String, dynamic>),
+            )
             .toList();
-      } else if (response is Map<String, dynamic> && response.containsKey('results')) {
+      } else if (response is Map<String, dynamic> &&
+          response.containsKey('results')) {
         final results = response['results'] as List<dynamic>;
         entries = results
-            .map((item) => LeaderboardEntry.fromJson(item as Map<String, dynamic>))
+            .map(
+              (item) => LeaderboardEntry.fromJson(item as Map<String, dynamic>),
+            )
             .toList();
       }
 
@@ -332,12 +395,16 @@ class GamificationService {
       if (e is ApiException) {
         return ApiResponse.error(message: e.message);
       }
-      return ApiResponse.error(message: 'Failed to get daily leaderboard: ${e.toString()}');
+      return ApiResponse.error(
+        message: 'Failed to get daily leaderboard: ${e.toString()}',
+      );
     }
   }
 
   /// Get weekly leaderboard
-  Future<ApiResponse<List<LeaderboardEntry>>> getWeeklyLeaderboard({int? limit}) async {
+  Future<ApiResponse<List<LeaderboardEntry>>> getWeeklyLeaderboard({
+    int? limit,
+  }) async {
     try {
       final queryParams = <String, dynamic>{};
       if (limit != null) queryParams['limit'] = limit;
@@ -350,12 +417,17 @@ class GamificationService {
       List<LeaderboardEntry> entries = [];
       if (response is List) {
         entries = response
-            .map((item) => LeaderboardEntry.fromJson(item as Map<String, dynamic>))
+            .map(
+              (item) => LeaderboardEntry.fromJson(item as Map<String, dynamic>),
+            )
             .toList();
-      } else if (response is Map<String, dynamic> && response.containsKey('results')) {
+      } else if (response is Map<String, dynamic> &&
+          response.containsKey('results')) {
         final results = response['results'] as List<dynamic>;
         entries = results
-            .map((item) => LeaderboardEntry.fromJson(item as Map<String, dynamic>))
+            .map(
+              (item) => LeaderboardEntry.fromJson(item as Map<String, dynamic>),
+            )
             .toList();
       }
 
@@ -364,12 +436,16 @@ class GamificationService {
       if (e is ApiException) {
         return ApiResponse.error(message: e.message);
       }
-      return ApiResponse.error(message: 'Failed to get weekly leaderboard: ${e.toString()}');
+      return ApiResponse.error(
+        message: 'Failed to get weekly leaderboard: ${e.toString()}',
+      );
     }
   }
 
   /// Get monthly leaderboard
-  Future<ApiResponse<List<LeaderboardEntry>>> getMonthlyLeaderboard({int? limit}) async {
+  Future<ApiResponse<List<LeaderboardEntry>>> getMonthlyLeaderboard({
+    int? limit,
+  }) async {
     try {
       final queryParams = <String, dynamic>{};
       if (limit != null) queryParams['limit'] = limit;
@@ -382,12 +458,17 @@ class GamificationService {
       List<LeaderboardEntry> entries = [];
       if (response is List) {
         entries = response
-            .map((item) => LeaderboardEntry.fromJson(item as Map<String, dynamic>))
+            .map(
+              (item) => LeaderboardEntry.fromJson(item as Map<String, dynamic>),
+            )
             .toList();
-      } else if (response is Map<String, dynamic> && response.containsKey('results')) {
+      } else if (response is Map<String, dynamic> &&
+          response.containsKey('results')) {
         final results = response['results'] as List<dynamic>;
         entries = results
-            .map((item) => LeaderboardEntry.fromJson(item as Map<String, dynamic>))
+            .map(
+              (item) => LeaderboardEntry.fromJson(item as Map<String, dynamic>),
+            )
             .toList();
       }
 
@@ -396,20 +477,26 @@ class GamificationService {
       if (e is ApiException) {
         return ApiResponse.error(message: e.message);
       }
-      return ApiResponse.error(message: 'Failed to get monthly leaderboard: ${e.toString()}');
+      return ApiResponse.error(
+        message: 'Failed to get monthly leaderboard: ${e.toString()}',
+      );
     }
   }
 
   /// Get user's rank in leaderboard
   Future<ApiResponse<Map<String, dynamic>>> getMyRank() async {
     try {
-      final response = await _apiClient.get(ApiEndpoints.buildUrl(ApiEndpoints.myRank));
+      final response = await _apiClient.get(
+        ApiEndpoints.buildUrl(ApiEndpoints.myRank),
+      );
       return ApiResponse.success(data: response as Map<String, dynamic>);
     } catch (e) {
       if (e is ApiException) {
         return ApiResponse.error(message: e.message);
       }
-      return ApiResponse.error(message: 'Failed to get my rank: ${e.toString()}');
+      return ApiResponse.error(
+        message: 'Failed to get my rank: ${e.toString()}',
+      );
     }
   }
 
@@ -418,19 +505,25 @@ class GamificationService {
   /// Get user's gamification profile
   Future<ApiResponse<UserProfile>> getMyProfile() async {
     try {
-      final response = await _apiClient.get(ApiEndpoints.buildUrl(ApiEndpoints.myProfile));
+      final response = await _apiClient.get(
+        ApiEndpoints.buildUrl(ApiEndpoints.myProfile),
+      );
       final profile = UserProfile.fromJson(response);
       return ApiResponse.success(data: profile);
     } catch (e) {
       if (e is ApiException) {
         return ApiResponse.error(message: e.message);
       }
-      return ApiResponse.error(message: 'Failed to get profile: ${e.toString()}');
+      return ApiResponse.error(
+        message: 'Failed to get profile: ${e.toString()}',
+      );
     }
   }
 
   /// Update user's preferences
-  Future<ApiResponse<UserProfile>> updatePreferences(UserProfileUpdateRequest request) async {
+  Future<ApiResponse<UserProfile>> updatePreferences(
+    UserProfileUpdateRequest request,
+  ) async {
     try {
       final response = await _apiClient.patch(
         ApiEndpoints.buildUrl(ApiEndpoints.updatePreferences),
@@ -443,12 +536,16 @@ class GamificationService {
       if (e is ApiException) {
         return ApiResponse.error(message: e.message);
       }
-      return ApiResponse.error(message: 'Failed to update preferences: ${e.toString()}');
+      return ApiResponse.error(
+        message: 'Failed to update preferences: ${e.toString()}',
+      );
     }
   }
 
   /// Complete a trip for gamification points
-  Future<ApiResponse<Map<String, dynamic>>> completeTrip(TripCompletionRequest request) async {
+  Future<ApiResponse<Map<String, dynamic>>> completeTrip(
+    TripCompletionRequest request,
+  ) async {
     try {
       final response = await _apiClient.post(
         ApiEndpoints.buildUrl(ApiEndpoints.completeTrip),
@@ -460,7 +557,9 @@ class GamificationService {
       if (e is ApiException) {
         return ApiResponse.error(message: e.message);
       }
-      return ApiResponse.error(message: 'Failed to complete trip: ${e.toString()}');
+      return ApiResponse.error(
+        message: 'Failed to complete trip: ${e.toString()}',
+      );
     }
   }
 
@@ -486,34 +585,46 @@ class GamificationService {
       if (e is ApiException) {
         return ApiResponse.error(message: e.message);
       }
-      return ApiResponse.error(message: 'Failed to get transactions: ${e.toString()}');
+      return ApiResponse.error(
+        message: 'Failed to get transactions: ${e.toString()}',
+      );
     }
   }
 
   /// Get transaction by ID
-  Future<ApiResponse<PointTransaction>> getTransactionById(String transactionId) async {
+  Future<ApiResponse<PointTransaction>> getTransactionById(
+    String transactionId,
+  ) async {
     try {
-      final response = await _apiClient.get(ApiEndpoints.buildUrl(ApiEndpoints.transactionById(transactionId)));
+      final response = await _apiClient.get(
+        ApiEndpoints.buildUrl(ApiEndpoints.transactionById(transactionId)),
+      );
       final transaction = PointTransaction.fromJson(response);
       return ApiResponse.success(data: transaction);
     } catch (e) {
       if (e is ApiException) {
         return ApiResponse.error(message: e.message);
       }
-      return ApiResponse.error(message: 'Failed to get transaction details: ${e.toString()}');
+      return ApiResponse.error(
+        message: 'Failed to get transaction details: ${e.toString()}',
+      );
     }
   }
 
   /// Get transactions summary
   Future<ApiResponse<Map<String, dynamic>>> getTransactionsSummary() async {
     try {
-      final response = await _apiClient.get(ApiEndpoints.buildUrl(ApiEndpoints.transactionsSummary));
+      final response = await _apiClient.get(
+        ApiEndpoints.buildUrl(ApiEndpoints.transactionsSummary),
+      );
       return ApiResponse.success(data: response as Map<String, dynamic>);
     } catch (e) {
       if (e is ApiException) {
         return ApiResponse.error(message: e.message);
       }
-      return ApiResponse.error(message: 'Failed to get transactions summary: ${e.toString()}');
+      return ApiResponse.error(
+        message: 'Failed to get transactions summary: ${e.toString()}',
+      );
     }
   }
 
@@ -531,7 +642,9 @@ class GamificationService {
       }
       return ApiResponse.error(message: response.message);
     } catch (e) {
-      return ApiResponse.error(message: 'Failed to get affordable rewards: ${e.toString()}');
+      return ApiResponse.error(
+        message: 'Failed to get affordable rewards: ${e.toString()}',
+      );
     }
   }
 
@@ -552,7 +665,9 @@ class GamificationService {
       }
       return ApiResponse.error(message: response.message);
     } catch (e) {
-      return ApiResponse.error(message: 'Failed to get joinable challenges: ${e.toString()}');
+      return ApiResponse.error(
+        message: 'Failed to get joinable challenges: ${e.toString()}',
+      );
     }
   }
 
@@ -568,12 +683,16 @@ class GamificationService {
       }
       return ApiResponse.error(message: response.message);
     } catch (e) {
-      return ApiResponse.error(message: 'Failed to get recent achievements: ${e.toString()}');
+      return ApiResponse.error(
+        message: 'Failed to get recent achievements: ${e.toString()}',
+      );
     }
   }
 
   /// Get achievements by type
-  Future<ApiResponse<List<Achievement>>> getAchievementsByType(AchievementType type) async {
+  Future<ApiResponse<List<Achievement>>> getAchievementsByType(
+    AchievementType type,
+  ) async {
     try {
       final queryParams = AchievementQueryParameters(
         achievementType: [type.value],
@@ -585,16 +704,16 @@ class GamificationService {
       }
       return ApiResponse.error(message: response.message);
     } catch (e) {
-      return ApiResponse.error(message: 'Failed to get achievements by type: ${e.toString()}');
+      return ApiResponse.error(
+        message: 'Failed to get achievements by type: ${e.toString()}',
+      );
     }
   }
 
   /// Get rewards by type
   Future<ApiResponse<List<Reward>>> getRewardsByType(RewardType type) async {
     try {
-      final queryParams = RewardQueryParameters(
-        rewardType: [type.value],
-      );
+      final queryParams = RewardQueryParameters(rewardType: [type.value]);
 
       final response = await getRewards(queryParams: queryParams);
       if (response.isSuccess && response.data != null) {
@@ -602,12 +721,16 @@ class GamificationService {
       }
       return ApiResponse.error(message: response.message);
     } catch (e) {
-      return ApiResponse.error(message: 'Failed to get rewards by type: ${e.toString()}');
+      return ApiResponse.error(
+        message: 'Failed to get rewards by type: ${e.toString()}',
+      );
     }
   }
 
   /// Get latest transactions
-  Future<ApiResponse<List<PointTransaction>>> getLatestTransactions({int limit = 10}) async {
+  Future<ApiResponse<List<PointTransaction>>> getLatestTransactions({
+    int limit = 10,
+  }) async {
     try {
       final queryParams = PointTransactionQueryParameters(
         orderBy: ['-created_at'],
@@ -620,7 +743,9 @@ class GamificationService {
       }
       return ApiResponse.error(message: response.message);
     } catch (e) {
-      return ApiResponse.error(message: 'Failed to get latest transactions: ${e.toString()}');
+      return ApiResponse.error(
+        message: 'Failed to get latest transactions: ${e.toString()}',
+      );
     }
   }
 
@@ -630,7 +755,7 @@ class GamificationService {
       final profileResponse = await getMyProfile();
       if (profileResponse.isSuccess && profileResponse.data != null) {
         final profile = profileResponse.data!;
-        
+
         final levelInfo = {
           'current_level': profile.currentLevel,
           'total_points': profile.totalPoints,
@@ -639,12 +764,14 @@ class GamificationService {
           'level_progress': profile.levelProgress,
           'points_to_next_level': profile.pointsToNextLevel,
         };
-        
+
         return ApiResponse.success(data: levelInfo);
       }
       return ApiResponse.error(message: profileResponse.message);
     } catch (e) {
-      return ApiResponse.error(message: 'Failed to get level info: ${e.toString()}');
+      return ApiResponse.error(
+        message: 'Failed to get level info: ${e.toString()}',
+      );
     }
   }
 }
